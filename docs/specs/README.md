@@ -2,7 +2,7 @@
 
 ## Product-level specification
 
-- [Umbrella Specification](umbrella.md) — the product mission, cross-cutting requirements, stage sequence, and acceptance outcomes. **Draft; pending developer approval.**
+- [Umbrella Specification](umbrella_spec_melliatlas.md) — the product mission, cross-cutting requirements, stage sequence, and acceptance outcomes. **Draft; pending developer approval.**
 
 ## Stage lifecycle
 

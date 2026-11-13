@@ -39,12 +39,14 @@ The **first user journey serves the beekeeper**. Conservation constraints are pa
 
 A user selects a territory and season, starts an investigation, and receives candidate stops on a map and a proposed relocation timeline. The application should explain **why** a site was selected, rejected, or reconsidered, which evidence was used, and what remains uncertain.
 
-The following is a **conceptual future processing DAG**, not a claim that these sources, adapters, or analyzers already exist. In `MVP-01`, all inputs are explicitly **synthetic**. Real integrations will require separate verification of availability, licensing, coverage, quality, and permitted use.
+The following is a **conceptual future processing DAG**, not a claim that these sources, adapters, or analyzers already exist. In `MVP-01`, planning evidence and remote-publication/Saturn responses are explicitly **synthetic or fixture-based**; the RU/BY map and territorial catalogs are sourced reference geography with documented version and rights. Actual public-web/news and Saturn integrations begin in `MVP-02`, subject to independent access and evidence verification.
 
 ```mermaid
 flowchart TD
     subgraph Sources["Potential sources — not yet integrated"]
-        LAND["Land cover and crop parcels"]
+        LAND["Maps, boundaries and land cover"]
+        PUBLIC["Public websites and news (RU and BY)"]
+        SATURN["Saturn map/treatment evidence (RU only)"]
         FLOW["Flowering calendars and phenology"]
         WX["Weather observations and forecasts"]
         CONS["Protected areas and applicable restrictions"]
@@ -62,6 +64,8 @@ flowchart TD
     end
 
     LAND --> NORM
+    PUBLIC --> NORM
+    SATURN --> NORM
     FLOW --> NORM
     WX --> NORM
     CONS --> NORM
@@ -83,9 +87,9 @@ The graph depicts **one execution pass**. If the agent finds missing or conflict
 
 ## Start small, keep improving
 
-The first stage, **`MVP-01`**, must already deliver a working browser-to-PostGIS application: a React/Leaflet map, a Python/FastAPI backend, minimal typed analysis operations, and a bounded deterministic agent. A synthetic example will propose at least two successive apiary stops, detect a fictional exclusion rule, reconsider an attractive location, and explain an alternative. A completed result can be reopened.
+The first stage, **`MVP-01`**, must already deliver a working browser-to-PostGIS application: a React/Leaflet map, a Python/FastAPI backend, complete first-order regional navigation for Russia and Belarus, district catalogs for Smolensk and Vitebsk Oblasts, minimal typed analysis operations, and a bounded deterministic agent. A synthetic example will propose at least two successive apiary stops, detect a fictional exclusion rule, reconsider an attractive location, and explain an alternative. A completed result can be reopened.
 
-Subsequent stages expand the **same working product** with better flowering evidence, more adaptive planning, durable jobs and caching, supported territories in Russia and Belarus, verified real data, weather-aware phenology, stronger conservation analysis, colony and agricultural considerations, constrained relocation planning, optional LLM support, scientific comparison, and eventually field observations and multi-year monitoring.
+Subsequent stages expand the **same working product** with approved public-web/news collection in Russia and Belarus, controlled Saturn integration in Russia, better flowering evidence, more adaptive planning, durable jobs and caching, multi-district comparisons, further verified real data, weather-aware phenology, stronger conservation analysis, colony and agricultural considerations, constrained relocation planning, optional LLM support, scientific comparison, and eventually field observations and multi-year monitoring.
 
 **Limits matter:** the software does not issue permits, guarantee honey yield, certify the absence of ecological harm, or establish scientific causation from a map correlation. Synthetic data must never appear to be live observations. Sensitive apiary coordinates and protected species locations require appropriate access controls.
 
@@ -102,4 +106,4 @@ The preferred architecture is a **Python modular monolith** backed by **PostgreS
 
 **Current status:** this repository is a scaffold with a draft product umbrella, not a running GIS service or a provider-integrated research system. The diagrams describe intended capabilities, not implemented or scientifically validated behavior.
 
-Read the [umbrella specification](docs/specs/umbrella.md) for the ordered stages and acceptance outcomes, or the [specification index](docs/specs/README.md) for the documentation lifecycle. Once a stage is selected, its sub-specification and implementation plan define the approved work. Run `bash ./run-tests.sh` to check documentation integrity; application-specific test commands will be added when product code is introduced.
+Read the [umbrella specification](docs/specs/umbrella_spec_melliatlas.md) for the ordered stages and acceptance outcomes, or the [specification index](docs/specs/README.md) for the documentation lifecycle. Once a stage is selected, its sub-specification and implementation plan define the approved work. Run `bash ./run-tests.sh` to check documentation integrity; application-specific test commands will be added when product code is introduced.
