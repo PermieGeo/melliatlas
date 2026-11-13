@@ -2,8 +2,6 @@
 
 **Status: architecture bootstrap only.** No normative active sub-specification, implementation plan, feature cross-reference, or developer-controlled checkpoint exists yet.
 
-The prior discussion draft, *BeeGeoTrace v0.1*, now uses the product name **MelliAtlas**. It is input for a future review, **not** an approved development contract. The first proposed workstream is **A - Python Engine Core**; **B - Agentic Layer** follows it. Approval and requirements/stage IDs are pending.
-
 When the developer selects a workstream:
 
 1. Write a focused normative sub-spec with observable requirements, scope, security, failures, boundaries, and acceptance tests.

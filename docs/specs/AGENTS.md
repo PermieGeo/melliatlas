@@ -16,6 +16,8 @@ Extends `../../AGENTS.md`. Keep normative requirements separate from advisory im
 - **ALWAYS** obtain developer approval for material requirements and changes before implementing them.
 
 ## Implementation Plans & TDD
+- **ALWAYS** name each active sub-spec's implementation plan `<spec_stem>_implementation_plan.md`, using the exact sub-spec filename stem; keep it beside the sub-spec and archive both together.
+- **MAY** record material specification or plan changes in `<spec_stem>_implementation_plan_history.md`; the current sub-spec and plan remain authoritative.
 - **ALWAYS** link each active sub-spec to its own advisory plan and keep both aligned when requirements change.
 - **ALWAYS** list proposed additions, edits, and removals by file; distinguish verified paths from proposed ones. Describe ownership, public contracts, dependencies, ordered steps, migrations, and recovery where relevant.
 - **ALWAYS** plan TDD: write executable tests that initially fail because the specified behavior is missing, implement the behavior, then refactor with those tests passing. **NEVER** use dummy failing assertions, skipped tests, or tests that merely mirror the implementation.
@@ -26,7 +28,7 @@ Extends `../../AGENTS.md`. Keep normative requirements separate from advisory im
 - **NEVER** invent existing code, executed checks, validated APIs, or accepted stages.
 
 ## STATE.json & Lifecycle
-- **ALWAYS** maintain `docs/specs/STATE.json` as the developer-controlled checkpoint once the first workstream is selected. Track the selected workstream, active sub-spec path, stage ID, and phase; keep it consistent with its schema, umbrella, plan, and spec index.
+- **ALWAYS** maintain `docs/specs/STATE.json` as the developer-controlled checkpoint once the first workstream is selected. Track the selected workstream, active sub-spec path, stage ID, and phase; validate it against `docs/specs/state.schema.json` and keep it consistent with the umbrella, plan, and spec index.
 - **ALWAYS** validate checkpoint consistency and links with repository tooling when available. **NEVER** copy legacy checkpoint values into a fresh repository or assume an uninitialized checkpoint exists.
 - **NEVER** advance the selected workstream, stage, phase, or acceptance status without an explicit developer decision; passing tests, creating a ZIP, or committing code is not acceptance.
 - **ALWAYS** move the completed sub-spec and its linked plan together from `active/` to `archive/` after implementation and explicit developer acceptance; update the index, umbrella, references, and checkpoint consistently.
