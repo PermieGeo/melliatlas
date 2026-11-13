@@ -11,6 +11,7 @@
 - **ALWAYS** load only modules that must change for the current specification stage or feature group. For dependent modules, read only their `contract.md` and public API.
 - **ALWAYS** follow the nearest `AGENTS.md`; nested rules may strengthen, never weaken root rules.
 - **ALWAYS** distinguish implemented behavior from approved requirements and unapproved drafts.
+- **NEVER** modify any `AGENTS.md` unless the user explicitly requests it.
 - Make minimal, cohesive changes. **NEVER** expand scope without approval.
 
 ## Architecture
