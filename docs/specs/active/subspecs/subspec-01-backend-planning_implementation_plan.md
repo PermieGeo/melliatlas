@@ -62,7 +62,7 @@ A module's `api.py` (or `__init__.py` facade when justified) is the importable b
 
 ## 2. Proposed public API declarations
 
-The declarations below are intended for the **named files**. Import statements, enums, parameters and return types are part of the proposed contract; implementation bodies are omitted intentionally. The plan's subsequent TDD steps require adding minimal compiling stubs, then initially failing executable tests before any actual logic.
+The declarations below are intended for the **named files**. Import statements, enums, parameters and return types are part of the proposed contract; implementation bodies are omitted intentionally. The plan's subsequent TDD steps require adding minimal compiling stubs, then initially failing executable tests before any actual logic. Add short English comments only where a type, value, or field has non-obvious semantics, constraints, or units. Do not repeat information already clear from identifiers or types.
 
 ### 2.1. `territories/api.py`
 
@@ -123,6 +123,7 @@ class ReferenceManifest:
     license_id: str
     checksum_sha256: str
     coordinate_system: str
+    # Documented geographic coverage, not verified completeness.
     declared_scope: str
     normalization_version: str
 
@@ -163,8 +164,11 @@ class ForageLevel(StrEnum):
     HIGH = "high"
 
 class SiteDisposition(StrEnum):
+    # No known exclusion; this is not a safety guarantee.
     ELIGIBLE = "eligible"
+    # A fictional exclusion rule applies in the demo scenario.
     EXCLUDED = "excluded"
+    # Requires review; not an automatic prohibition.
     CAUTION = "caution"
 
 @dataclass(frozen=True)
@@ -190,6 +194,7 @@ class ForageOpportunity:
 class SiteAssessment:
     site_id: str
     disposition: SiteDisposition
+    # Applied demo rule, if any; not an inferred legal ban.
     rule_id: str | None
     evidence_ids: tuple[str, ...]
     explanation: str
@@ -223,12 +228,15 @@ from typing import Protocol, TypeAlias
 from melliatlas.territories.api import CountryCode, GeometryWgs84
 from melliatlas.planning.api import CandidateSite, ForageLevel, SiteDisposition, TimeWindow
 
+# Classifies source data, not DAG execution steps.
 class SourceKind(StrEnum):
     CARTOGRAPHY = "cartography"
     PUBLIC_WEB = "public_web"
+    # Russia-only Saturn evidence source.
     SATURN = "saturn"
 
 class SourceMode(StrEnum):
+    # Verified versioned reference data.
     REFERENCE = "reference"
     FIXTURE = "fixture"
     UNAVAILABLE = "unavailable"
@@ -237,13 +245,16 @@ class EvidenceKind(StrEnum):
     ADMIN_BOUNDARY = "admin_boundary"
     FORAGE_WINDOW = "forage_window"
     CANDIDATE_SITE = "candidate_site"
+    # Fictional binding exclusion.
     DEMO_RESTRICTION = "demo_restriction"
+    # Fictional non-binding concern.
     DEMO_PRECAUTION = "demo_precaution"
     PUBLICATION_SAMPLE = "publication_sample"
     SATURN_SAMPLE = "saturn_sample"
 
 @dataclass(frozen=True)
 class SourceDescriptor:
+    # Registry key for this source instance, not its category.
     id: str
     kind: SourceKind
     countries: frozenset[CountryCode]
@@ -260,6 +271,7 @@ class FloweringPayload:
     window: TimeWindow
     level: ForageLevel
 
+# Contains fictional screening geometry, not a legal boundary.
 @dataclass(frozen=True)
 class EcologyPayload:
     rule_id: str
@@ -291,6 +303,7 @@ class EvidenceRecord:
     mode: SourceMode
     collected_at: datetime
     reference_id: str
+    # Territory scope when known; not proof of local applicability.
     territory_id: str | None
     description: str
     payload: EvidencePayload
@@ -299,6 +312,7 @@ class EvidenceRecord:
 class SourceQuery:
     country: CountryCode
     territory_id: str
+    # Deterministic fixture scenario, not a live provider query.
     scenario_id: str
 
 @dataclass(frozen=True)
@@ -375,23 +389,25 @@ class AnalyzerRegistry(Protocol):
 
 ```python
 from dataclasses import dataclass
-from enum import StrEnum
 from typing import Protocol, TypeAlias
-from melliatlas.sources.api import SourceResult
-from melliatlas.analyzers.api import AnalyzerOutput
-from melliatlas.sources.api import SourceQuery
+from melliatlas.sources.api import SourceResult, SourceQuery
+from melliatlas.analyzers.api import AnalyzerKind, AnalyzerOutput
 from melliatlas.planning.api import TimeWindow
 
-class OperationKind(StrEnum):
-    SOURCE = "source"
-    ANALYZER = "analyzer"
+@dataclass(frozen=True)
+class SourceStep:
+    id: str
+    # Exact SourceRegistry key, not SourceKind.
+    source_id: str
+    depends_on: tuple[str, ...]
 
 @dataclass(frozen=True)
-class StepSpec:
+class AnalyzerStep:
     id: str
-    operation_kind: OperationKind
-    capability_id: str
+    analyzer_kind: AnalyzerKind
     depends_on: tuple[str, ...]
+
+StepSpec: TypeAlias = SourceStep | AnalyzerStep
 
 @dataclass(frozen=True)
 class ExecutionGraph:
@@ -426,7 +442,7 @@ class DagExecutor(Protocol):
     ) -> ExecutionResult: ...
 ```
 
-**Proposed `engine/contract.md` v1:** owns graph validation, unique node IDs, known dependencies, deterministic topological ordering, allowed capability identifiers and maximum step/deadline enforcement. The implementation may use a small **internal typed binding from dependency artifacts to operation input**; it must be declared and tested rather than relying on untyped positional casts. No arbitrary submitted DSL, eval, LLM code or transport-level types. Failures preserve source causes in server diagnostics while sanitizing HTTP responses. Cancellation releases owned resources.
+**Proposed `engine/contract.md` v1:** owns graph validation, unique step IDs, known dependencies, deterministic topological ordering, registered source IDs/analyzer kinds and maximum step/deadline enforcement. `SourceStep` invokes a `Source` identified by `source_id`; `AnalyzerStep` invokes an `Analyzer` selected by `AnalyzerKind`. These are **execution step variants**, not kinds of source or analyzer components. The `StepSpec` union allows dispatch by concrete variant without interpreting a generic `capability_id`. Validate source/analyzer registration, prerequisite artifact types and analyzer input compatibility before invocation. The implementation may use a small **internal typed binding from dependency artifacts to analyzer input**; it must be declared and tested rather than relying on untyped positional casts. No arbitrary submitted DSL, eval, LLM code or transport-level types. Failures preserve source causes in server diagnostics while sanitizing HTTP responses. Cancellation releases owned resources.
 
 ### 2.6. `agent/api.py`
 
@@ -507,6 +523,7 @@ class InvestigationSnapshot:
     status: InvestigationStatus
     request: InvestigationRequest
     created_at: datetime
+    # Populated only after a terminal lifecycle transition.
     finished_at: datetime | None
     outcome: AgentOutcome | None
     error_code: InvestigationErrorCode | None
@@ -529,6 +546,7 @@ from typing import Protocol
 from melliatlas.jobs.api import InvestigationStore
 from melliatlas.territories.api import TerritoryCatalog, TerritoryImport
 
+# Defines transactional resource ownership for persistence.
 class StorageUnitOfWork(Protocol):
     async def __aenter__(self) -> "StorageUnitOfWork": ...
     async def __aexit__(self, exc_type: type[BaseException] | None,
@@ -576,6 +594,7 @@ class CreateInvestigationDto(BaseModel):
     territory_id: str = Field(min_length=1)
     start_date: date
     end_date: date
+    # Identifier of the selected synthetic demo scenario.
     scenario_id: str
 
 @dataclass(frozen=True)
@@ -659,7 +678,7 @@ For each step: add public declarations and contract draft → write the stated e
 3. **Planning models** — define immutable site, season, forage and assessment contracts; first test invalid dates, duplicate site IDs, overlapping windows and exclusion precedence; implement deterministic validators. *Acceptance:* `A07`, `A08`.
 4. **Sources** — register RU/BY geography, RU/BY public web fixture and RU Saturn fixture; first test source-country compatibility, unsupported modes and zero outbound provider calls; implement descriptors/fixtures. *Acceptance:* `A04`.
 5. **Analyzers** — first test independently expected forage overlaps, explicit fictional restriction, precaution-only warning, unknown evidence and stable ordering; implement pure functions and typed dispatch. *Acceptance:* `A07`, `A08`.
-6. **Engine DAG** — first test dependency ordering, cycles, missing steps, incompatible input variants, reused artifacts, timeout and failed node; implement topological executor with explicit artifact binding. *Acceptance:* `A05`, `A10`.
+6. **Engine DAG** — first test `SourceStep(source_id=...)` fetching from the source registry and `AnalyzerStep(analyzer_kind=...)` consuming typed upstream artifacts; cover dependency ordering, cycles, missing steps/capabilities, incompatible input variants, reused artifacts, timeout and failed nodes. Implement topological execution and explicit artifact binding without a generic operation-kind discriminator. *Acceptance:* `A05`, `A10`.
 7. **Deterministic Agent** — first test initially attractive but excluded candidate, evidence-triggered replan, no available alternative, missing ecology result, max-step limit and consistent trace; implement bounded observe/replan policy. *Acceptance:* `A06`, `A07`.
 8. **PostGIS migration and storage** — first test transactional completed snapshot, saved geometry with valid SRID, reload via a new connection, rolled-back failed save and stable imported boundaries; implement migrations and adapters. *Acceptance:* `A02`, `A03`, `A09`.
 9. **Investigation service** — first test valid submission, status progression, error mapping, duplicate requests, completion only after committed storage, and interruption semantics. Implement minimal bounded in-process runner without pretending to have durable worker recovery. *Acceptance:* `A08`–`A10`.
@@ -791,9 +810,9 @@ All IDs below are **planned**, not executed. `U` = unit; `C` = public contract; 
 | `BE-T027` | U/N | Season analyzer | Fewer than two usable stops returns insufficient outcome | R09/R10 |
 | `BE-T028` | C | AnalyzerRegistry | Correct kind dispatches to declared input/output types | R07 |
 | `BE-T029` | C/N | AnalyzerRegistry | Wrong input kind fails contract before execution | R07/R15 |
-| `BE-T030` | C | DagExecutor | Dependencies execute once in topological order | R07 |
+| `BE-T030` | C | DagExecutor | `SourceStep` invokes a registered source by ID, then `AnalyzerStep` invokes the declared analyzer kind once, in dependency order | R07 |
 | `BE-T031` | C/N | DagExecutor | Cycle, duplicate ID, unknown dependency rejected | R07 |
-| `BE-T032` | C/N | DagExecutor | Unknown capability ID and missing artifact fail clearly | R07/R15 |
+| `BE-T032` | C/N | DagExecutor | Unknown `source_id`, unavailable `analyzer_kind`, or missing dependency artifact fails explicitly | R07/R15 |
 | `BE-T033` | C/B | DagExecutor | Step/time limits terminate with typed diagnostic | R12/R15 |
 | `BE-T034` | C/N | DagExecutor | Failing source/analyzer does not become successful artifact | R07/R15 |
 | `BE-T035` | U | DeterministicPlanner | Exclusion evidence causes replan and alternative selection | R08/R09 |
