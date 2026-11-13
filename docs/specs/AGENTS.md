@@ -19,6 +19,8 @@ Extends `../../AGENTS.md`. Keep normative requirements separate from advisory im
 - **ALWAYS** name each active sub-spec's implementation plan `<spec_stem>_implementation_plan.md`, using the exact sub-spec filename stem; keep it beside the sub-spec and archive both together.
 - **MAY** record material specification or plan changes in `<spec_stem>_implementation_plan_history.md`; the current sub-spec and plan remain authoritative.
 - **ALWAYS** link each active sub-spec to its own advisory plan and keep both aligned when requirements change.
+- **TRY TO** reuse proven existing solutions instead of inventing new ones.
+- **ALWAYS** research relevant open-source solutions for nontrivial features before designing a custom implementation; consider implementations in other languages and record useful findings and tradeoffs in the active plan.
 - **ALWAYS** list proposed additions, edits, and removals by file; distinguish verified paths from proposed ones. Describe ownership, public contracts, dependencies, ordered steps, migrations, and recovery where relevant.
 - **ALWAYS** plan TDD: write executable tests that initially fail because the specified behavior is missing, implement the behavior, then refactor with those tests passing. **NEVER** use dummy failing assertions, skipped tests, or tests that merely mirror the implementation.
 - **ALWAYS** enumerate functional tests with requirement IDs, inputs/fixtures, expected observable outcomes, failure and boundary cases, and how each test is run and verified.

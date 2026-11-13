@@ -8,6 +8,7 @@
 ## Before Editing
 - **ALWAYS** read the approved specification, linked plan, and contracts, source files, and tests of modules affected by the current stage or feature group.
 - **ALWAYS** load only modules that must change for the current specification stage or feature group. For dependent modules, read only their `contract.md` and public API.
+- **TRY TO** reuse existing functionality before implementing new code; inspect relevant module contracts and public APIs, not the entire codebase.
 - **ALWAYS** follow the nearest `AGENTS.md`; nested rules may strengthen, never weaken root rules.
 - **ALWAYS** distinguish implemented behavior from approved requirements and unapproved drafts.
 - **NEVER** modify any `AGENTS.md` unless the user explicitly requests it.
@@ -16,6 +17,7 @@
 ## Architecture
 - **ALWAYS** organize code into cohesive, independently understandable modules by feature or capability, not global technical layers.
 - **ALWAYS** define explicit module ownership and narrow public APIs that hide implementation details. Document each module's purpose and public contract in its `contract.md`.
+- **ALWAYS** collect genuinely general-purpose reusable functions in a dedicated `common` module; keep domain-specific helpers with their owning modules.
 - **NEVER** import another module's internals.
 - **NEVER** introduce circular dependencies or hidden coupling.
 - **NEVER** couple domain logic to frameworks, databases, or transport.
@@ -27,7 +29,10 @@
 - **TRY NOT TO** exceed 1000 physical lines per handwritten source file. Exceed this guideline only when necessary and consistent with the overall architecture; justify exceptions.
 - **ALWAYS** enforce strict typing. Never use `any`/`Any` to evade type safety.
 - **NEVER** suppress lint/type errors instead of fixing their causes.
-- **NEVER** duplicate business rules or introduce dead code.
+- **TRY TO AVOID** magic numbers and magic strings. Extract constants only when they improve readability or reliability.
+- **ALWAYS** use enums for coherent finite sets of related values, such as statuses and error codes.
+- **NEVER** introduce dead code.
+- **REMEMBER** occasional duplication is acceptable; address it through focused periodic refactoring instead of loading unrelated modules to keep the entire codebase synchronized.
 - **NEVER** swallow exceptions or hide failures.
 - **NEVER** introduce implicit I/O, hidden side effects, or hardcoded configuration.
 - Prefer readable control flow, explicit state, and clear naming.
