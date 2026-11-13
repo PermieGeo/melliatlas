@@ -19,6 +19,8 @@ Extends `../../AGENTS.md`. Keep normative requirements separate from advisory im
 - **ALWAYS** name each active sub-spec's implementation plan `<spec_stem>_implementation_plan.md`, using the exact sub-spec filename stem; keep it beside the sub-spec and archive both together.
 - **MAY** record material specification or plan changes in `<spec_stem>_implementation_plan_history.md`; the current sub-spec and plan remain authoritative.
 - **ALWAYS** link each active sub-spec to its own advisory plan and keep both aligned when requirements change.
+- **ALWAYS** split a feature affecting both frontend and backend into separate backend and frontend active sub-specs, each with its own implementation plan. Implement and verify the backend contract before the dependent frontend implementation.
+- **ALWAYS** specify real, typed public API class/function/data-structure declarations for any newly proposed module in its plan; include initially failing, executable API-contract test skeletons and a first `contract.md` draft. Do not substitute vague pseudocode for those public declarations.
 - **TRY TO** reuse proven existing solutions instead of inventing new ones.
 - **ALWAYS** research relevant open-source solutions for nontrivial features before designing a custom implementation; consider implementations in other languages and record useful findings and tradeoffs in the active plan.
 - **ALWAYS** list proposed additions, edits, and removals by file; distinguish verified paths from proposed ones. Describe ownership, public contracts, dependencies, ordered steps, migrations, and recovery where relevant.

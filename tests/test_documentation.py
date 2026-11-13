@@ -15,7 +15,7 @@ GUIDANCE_DIRECTORIES = (Path('.'), Path('backend'), Path('web'), Path('docs/spec
 REQUIRED_DOCUMENTS = (
     Path('README.md'),
     Path('docs/specs/README.md'),
-    Path('docs/specs/umbrella.md'),
+    Path('docs/specs/umbrella_spec_melliatlas.md'),
 )
 MARKDOWN_LINK = re.compile(r'\[[^\]]+\]\(([^)]+)\)')
 MERMAID_BLOCK = re.compile(r'^```mermaid\s*\n(.*?)^```\s*$', re.MULTILINE | re.DOTALL)
@@ -174,7 +174,7 @@ class DocumentationTests(unittest.TestCase):
             visit(node)
 
     def test_umbrella_roadmap_and_requirements_are_complete(self) -> None:
-        umbrella = (ROOT / 'docs/specs/umbrella.md').read_text(encoding='utf-8')
+        umbrella = (ROOT / 'docs/specs/umbrella_spec_melliatlas.md').read_text(encoding='utf-8')
         self.assertEqual([], stage_structure_errors(umbrella))
         self.assertIn('**Status:**', umbrella)
         self.assertIn('MVP-01', umbrella)
@@ -182,7 +182,7 @@ class DocumentationTests(unittest.TestCase):
 
     def test_specification_index_links_to_umbrella(self) -> None:
         index = (ROOT / 'docs/specs/README.md').read_text(encoding='utf-8')
-        self.assertRegex(index, r'\[[^\]]+\]\(umbrella\.md\)')
+        self.assertRegex(index, r'\[[^\]]+\]\(umbrella_spec_melliatlas\.md\)')
         self.assertIn('active/', index)
         self.assertIn('archive/', index)
         self.assertIn('STATE.json', index)
@@ -195,6 +195,36 @@ class DocumentationTests(unittest.TestCase):
                 self.assertEqual('object', schema['type'])
                 self.assertIn('$schema', schema)
 
+    def test_initial_territory_and_source_scope_is_explicit(self) -> None:
+        umbrella = (ROOT / 'docs/specs/umbrella_spec_melliatlas.md').read_text(encoding='utf-8')
+        stage1 = umbrella.split('### MVP-01 —', maxsplit=1)[1].split('### MVP-02 —', maxsplit=1)[0]
+        stage2 = umbrella.split('### MVP-02 —', maxsplit=1)[1].split('### MVP-03 —', maxsplit=1)[0]
+        for value in ('Smolensk Oblast', 'Vitebsk Oblast', 'Russia (RU)', 'Belarus (BY)',
+                      'Saturn (RU only)', 'public websites/news', 'MVP-01.A06', 'MVP-01.A08'):
+            with self.subTest(value=value):
+                self.assertIn(value.casefold(), stage1.casefold())
+        for value in ('FGIS Saturn', 'Russia', 'Belarus', 'MVP-02.A02',
+                      'MVP-02.R03', 'live smoke', 'source-access review'):
+            with self.subTest(value=value):
+                self.assertIn(value.casefold(), stage2.casefold())
+        self.assertIn('MVP-01', umbrella)
+        self.assertIn('MVP-02', umbrella)
+
+    def test_feature_catalog_has_unique_stable_ids(self) -> None:
+        features = (ROOT / 'docs/FEATURES.md').read_text(encoding='utf-8')
+        ids = re.findall(r'^\|\s*`([A-Z][A-Z0-9]*(?:\.[A-Z][A-Z0-9_]*)+)`\s*\|\s*([^|]+)\|$',
+                         features, re.MULTILINE)
+        feature_ids = [feature_id for feature_id, description in ids if len(description.strip()) >= 12]
+        self.assertGreaterEqual(len(feature_ids), 20)
+        self.assertEqual(len(feature_ids), len(set(feature_ids)))
+        for feature_id in ('GEOGRAPHY.RU_REGIONS', 'GEOGRAPHY.BY_REGIONS',
+                           'GEOGRAPHY.PILOT_DISTRICTS', 'SOURCES.PUBLIC_WEB_RU',
+                           'SOURCES.PUBLIC_WEB_BY', 'SOURCES.SATURN_RU'):
+            with self.subTest(feature_id=feature_id):
+                self.assertIn(feature_id, feature_ids)
+        registry = (ROOT / 'docs/specs/feature-cross-ref.yaml').read_text(encoding='utf-8')
+        self.assertEqual('schema_version: 1\nfeatures: []\n', registry)
+
     def test_link_validator_detects_broken_targets(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -203,7 +233,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertEqual(1, len(missing_relative_links(document.read_text(), document, root)))
 
     def test_roadmap_validator_detects_missing_acceptance_evidence(self) -> None:
-        umbrella = (ROOT / 'docs/specs/umbrella.md').read_text(encoding='utf-8')
+        umbrella = (ROOT / 'docs/specs/umbrella_spec_melliatlas.md').read_text(encoding='utf-8')
         damaged = umbrella.replace('**Acceptance evidence**', '**Unspecified checks**', 1)
         self.assertTrue(any('missing acceptance evidence' in issue for issue in stage_structure_errors(damaged)))
 

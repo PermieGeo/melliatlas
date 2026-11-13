@@ -1,6 +1,6 @@
 # MelliAtlas — Umbrella Product Specification
 
-**Version:** 0.4 (initial repository draft)  
+**Version:** 0.5 (geographic coverage and early live sources draft)  
 **Status:** Draft — requires explicit developer approval  
 **Product:** Sustainable migratory beekeeping, pollinator conservation, and ecological research  
 **Delivery approach:** A functioning vertical-slice MVP in stage `MVP-01`; every later stage incrementally improves the working application.
@@ -39,7 +39,7 @@ The result is a **proposed decision-support plan**, not an instruction that a si
 - Distinguish observed evidence, model estimates, assumptions, unknowns, and synthetic demonstration data.
 - Support investigation and revision when information conflicts or proves insufficient.
 - Keep geospatial analyses reproducible to the extent supported by captured inputs, algorithms, and external data versions.
-- Extend from one local demonstration to supported territories in Russia and Belarus without embedding particular districts or provider IDs in business logic.
+- Cover both Russia and Belarus from `MVP-01` with browsable cartographic layers and complete first-level administrative directories; include full district directories for Smolensk Oblast and Vitebsk Oblast without embedding provider IDs in domain logic.
 - Support long-term scientific workflows only when their distinct requirements are designed and tested.
 
 ### 1.5. Out of scope as a product promise
@@ -62,7 +62,7 @@ MelliAtlas must not claim to issue permits, establish binding environmental poli
 
 **Input:** a geographic study area, a season or planning interval, an apiary starting position, and any supported operating constraints.
 
-**Expected outcome:** an ordered set of candidate stops with proposed time windows, map locations, evidence about forage opportunity, meaningful constraints, an explanation of selection, and alternatives. A plan may be incomplete when evidence is insufficient. The first stage uses synthetic inputs and a deliberately narrow rule set. Smolensk Oblast is the intended initial real-world pilot area, subject to verified data availability; no specific district or provider identifier is hardcoded into product logic.
+**Expected outcome:** an ordered set of candidate stops with proposed time windows, map locations, evidence about forage opportunity, meaningful constraints, an explanation of selection, and alternatives. A plan may be incomplete when evidence is insufficient. The first stage includes administrative geography for both Russia and Belarus, with detailed district coverage for Smolensk Oblast and Vitebsk Oblast; its apiary recommendations use synthetic evidence and a deliberately narrow rule set. Country and district selection must not depend on a particular provider code.
 
 **Failure behavior:** missing territory, invalid dates/geometry, infeasible constraints, or insufficient usable sites result in explicit diagnostic output, never a fabricated plan.
 
@@ -150,8 +150,8 @@ The requirement IDs below are umbrella-wide anchors. Sub-specs must refine and t
 ### 4.3. Spatial integrity and rights
 
 - **SYS-11 — Geometry.** Treat coordinates, coordinate reference systems, spatial precision, invalid geometries, and boundaries explicitly. Do not use unqualified geographic-coordinate distances as meters.
-- **SYS-12 — Territories.** The territory model must remain independent of one country's provider-specific identifiers. Initially a synthetic demonstration area is allowed; Russia and Belarus are target configurations for later coverage.
-- **SYS-13 — Data acquisition.** Integrate real providers only after confirming availability, permitted use, attribution, rate limits, data coverage, and failure handling.
+- **SYS-12 — Territories.** From `MVP-01`, support Russia (RU) and Belarus (BY), complete country-level first-order region directories and geographic coverage, and complete district catalogs for Smolensk Oblast and Vitebsk Oblast. Model territory identities independently of providers and record administrative data provenance, version, coverage, and validity date. Synthetic study evidence must be identified separately from real boundary/catalog data.
+- **SYS-13 — Data acquisition.** Register cartography, public websites/news, and Russia-only Saturn as distinct source categories from `MVP-01`, using controlled fixtures for non-geographic feeds initially. Implement approved live website/news access for RU/BY and Russia-only Saturn access in `MVP-02`, after confirming availability, permitted use, attribution, rate limits, coverage, and failure handling. Never imply a source category is a working live connector.
 - **SYS-14 — Sensitive locations.** Prevent unauthorized disclosure of private apiary coordinates and sensitive species/habitat records, including through exports, logs, map layers, and cross-user responses.
 - **SYS-15 — Permission versus recommendation.** A recommended stop is not proof of landowner consent, access, legal compliance, or absence of ecological impacts.
 
@@ -212,7 +212,7 @@ The stage descriptions below are deliberate **umbrella-level detail**. Only the 
 - Future sub-specs may refine these into more granular testable requirements without changing their parent references.
 - Stable product capability `feature_id` values belong **only** in `docs/FEATURES.md`, with stage/spec/owner/test associations in `docs/specs/feature-cross-ref.yaml`. Do not use stage or requirement IDs as substitutes for stable feature IDs.
 
-No permanent feature IDs or implementation owner paths are invented in this umbrella draft. Populate cross-references when the corresponding feature and verified code ownership are established.
+The stable *planned capability IDs* are predeclared in `docs/FEATURES.md`. `docs/specs/feature-cross-ref.yaml` remains empty until an active sub-spec and verified implementation ownership exist; never fabricate code or sub-spec paths.
 
 ### 6.4. Test-first and architecture verification
 
@@ -232,12 +232,12 @@ Every completed stage should provide:
 
 | Stage | Product increment | Mandatory predecessor |
 | --- | --- | --- |
-| `MVP-01` | Full synthetic beekeeper planning slice with ecology-aware alternative and React map | Repository scaffold |
-| `MVP-02` | Better forage, flowering intervals, and honey-flow continuity | `MVP-01` |
+| `MVP-01` | Runnable ecology-aware planning slice, RU/BY maps and first-level regions, Smolensk/Vitebsk districts, fixture-backed source categories | Repository scaffold |
+| `MVP-02` | Live RU/BY public-web sources and RU Saturn integration; initial forage/flowering continuity | `MVP-01` |
 | `MVP-03` | Evidence-aware adaptive agent and decision-trace comparison | `MVP-02` |
 | `MVP-04` | Robust jobs, server caching, recovery, and run history | `MVP-03` |
-| `MVP-05` | Country-aware geography and multiple territories (RU/BY) | `MVP-04` |
-| `MVP-06` | First verified real geospatial/forage source | `MVP-05` |
+| `MVP-05` | Multi-district comparisons, extended subregional coverage, and cross-boundary analysis | `MVP-04` |
+| `MVP-06` | Expand permitted geospatial/forage sources beyond public websites and Saturn | `MVP-05` |
 | `MVP-07` | Weather-informed phenology and season adjustments | `MVP-06` |
 | `MVP-08` | Stronger habitat/protected-area evidence and ecological compatibility | `MVP-07` |
 | `MVP-09` | Bee-family conditions, agricultural hazards, site feasibility | `MVP-08` |
@@ -256,12 +256,12 @@ The table defines a **default logical order**, not an immutable dependency graph
 
 **Objective.** Deliver a locally runnable, complete MelliAtlas application with a genuinely usable *demonstration* of apiary relocation planning and ecology-aware site selection. This is a product MVP, not a foundation-only sprint.
 
-**User outcome.** In the browser, a beekeeper selects a demonstration area and season, runs an investigation, sees a proposed sequence of apiary stops on a map and timeline, understands why a promising site was excluded, and can reopen the completed result.
+**User outcome.** In the browser, a beekeeper switches between Russia and Belarus, browses complete regional directories and the districts of Smolensk Oblast or Vitebsk Oblast, selects a demonstration area and season, runs an investigation, sees proposed apiary stops on a map/timeline, understands an ecological exclusion, and reopens the result.
 
 **Required behavior**
 
 - `MVP-01.R01` — Start a Python/FastAPI backend and one mobile-friendly React/TypeScript/Leaflet frontend. The main workflow is accessible through that browser client; do not create a separate admin app.
-- `MVP-01.R02` — Supply one clearly **synthetic** study area, one example apiary starting point, at least three candidate sites, and illustrative flowering/forage intervals that can support at least two planned stops and a relocation.
+- `MVP-01.R02` — Supply an explicitly **synthetic** apiary-planning scenario within the supported RU/BY geography, with one example starting point, at least three candidate sites, and illustrative flowering/forage intervals supporting at least two planned stops and a relocation. Do not label synthetic forage or hazards as real observations.
 - `MVP-01.R03` — Implement minimal typed Source and Analyzer contracts, a small registry, and execution of several dependent operations. Source, analyzer, and agent behavior must be independently testable; full generic orchestration is not required.
 - `MVP-01.R04` — Implement a bounded deterministic agent that proposes a candidate, observes the result of an additional registered ecological check, and revises the plan when the result conflicts with a defined demonstration constraint. This must result from the check's output, not a one-off hardcoded branch on a demo location ID.
 - `MVP-01.R05` — Model at least one synthetic **binding-for-the-demo** exclusion zone and one synthetic *precautionary* ecological area. The former excludes a candidate under an explicit synthetic rule; the latter generates an explanation/uncertainty rather than an invented legal ban. The UI must identify both as fictional.
@@ -269,8 +269,13 @@ The table defines a **default logical order**, not an immutable dependency graph
 - `MVP-01.R07` — Persist the completed investigation, chosen alternatives, and relevant geometries in PostgreSQL/PostGIS. Allow the browser to reopen a previously completed result after a page reload.
 - `MVP-01.R08` — Display a map with candidate/selected/rejected sites, a simple schedule, progress or completion state, and an evidence/limitations panel. Clearly mark all data and conclusions as demonstrative.
 - `MVP-01.R09` — Provide diagnostic errors for invalid inputs, missing data, impossible plans, invalid geometries, failed operations, and exceeded agent limits. A missing viable candidate must not be converted into a recommendation.
+- `MVP-01.R10` — Load and expose a complete, dated first-order administrative region catalog for **Russia (RU)** and **Belarus (BY)**. Include all Russian oblasts and other first-order federal subjects represented in the selected verified reference, all Belarusian oblasts, and the separately administered city of Minsk. Do not hardcode purported territory counts or equate a provider's region codes with canonical IDs.
+- `MVP-01.R11` — Load and expose complete district catalogs for **Smolensk Oblast (RU)** and **Vitebsk Oblast (BY)**, based on their selected dated administrative reference. Other regions need region-level navigation only in this stage. Distinguish administrative districts from municipal entities, cities, and provider-specific districts rather than silently merging them.
+- `MVP-01.R12` — Provide navigable cartographic coverage for both countries, including versioned boundary geometry for the supported first-order regions and the two pilot oblasts' districts, subject to verified data rights. Associate each administrative feature with source, retrieval/reference date, coordinate system, and completeness. Reject or flag missing/invalid geometry instead of drawing fabricated boundaries.
+- `MVP-01.R13` — Register three source-category interfaces: **cartographic/geographic data (RU and BY)**, **public websites/news and Internet publications (RU and BY)**, and **FGIS Saturn (RU only)**. The first stage demonstrates publication and Saturn operations with explicitly labeled **synthetic/recorded test fixtures**, not unrestricted live crawling or a claimed operational Saturn feed. Show each category's country applicability, mode (fixture/live/unavailable), and provenance in the UI/API. The real connectors belong to `MVP-02`.
+- `MVP-01.R14` — Allow country → region selection for both RU and BY, and region → district selection for Smolensk and Vitebsk, in the existing React map and study-area workflow. All other regions must remain selectable at region level without inventing district-level availability.
 
-**Explicit scope limits.** One synthetic area and one local demonstration scenario; no real weather or land-use integration, real treatment notice, validated ecological impact model, login, multi-tenant access, public apiary sharing, road routing, or production-quality job recovery. An in-process executor is acceptable. Persist **completed results**; a process interrupted mid-run may require a new run until `MVP-04`. The first stage need not install a separate worker or use an LLM.
+**Explicit scope limits.** One synthetic planning scenario, available within real RU/BY administrative navigation; no live website/Saturn ingestion, real weather or land-use evidence, verified real treatment notice, validated ecological impact model, login, multi-tenant access, public apiary sharing, road routing, or production-quality job recovery. An in-process executor is acceptable. Persist **completed results**; a process interrupted mid-run may require a new run until `MVP-04`. The first stage need not install a separate worker or use an LLM.
 
 **Acceptance evidence**
 
@@ -278,32 +283,42 @@ The table defines a **default logical order**, not an immutable dependency graph
 - `MVP-01.A02` — Agent scenario: an initially attractive site is rejected only after the synthetic restriction tool returns applicable evidence; the final plan selects an available alternative and records why the plan changed.
 - `MVP-01.A03` — The precautionary zone produces a qualified warning rather than a fabricated prohibition; an explicit forbidden site is never selected as valid.
 - `MVP-01.A04` — Independent unit/contract/integration tests verify typed component calls, dependency order, persistence, invalid inputs, empty outcomes, and finite agent execution.
-- `MVP-01.A05` — No page or API output implies that synthetic locations, legal restrictions, flowering intervals, ecological risks, or yields are real.
+- `MVP-01.A05` — No page or API output implies that synthetic apiary locations, legal restrictions, flowering intervals, ecological risks, or yields are real; verified geographic reference data is explicitly distinguishable.
+- `MVP-01.A06` — Catalog verification against the dated selected territorial reference confirms no missing first-order Russian or Belarusian entries, no missing districts of Smolensk or Vitebsk, stable country/region/district relationships, and reproducible seed/import results. Checks do not assume an invented fixed count.
+- `MVP-01.A07` — Browser E2E switches RU/BY, selects Smolensk → district and Vitebsk → district, navigates another first-order region without an unsupported district catalog, and renders only validated supported geometries.
+- `MVP-01.A08` — Contract tests demonstrate country/source compatibility: geographic and public-web categories are defined for RU/BY, Saturn only for RU; all website/Saturn responses remain clearly marked fixture-only with no outbound provider call.
+- `MVP-01.A09` — Geometry/catalog import tests verify provenance, coordinate validity, repeatability, coverage diagnostics, missing geometries, naming ambiguity, and correct rejection of provider-specific identifiers as canonical territory IDs.
 
-**Completion gate.** A reviewer can run the application locally, complete the entire scenario through React, inspect the persisted result and agent's reasoning, and obtain passing focused automated checks. No subsequent stage is a prerequisite to declare this **synthetic** MVP complete.
+**Completion gate.** A reviewer can run the application locally, navigate RU/BY regional maps and both complete pilot district catalogs, complete a synthetic planning scenario through React, inspect persisted results and agent decisions, and obtain passing catalog-coverage, contract, integration, and browser checks. No live website or Saturn connector is a prerequisite for this **synthetic-analysis** MVP.
 
-### MVP-02 — Forage and flowering continuity
+### MVP-02 — Live RU/BY public web and RU Saturn sources; forage continuity
 
-**Objective.** Improve the agronomic usefulness of the existing seasonal plan without claiming validated nectar production or honey yield.
+**Objective.** Implement the first permitted, provenance-preserving public-website/news sources in **both Russia and Belarus** and the first controlled **FGIS Saturn source for Russia**, while improving the existing flowering/forage comparison. A source integration is not a scientific risk assessment or proof of geographic coverage.
 
 **Required behavior**
 
-- `MVP-02.R01` — Represent relevant forage categories and flowering evidence using time ranges, spatial extent, source, and evidence type. Distinguish nectar/pollen opportunity from measured harvest.
-- `MVP-02.R02` — Support beginning, expected peak, and ending of flowering where known; missing dates remain missing rather than being replaced with arbitrary defaults.
-- `MVP-02.R03` — Compare periods across candidate sites, identify overlap and potential gaps, and explain how they affect a proposed relocation sequence.
-- `MVP-02.R04` — Compute a transparent, relative demonstration assessment of forage opportunity; make weights/rules inspectable and avoid scientifically unvalidated yields.
-- `MVP-02.R05` — Allow a user to compare at least two seasonal alternatives in the existing map/timeline interface, including differences in gap coverage.
-- `MVP-02.R06` — Preserve ecological screening from `MVP-01` when forage inputs or the relative ordering of candidate sites changes.
+- `MVP-02.R01` — Implement a configured, approved public-web/news ingestion capability usable in **RU and BY**, with at least one independently reviewed publication source for each country. Accept documented HTML or structured feeds initially; support attachments only where parsing and rights are explicitly verified. Store the original citation, publisher, publication/retrieval times, text-to-location precision, and source revision when permitted.
+- `MVP-02.R02` — Discover candidate pages only within explicit approved domains and allowed paths. Apply bounded requests, redirect/DNS/IP protections, content-type/size limits, source-wide pacing, timeout and retry policies, and respect documented terms/robots/access decisions. Arbitrary user text or LLM output must not trigger unrestricted fetching.
+- `MVP-02.R03` — Implement a Russia-only Saturn provider through the established Source contract, using historical Saturn provider contracts and source-evidence notes as reference material, never as deployed code or proof of current access. Research and verify actual endpoints, request schemas, authorization, permitted use, throttling, regional and district identifiers, pagination, and geographic/temporal coverage before enabling a live request.
+- `MVP-02.R04` — Keep Saturn map-index records, administrative directory *centers*, field geometries, detailed agricultural-treatment notices, and publisher claims as **distinct evidence types**. The historical `/query`, `/district/{regionCode}`, `/geojson-polygons`, `/acr/{fieldId}`, and `/planapplybees` shapes are investigation leads, not authoritative associations or stable public API contracts. Do not derive field polygons, treatment events, district coverage, or hazard verdicts from an unverified index row or directory center.
+- `MVP-02.R05` — Use source-specific, configured region/district mapping to join retrieved evidence to canonical RU territories; Saturn is not supported for Belarus. Record unmapped, ambiguous or uncorroborated locations as such instead of guessing a polygon or inventing a neighboring territory.
+- `MVP-02.R06` — Represent extracted announcements, proposed/actual agricultural work (when actually distinguishable), observations, and derived classifications separately. A web article or Saturn record is not automatically a verified event, ecological-impact estimate, or legal finding. Unknown/expired and contradictory reports must remain explicit.
+- `MVP-02.R07` — Introduce forage categories and flowering evidence with spatial scope, provenance and expected beginning/peak/end where known; distinguish reported, observed, modeled and synthetic values. Compare candidate sites over time, identify overlapping periods and potential honey-flow gaps, and explain relative trade-offs without fabricated yields.
+- `MVP-02.R08` — Present live, cached, fixture-only, unavailable, partial, and access-blocked source states clearly in the same React experience. Preserve the existing synthetic demonstration workflow and ecological exclusion behavior when real feeds are unavailable or incomplete; never silently substitute fixture data for a live result.
+- `MVP-02.R09` — Preserve immutable document/page identity and revisions where retention is permitted, deduplicate repeated retrievals, maintain bounded errors/audit metadata, and expose source freshness and known coverage. The absence of a publication or Saturn entry must never be reported as proof that pesticide treatment is absent.
 
-**Non-goals.** Species-complete botanical coverage, predictive climate modeling, universal foraging radii, or an authoritative yield calculator.
+**Non-goals.** Unrestricted Internet crawling, unsupported Saturn bulk collection, live source coverage for every RU/BY district, automated permit/legal decisions, proven treatment-to-polygon associations from unverified API joins, universal flowering or honey-yield predictions, or a guarantee that every named provider grants machine access. Any inaccessible source needs an explicit developer-approved rescope rather than an invented live result.
 
 **Acceptance evidence**
 
-- `MVP-02.A01` — Fixed synthetic flowering intervals produce correct overlapping/adjacent/gap classifications, including year-boundary and missing-date cases.
-- `MVP-02.A02` — Changing flowering evidence can change the plan ranking while a forbidden candidate stays excluded.
-- `MVP-02.A03` — UI comparison states the source and limitations of forage assessments; previous `MVP-01` end-to-end behavior remains functional.
+- `MVP-02.A01` — With recorded fixtures and at least one separately authorized live smoke check per country, RU and BY website adapters correctly preserve publisher, dates, link, territorial precision, revision, and failure state; unapproved hosts, redirects to private addresses, oversized responses and malicious embedded instructions are rejected.
+- `MVP-02.A02` — Russia-only Saturn contract tests cover controlled request construction, pagination, invalid source identifiers, ambiguous directory centers, malformed GeoJSON/JSONP, mismatched index/detail evidence, rate-limit/retry behavior and offline source failure. A permitted live smoke check is recorded **only after** source-access review and cannot be inferred from the old repository snapshot.
+- `MVP-02.A03` — Country routing shows Saturn available as a Russia-only capability and never invokes it for Belarus; public-web sources work for both country configurations. Missing live approval is displayed as blocked/unavailable, not successful ingestion.
+- `MVP-02.A04` — Known flowering fixtures yield correct overlaps, gaps, and missing/season-boundary cases; alternative ranking changes when evidence warrants it, while a restricted site remains excluded.
+- `MVP-02.A05` — Browser tests demonstrate reading source provenance and geographic uncertainty, comparing seasonal alternatives, distinguishing real records from fixtures, and reopening the original `MVP-01` scenario.
+- `MVP-02.A06` — Repeated imports and upstream revisions are attributable and idempotent; a missing notice, incompatible location or unavailable provider never yields a verified 'safe' recommendation.
 
-**Implementation questions for the later sub-spec.** Which forage taxonomies and temporal granularity are necessary; what relative assessment is meaningful without introducing false precision; how does a user inspect competing flowering claims?
+**Implementation questions for the later sub-spec.** Select and review permitted sites for each country; verify Saturn's current contract and permission state independently; decide which record types and formats have corroborated meaning; define reference fixtures, mapping/reconciliation, website extraction approach, and the initial forage taxonomy. The old Saturn code is reusable evidence of an earlier implementation, not an authorized integration or a guarantee of current endpoints.
 
 ### MVP-03 — Evidence-aware adaptive planning
 
@@ -351,52 +366,52 @@ The table defines a **default logical order**, not an immutable dependency graph
 
 **Implementation questions for the later sub-spec.** Transaction boundaries, job claiming, cache lifecycle, idempotency keys, locks/leases, and test-environment restart orchestration.
 
-### MVP-05 — Multiple territories and country configurations
+### MVP-05 — Multi-territory planning and broader district coverage
 
-**Objective.** Extend the usable planning area beyond a single demonstration polygon while preserving provider independence and reliable spatial behavior.
+**Objective.** Extend the RU/BY country maps, complete first-order regions, and Smolensk/Vitebsk district directories established in `MVP-01` to support more complex spatial planning and additional verified district catalogs.
 
 **Required behavior**
 
-- `MVP-05.R01` — Introduce an explicit territory hierarchy suitable for Russia and Belarus, with country-aware differences in administrative structure and versioned identifiers.
-- `MVP-05.R02` — Separate internal territory identity from provider codes and local example-data seeds; no business logic assumes Smolensk Oblast or any one district.
-- `MVP-05.R03` — Support selection, inspection, and comparison across multiple districts or neighboring areas in the web interface.
-- `MVP-05.R04` — Express each source's actual geographic/temporal coverage and handle partial coverage when a plan crosses boundaries.
-- `MVP-05.R05` — Validate coordinate systems, polygon operations, boundary adjacency, and inaccurate or missing geometries.
-- `MVP-05.R06` — Preserve prior demonstration plans and histories through migration of territory representations.
+- `MVP-05.R01` — Support comparison and research queries spanning multiple selected districts, first-order regions, or neighboring territories in either country, without provider-ID dependencies.
+- `MVP-05.R02` — Allow additional district directories and map boundaries to be imported for other RU/BY regions with dated provenance, quality reporting, and versioned canonical IDs; do not silently extend coverage to regions whose district data has not been verified.
+- `MVP-05.R03` — Support cross-boundary selection and side-by-side candidate comparison in the existing web UI, preserving correct containment, adjacency and country context.
+- `MVP-05.R04` — Respect actual source geographic/temporal coverage and explain mixed or partial evidence when a proposed itinerary crosses a source boundary.
+- `MVP-05.R05` — Validate coordinate systems, polygon/multipolygon operations, border adjacency, and missing, imprecise, disputed, or changing administrative geometry.
+- `MVP-05.R06` — Migrate territory reference data or APIs without losing existing RU/BY catalog identities, saved Smolensk/Vitebsk plans, or historical evidence.
 
-**Non-goals.** Exhaustive complete official territory catalogs or real-time availability of country-wide provider data; initial RU/BY configuration does not imply live coverage.
+**Non-goals.** Guaranteed full district catalogs or live source coverage nationwide; the complete first-order RU/BY catalogs and two pilot district catalogs are already required in `MVP-01`, not deferred here.
 
 **Acceptance evidence**
 
-- `MVP-05.A01` — Country-specific fixture territories work without provider-bound identifiers; invalid and ambiguous administrative references are rejected.
+- `MVP-05.A01` — Multi-territory comparisons and newly imported approved district catalogs work without provider-bound identities; missing coverage remains visible.
 - `MVP-05.A02` — Spatial tests cover border-crossing, multipolygons, coordinate transformation, invalid geometry, and partial source coverage.
-- `MVP-05.A03` — A multi-territory user journey works in React; original single-area scenario remains runnable.
+- `MVP-05.A03` — A cross-district journey runs in React while the complete `MVP-01` catalogs and original single-area scenario still pass regression tests.
 
-**Implementation questions for the later sub-spec.** Data authority for borders, handling of changing boundaries and disputed designations, coordinate precision, and local seed/import strategy.
+**Implementation questions for the later sub-spec.** Which additional district catalogs have defensible source/provenance, what cross-border planning is practical, and how to version administrative changes without rewriting historical investigations.
 
-### MVP-06 — First verified real data integration
+### MVP-06 — Broader verified geospatial and forage data integration
 
-**Objective.** Prove that the planning engine can use a permitted, attributable real-world dataset without losing the ability to distinguish evidence from assumptions and synthetic fixtures.
+**Objective.** Expand the first real RU/BY website and RU Saturn integrations from `MVP-02` with separately permitted geospatial, land-cover, forage, or agricultural reference datasets that improve spatial planning quality.
 
 **Required behavior**
 
-- `MVP-06.R01` — Select a real geospatial, land-cover, forage, or agricultural source based on utility to planning, access terms, geographic coverage, update cadence, and technical feasibility. The specific provider is chosen during the sub-spec's research, not invented here.
-- `MVP-06.R02` — Implement a source adapter behind the established Source contract, with configuration-driven location and credentials; never embed a region or provider URL in domain logic.
-- `MVP-06.R03` — Retain source identification, applicable license/attribution, acquisition time, original geometry/attributes where permitted, and normalization details.
-- `MVP-06.R04` — Handle unavailable/partial responses, pagination where relevant, rate limiting, provider schema changes, inconsistent geometries, and retries within agreed limits.
-- `MVP-06.R05` — Separate and visually label real-source records, user-provided records, synthetic fixtures, and derived/model values in result artifacts and the web UI.
-- `MVP-06.R06` — Support a mixed investigation: a permitted real dataset may contribute evidence while other required inputs remain synthetic or explicitly unknown. No synthetic fallback is silently presented as live observation.
-- `MVP-06.R07` — Preserve previous plan versions and guarantee that a provider failure does not transform unverified or stale evidence into a confident recommendation.
+- `MVP-06.R01` — Select at least one additional trustworthy geospatial/land-cover/forage dataset relevant to supported territories, after reviewing permitted use, geographic coverage, update cadence, quality, and technical feasibility.
+- `MVP-06.R02` — Implement the source adapter behind an existing typed Source contract and configuration-driven connection, without hardcoded region/provider URLs in domain decisions.
+- `MVP-06.R03` — Preserve source identity, applicable license/attribution, acquisition time, original geometry/attributes when allowed, and normalization transformations.
+- `MVP-06.R04` — Handle partial responses, pagination where applicable, rate limits, provider schema changes, invalid geometries, and bounded retries independently of existing web/Saturn adapters.
+- `MVP-06.R05` — Expose derived, synthetic, user-provided, and each real-source evidence category distinctly in results and browser views.
+- `MVP-06.R06` — Support mixed evidence investigations, making the source coverage and missing inputs explicit instead of inventing geographic completeness.
+- `MVP-06.R07` — Preserve historical plan results and source versions across provider outages and source revisions, without promoting stale evidence to confirmed safety.
 
-**Non-goals.** Real-time coverage for all territories, guaranteed availability of any named government portal, or automatic bulk harvesting contrary to source terms. Do not assume a source can substantiate flowering or ecological safety merely because it provides crop/land-cover geometry.
+**Non-goals.** Universal real-time country coverage, implicit permission to scrape outside approved paths, or conclusions about flowering/ecological safety based only on land-cover polygons.
 
 **Acceptance evidence**
 
-- `MVP-06.A01` — Recorded/controlled provider fixtures and a permitted smoke test demonstrate parsing, geometry validation, attribution, pagination/partial responses where relevant, and transparent source errors.
-- `MVP-06.A02` — Repeated runs reuse stored source versions according to policy; changes in incoming data are traceable and do not rewrite old conclusions.
-- `MVP-06.A03` — The UI explicitly displays which parts of the analysis use real data, synthetic data, or unknown inputs. Mixed-evidence runs are not described as fully verified.
+- `MVP-06.A01` — Controlled fixtures and permitted smoke evidence verify ingestion, validation, provenance, partial coverage, source failures, and independently testable normalization.
+- `MVP-06.A02` — Repeated runs reuse eligible stored source versions; revisions remain traceable without rewriting previously saved conclusions.
+- `MVP-06.A03` — The UI distinguishes this new real dataset from earlier public-web/Saturn sources and from synthetic data; earlier stage workflows remain functional.
 
-**Implementation questions for the later sub-spec.** Provider choice after current research, licensing, caching rights, legal attribution, format coverage, adapter failure policy, and representative integration tests. Never make a live-source assertion without checking it.
+**Implementation questions for the later sub-spec.** Source and license selection, geographic coverage/quality evaluation, dataset versioning, caching rights, and adapter compatibility with previously implemented web/Saturn ingestion.
 
 ### MVP-07 — Weather-aware phenology and seasonal uncertainty
 
@@ -455,7 +470,7 @@ The table defines a **default logical order**, not an immutable dependency graph
 **Required behavior**
 
 - `MVP-09.R01` — Represent relevant non-sensitive apiary planning parameters (for example colony count or basic constraints) only when supplied and authorized; never infer private colony health from spatial context alone.
-- `MVP-09.R02` — Integrate permitted agricultural treatment notices or other relevant hazard signals after verifying their status, dates, geography, and attribution.
+- `MVP-09.R02` — Extend the permitted agricultural-treatment notices introduced in `MVP-02` (including Russia-only Saturn where authorized) with verified status, dates, geography and attribution, and optionally add further approved hazard sources.
 - `MVP-09.R03` — Distinguish a **planned or announced treatment**, an observed application, a report of adverse effects, and an inferred exposure concern; these are different evidence types.
 - `MVP-09.R04` — Present weather, accessible forage, water or other site feasibility factors only when supported by available data and documented methods.
 - `MVP-09.R05` — Show precautionary reminders and reasons to seek local verification rather than asserting a site is safe because a hazard source reports nothing.
@@ -645,12 +660,12 @@ Maintain stable feature IDs and short descriptions in `docs/FEATURES.md`. Store 
 
 These decisions should not block agreement on the product mission or the umbrella-stage sequence, but they must not be silently filled in by an implementation agent.
 
-1. **First-run workflow:** exact API operations, database schema, demonstration fixtures, browser views, and what counts as an agent's observable replan (`MVP-01`).
+1. **First-run workflow:** exact API operations, database schema, RU/BY administrative-reference versions and completeness checks, Smolensk/Vitebsk district catalogs, demonstration fixtures, browser views, and what counts as an agent's observable replan (`MVP-01`).
 2. **Ecological demo policy:** which fictional rule defines the excluded demo site and how precautionary and missing information differ (`MVP-01`).
-3. **Forage model:** appropriate flora/crop categories, flowering evidence, comparison method, and scientific boundaries (`MVP-02`).
+3. **First live sources and forage model:** permitted website/news publishers in RU and BY, independently verified Russia-only Saturn capabilities and access, initial flora/crop categories and flowering evidence (`MVP-02`).
 4. **Execution model:** minimal agent/Engine interfaces now versus durable-worker design later (`MVP-01`, `MVP-04`).
-5. **Geography:** territory/coordinate dataset choice, permitted use, and versioning for Russia and Belarus (`MVP-05`).
-6. **Real sources:** current legal access, completeness, scientific relevance, and operational cost (`MVP-06` onward).
+5. **Geography:** choose and validate the licensed RU/BY boundary/catalog source for `MVP-01`; choose subsequent additional district coverage and cross-region methods for `MVP-05`.
+6. **Real sources:** authorize and validate RU/BY website/news and RU Saturn integrations in `MVP-02`; expand to new geospatial and forage feeds in `MVP-06`.
 7. **Ecology:** applicable protected-area restrictions, evidence standards, and how to represent possible competition among pollinators without unsupported causal claims (`MVP-08`).
 8. **Private data:** roles, secure storage, generalized views, and export rules before any multi-user/public deployment (`MVP-09`, `MVP-12`, `MVP-13`).
 9. **Optimization:** how to communicate constraint trade-offs without asserting a guaranteed best harvest or a validated single ecological score (`MVP-10`).
@@ -658,9 +673,9 @@ These decisions should not block agreement on the product mission or the umbrell
 
 ## 12. Product acceptance milestones
 
-**First MVP (`MVP-01`)** is complete only when the full browser workflow, synthetic ecological constraint, explainable adaptive alternative, persistence, and automated tests pass. Everything is explicitly labeled as demo data.
+**First MVP (`MVP-01`)** is complete only when the RU/BY region maps/directories and Smolensk/Vitebsk district catalogs, full browser workflow, synthetic ecological constraint, explainable alternative, persistence, and automated tests pass. Geographic reference data carries its own source/date, and synthetic analysis remains clearly labeled.
 
-**Operationally useful planning (`MVP-02`–`MVP-10`)** grows through better forage evidence, dependable jobs, multiple territories, permitted real sources, weather, conservation analysis, bee-related hazards, and constrained route alternatives. Each stage must keep the existing planning workflow intact; no single stage implies scientifically validated real-world recommendations beyond its evidence.
+**Operationally useful planning (`MVP-02`–`MVP-10`)** grows through approved RU/BY public-web sources, Russia-only Saturn, better forage evidence, dependable jobs, multi-territory analysis, additional permitted real sources, weather, conservation analysis, bee-related hazards, and constrained route alternatives. Each stage must keep the existing planning workflow intact; no single stage implies scientifically validated real-world recommendations beyond its evidence.
 
 **Optional agent intelligence (`MVP-11`)** may improve task selection but cannot substitute for validated data or safeguards.
 
