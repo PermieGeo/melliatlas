@@ -223,7 +223,64 @@ class DocumentationTests(unittest.TestCase):
             with self.subTest(feature_id=feature_id):
                 self.assertIn(feature_id, feature_ids)
         registry = (ROOT / 'docs/specs/feature-cross-ref.yaml').read_text(encoding='utf-8')
-        self.assertEqual('schema_version: 1\nfeatures: []\n', registry)
+        self.assertIn('schema_version: 1\nfeatures:', registry)
+        referenced_ids = re.findall(r'^  - feature_id: ([A-Z][A-Z0-9_.]+)$',
+                                    registry, re.MULTILINE)
+        self.assertGreaterEqual(len(referenced_ids), 10)
+        self.assertEqual(len(referenced_ids), len(set(referenced_ids)))
+        self.assertTrue(set(referenced_ids).issubset(set(feature_ids)))
+        referenced_paths = re.findall(r'^    spec_paths: \[([^\]]+)\]$',
+                                      registry, re.MULTILINE)
+        self.assertGreaterEqual(len(referenced_paths), 1)
+        for item in referenced_paths:
+            for path in item.split(', '):
+                self.assertTrue((ROOT / path).is_file(), f'Missing linked spec: {path}')
+
+    def test_active_checkpoint_and_linked_plan_are_consistent(self) -> None:
+        state = json.loads((ROOT / 'docs/specs/STATE.json').read_text(encoding='utf-8'))
+        schema = json.loads((ROOT / 'docs/specs/state.schema.json').read_text(encoding='utf-8'))
+        self.assertEqual(schema['properties']['schemaVersion']['const'], state['schemaVersion'])
+        self.assertEqual(schema['properties']['mode']['const'], state['mode'])
+        selected = [item for item in state['workstreams']
+                    if item['id'] == state['selectedWorkstreamId']]
+        self.assertEqual(1, len(selected))
+        for workstream in state['workstreams']:
+            with self.subTest(workstream=workstream['id']):
+                spec_path = Path(workstream['specPath'])
+                self.assertTrue(spec_path.is_relative_to(Path('docs/specs/active/subspecs')))
+                self.assertTrue((ROOT / spec_path).is_file())
+                self.assertIn(workstream['phase'], schema['properties']['workstreams']
+                              ['items']['properties']['phase']['enum'])
+                plan_path = spec_path.with_name(spec_path.stem + '_implementation_plan.md')
+                self.assertTrue((ROOT / plan_path).is_file())
+                spec = (ROOT / spec_path).read_text(encoding='utf-8')
+                plan = (ROOT / plan_path).read_text(encoding='utf-8')
+                self.assertIn(plan_path.name, spec)
+                self.assertIn(spec_path.name, plan)
+                self.assertIn('## ', spec)
+                self.assertIn('## ', plan)
+                self.assertIn('contract.md', plan)
+                self.assertIn('TDD', plan)
+                errors = missing_relative_links(spec, ROOT / spec_path, ROOT)
+                errors.extend(missing_relative_links(plan, ROOT / plan_path, ROOT))
+                self.assertEqual([], errors)
+
+    def test_first_backend_plan_defines_api_and_independent_tests_when_active(self) -> None:
+        relative = Path('docs/specs/active/subspecs/subspec-01-backend-planning.md')
+        if not (ROOT / relative).exists():
+            return
+        spec = (ROOT / relative).read_text(encoding='utf-8')
+        plan = (ROOT / relative.with_name(relative.stem + '_implementation_plan.md'))            .read_text(encoding='utf-8')
+        self.assertGreaterEqual(len(set(re.findall(r'MVP01-BE-R\d{2}', spec))), 15)
+        self.assertGreaterEqual(len(set(re.findall(r'MVP01-BE-A\d{2}', spec))), 10)
+        self.assertGreaterEqual(len(set(re.findall(r'BE-T\d{3}', plan))), 50)
+        for module in ('territories', 'planning', 'sources', 'analyzers', 'engine',
+                       'agent', 'jobs', 'persistence', 'api'):
+            with self.subTest(module=module):
+                self.assertIn(f'{module}/contract.md', plan)
+                public_file = 'api/public.py' if module == 'api' else f'{module}/api.py'
+                self.assertIn(public_file, plan)
+        self.assertIn('No code has been generated', plan)
 
     def test_link_validator_detects_broken_targets(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

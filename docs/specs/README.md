@@ -4,9 +4,15 @@
 
 - [Umbrella Specification](umbrella_spec_melliatlas.md) — the product mission, cross-cutting requirements, stage sequence, and acceptance outcomes. **Draft; pending developer approval.**
 
-## Stage lifecycle
+## Active workstream
 
-No stage-specific normative sub-specification or implementation plan has been selected or created yet. `active/` contains only scaffolding, and `archive/` contains no completed stage documents. `STATE.json` will be initialized when the first workstream is explicitly selected; do not fabricate an active checkpoint.
+`MVP-01` is selected for specification design, **not approved for implementation**. Its first active workstream is the backend contract; the separate React/Web sub-spec and plan will be prepared only after the backend contract is reviewed.
+
+- [MVP-01 Backend sub-specification](active/subspecs/subspec-01-backend-planning.md) — normative draft for RU/BY geography, fixture sources, typed analysis, the deterministic agent, PostGIS, and HTTP.
+- [MVP-01 Backend implementation plan](active/subspecs/subspec-01-backend-planning_implementation_plan.md) — advisory modules, typed API declarations, contract drafts, file changes, and test-first sequence.
+- [`STATE.json`](STATE.json) — selected `mvp-01-backend` workstream in `DESIGN`, not evidence of approval or completed checks.
+
+`archive/` has no completed stage documents. Do not read archived work during ordinary implementation.
 
 For a selected stage:
 
