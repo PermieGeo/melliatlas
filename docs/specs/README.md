@@ -1,6 +1,6 @@
 # MelliAtlas Specification Index
 
-**Status: architecture bootstrap only.** No normative active sub-specification, implementation plan, feature cross-reference, or developer-controlled checkpoint exists yet.
+**Status: architecture bootstrap only.** No normative active sub-specification, implementation plan, or developer-controlled checkpoint exists yet. The feature catalog and cross-reference registry are empty until features are specified.
 
 When the developer selects a workstream:
 

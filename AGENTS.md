@@ -6,7 +6,6 @@
 - Prioritize correctness, modularity, simplicity, and maintainability.
 
 ## Before Editing
-- **ALWAYS** read `README.md` and `docs/specs/README.md` first.
 - **ALWAYS** read the approved specification, linked plan, and contracts, source files, and tests of modules affected by the current stage or feature group.
 - **ALWAYS** load only modules that must change for the current specification stage or feature group. For dependent modules, read only their `contract.md` and public API.
 - **ALWAYS** follow the nearest `AGENTS.md`; nested rules may strengthen, never weaken root rules.
@@ -37,7 +36,7 @@
 ## Documentation
 - **ALWAYS** maintain a `README.md` alongside each `AGENTS.md`. Read the relevant README before editing its area; use README for developer-facing information and AGENTS for concise engineering directives. Keep them complementary, not duplicative.
 - **ALWAYS** limit routine documentation to those README files, owned module `contract.md` files, SDD specifications/plans and required SDD metadata, plus `docs/INSTALLATION.md`, `docs/USAGE.md`, `docs/TESTS.md`, and `docs/FEATURES.md`. **NEVER** create other documentation without an explicit request.
-- **ALWAYS** document setup, usage, and test procedures in their named files once those procedures exist. **ALWAYS** maintain `docs/FEATURES.md` as a feature table linking applicable specifications and verified implementation files; distinguish planned from implemented work.
+- **ALWAYS** link sub-specifications to their implementing modules and tests using stable feature IDs defined in `docs/FEATURES.md`. Keep that catalog limited to feature IDs and brief descriptions. Record stage, specification, implementation owner, and test paths in `docs/specs/feature-cross-ref.yaml`; validate them against `docs/specs/feature-cross-ref.schema.json`. Never invent implementation paths or treat planned files as implemented.
 - **NEVER** add conversation history, prior product names, patch chronology, or speculative approval/progress statements to README files or other stable documentation unless explicitly requested.
 
 ## Tests & Enforcement
