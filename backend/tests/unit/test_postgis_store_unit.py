@@ -164,3 +164,27 @@ def test_load_rejects_inconsistent_json_record() -> None:
     with pytest.raises(InvestigationStorageError):
         repo.load(identifier)
     assert database.connections[-1].closed
+
+
+def test_insufficient_evidence_save_has_no_site_geometry() -> None:
+    database = RecordingDatabase()
+    repo = PostgisCompletedInvestigationStore(database.connect)
+    service = InMemoryInvestigationService(SyntheticFixtureProvider(), repo)
+    queued = service.submit(
+        InvestigationRequest(
+            country=CountryCode.RU,
+            territory_id="ru:region:smolensk",
+            scenario_id=SYNTHETIC_SCENARIO_ID,
+            season=TimeWindow(date(2026, 5, 1), date(2026, 5, 20)),
+            starting_point=(32.0, 54.0),
+        )
+    )
+    service.process(queued.id)
+    completed = service.get(queued.id)
+    assert completed is not None
+    assert completed.status is InvestigationStatus.COMPLETED
+    assert completed.plan is None
+    query, parameters = database.connections[0].executed[0]
+    assert "ST_GeomFromGeoJSON" in query
+    assert parameters[-1] is None
+    assert repo.load(queued.id) == completed
