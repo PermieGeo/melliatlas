@@ -222,7 +222,7 @@ class DocumentationTests(unittest.TestCase):
             with self.subTest(feature_id=feature_id):
                 self.assertIn(feature_id, feature_ids)
         registry = (ROOT / 'docs/specs/feature-cross-ref.yaml').read_text(encoding='utf-8')
-        self.assertIn('schema_version: 1\nfeatures:', registry)
+        self.assertIn('schema_version: 2\nfeatures:', registry)
         referenced_ids = re.findall(r'^  - feature_id: ([A-Z][A-Z0-9_.]+)$',
                                     registry, re.MULTILINE)
         self.assertGreaterEqual(len(referenced_ids), 10)

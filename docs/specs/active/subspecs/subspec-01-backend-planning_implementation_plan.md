@@ -63,95 +63,29 @@ A module's `api.py` (or `__init__.py` facade when justified) is the importable b
 - All domain types should use finite enums, explicit IDs, timezone-aware timestamps where relevant and typed uncertainty/status fields. Never introduce broad `Any` or dynamically typed dictionaries as a shortcut.
 - New runtime dependencies and any weakening of approved enforcement constraints require developer approval. Justified dev/test tooling and stricter architecture checks may be introduced within the authorized task with regression evidence. Listed third-party runtime libraries remain **candidates**, not approved installations.
 
+### 1.4. Contract compatibility and remaining gaps
+
+| Boundary | Implemented source of truth | Required future work |
+| --- | --- | --- |
+| `TerritoryCatalog` and `TerritoryImport` | `territories/api.py`, `territories/contract.md`, tested snapshot+inventory signatures | Full RU/BY reference approval, precision/unknown-accuracy semantics and PostGIS adapter before A02/A03 |
+| Territory HTTP routes | `api/routes_territories.py`, `api/contract.md` | Preserve `/districts?region_id=` and `/geometry/{territory_id}`; do not introduce conflicting path shapes |
+| Application factory | `api/app.py` with optional `settings` and `territories` | Inject new source/investigation collaborators additively; do not replace the existing signature |
+| Evidence records | Not yet implemented | Effective interval, uncertainty, validated kind/payload, geographic and reference scope before R14 |
+| Investigations | Not yet implemented | Optional starting point, geography version, evidence summaries, and separate technical status vs domain outcome |
+
+This is a compatibility inventory, not an acceptance claim. A new task must reconcile its proposed contracts with checked-in interfaces and the normative sub-spec before writing code.
+
 ## 2. Proposed public API declarations
 
-The declarations below are intended for the **named files**. Import statements, enums, parameters and return types are part of the proposed contract; implementation bodies are omitted intentionally. The plan's subsequent TDD steps require adding minimal compiling stubs, then initially failing executable tests before any actual logic. Add short English comments only where a type, value, or field has non-obvious semantics, constraints, or units. Do not repeat information already clear from identifiers or types.
+The examples below describe **future** interfaces unless explicitly identified as implemented. For implemented interfaces, the checked-in public API and its `contract.md` are authoritative; the plan must not override them. Each future task first confirms compatibility with existing types, then adds executable contract tests before implementation. Add English comments only for non-obvious constraints or units.
 
 ### 2.1. `territories/api.py`
 
-```python
-from dataclasses import dataclass
-from datetime import date, datetime
-from enum import StrEnum
-from typing import Protocol, TypeAlias, TypedDict, Literal
+**Implemented contract (source of truth):** [`backend/src/melliatlas/territories/api.py`](../../../../backend/src/melliatlas/territories/api.py) and [`backend/src/melliatlas/territories/contract.md`](../../../../backend/src/melliatlas/territories/contract.md). The existing public API defines `CountryCode`, `TerritoryKind`, `GeometryStatus`, GeoJSON WGS84 types, `Territory`, `ReferenceManifest`, `TerritoryGeometry`, `ReferenceSnapshot`, `ExpectedInventory`, `TerritoryCatalog`, `TerritoryImport`, and typed errors. `InMemoryTerritoryCatalog` is the current non-durable implementation. Do **not** regenerate these declarations from an earlier design example.
 
-class CountryCode(StrEnum):
-    RU = "RU"
-    BY = "BY"
+`TerritoryImport.validate_reference(snapshot: ReferenceSnapshot, inventory: ExpectedInventory)` and `apply_reference(snapshot: ReferenceSnapshot, inventory: ExpectedInventory)` already exist; both receive the normalized data and an independently sourced inventory. `create_app` injects a `TerritoryCatalog` and neither constructs nor approves a live geographical dataset. The public `TerritoryGeometry` currently carries `reference_id` and EPSG:4326, but **not** an explicit precision estimate. Before acceptance `MVP01-BE-A03`, design a reviewed precision/unknown-accuracy representation and preserve a traceable link to the source manifest; do not invent accuracy values. Complete topology and PostGIS storage remain pending.
 
-class TerritoryKind(StrEnum):
-    COUNTRY = "country"
-    REGION = "region"
-    DISTRICT = "district"
-
-class GeometryStatus(StrEnum):
-    AVAILABLE = "available"
-    MISSING = "missing"
-    INVALID = "invalid"
-
-Position: TypeAlias = tuple[float, float]  # Longitude, latitude
-
-class PolygonWgs84(TypedDict):
-    type: Literal["Polygon"]
-    coordinates: list[list[Position]]
-
-class MultiPolygonWgs84(TypedDict):
-    type: Literal["MultiPolygon"]
-    coordinates: list[list[list[Position]]]
-
-GeometryWgs84: TypeAlias = PolygonWgs84 | MultiPolygonWgs84
-
-@dataclass(frozen=True)
-class GeoPoint:
-    longitude: float
-    latitude: float
-
-@dataclass(frozen=True)
-class Territory:
-    id: str
-    country: CountryCode
-    kind: TerritoryKind
-    name: str
-    parent_id: str | None
-    reference_id: str
-    valid_on: date
-    geometry_status: GeometryStatus
-
-@dataclass(frozen=True)
-class ReferenceManifest:
-    reference_id: str
-    snapshot_date: date
-    retrieved_at: datetime
-    source_uri: str
-    license_id: str
-    checksum_sha256: str
-    coordinate_system: str
-    # Documented geographic coverage, not verified completeness.
-    declared_scope: str
-    normalization_version: str
-
-@dataclass(frozen=True)
-class TerritoryGeometry:
-    territory_id: str
-    geometry: GeometryWgs84
-    reference_id: str
-    coordinate_system: Literal["EPSG:4326"]
-
-class CatalogDepthUnsupported(ValueError):
-    pass
-
-class TerritoryCatalog(Protocol):
-    async def list_regions(self, country: CountryCode) -> tuple[Territory, ...]: ...
-    async def list_districts(self, region_id: str) -> tuple[Territory, ...]: ...
-    async def get(self, territory_id: str) -> Territory | None: ...
-    async def get_geometry(self, territory_id: str) -> TerritoryGeometry | None: ...
-
-class TerritoryImport(Protocol):
-    async def validate_reference(self, manifest: ReferenceManifest) -> None: ...
-    async def apply_reference(self, manifest: ReferenceManifest) -> None: ...
-```
-
-**Proposed `territories/contract.md` v1:** owns canonical territory identity, RU/BY hierarchy, source manifest integrity, geometry boundary semantics, and complete/incomplete coverage diagnostics. No internal adapter/provider ID becomes public territory identity. `list_districts()` on an unsupported region raises a typed `CatalogDepthUnsupported` error instead of returning an unjustified empty *complete* list. Invalid coordinates, self-intersecting rings, unclosed polygons, unknown parents, duplicate provider mappings and missing reference entries fail validation. Imported data is immutable by reference version; repeated same-version import is idempotent.
+**Future extension only:** `GeoPoint(longitude: float, latitude: float)` is proposed in `planning/api.py` for the planning and investigation tasks; it is not currently exported by any module. Validate its WGS84 range when implementing it.
 
 ### 2.2. `planning/api.py`
 
@@ -159,7 +93,11 @@ class TerritoryImport(Protocol):
 from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
-from melliatlas.territories.api import GeoPoint
+
+@dataclass(frozen=True)
+class GeoPoint:
+    longitude: float
+    latitude: float
 
 class ForageLevel(StrEnum):
     LOW = "low"
@@ -244,6 +182,12 @@ class SourceMode(StrEnum):
     FIXTURE = "fixture"
     UNAVAILABLE = "unavailable"
 
+class EvidenceUncertainty(StrEnum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    UNKNOWN = "unknown"
+
 class EvidenceKind(StrEnum):
     ADMIN_BOUNDARY = "admin_boundary"
     FORAGE_WINDOW = "forage_window"
@@ -306,6 +250,9 @@ class EvidenceRecord:
     mode: SourceMode
     collected_at: datetime
     reference_id: str
+    # None means the evidence has no validated effective date range.
+    effective_window: TimeWindow | None
+    uncertainty: EvidenceUncertainty
     # Territory scope when known; not proof of local applicability.
     territory_id: str | None
     description: str
@@ -334,7 +281,7 @@ class SourceRegistry(Protocol):
     def get(self, source_id: str) -> Source: ...
 ```
 
-**Proposed `sources/contract.md` v1:** owns source capability, applicable countries, fixture/reference/unavailable mode and evidence provenance. Cross-country requests fail with a typed `SourceCountryUnsupported`; `SATURN` is RU-only, public-web RU/BY. No outbound website or Saturn client may be initialized in MVP-01. Source results are evidence records, **not** verified treatment events or legal rulings. Each evidence kind has a matching **typed payload**; analyzers must validate this pairing, never cast arbitrary metadata into a forage window or ecological rule. Ecology fixtures carry explicit geometry and disposition; the site-screening algorithm evaluates actual spatial intersection rather than site ID. Future live source payload contracts may be added compatibly after source access verification.
+**Proposed `sources/contract.md` v1:** owns source capability, applicable countries, fixture/reference/unavailable mode and evidence provenance. Cross-country requests fail with a typed `SourceCountryUnsupported`; `SATURN` is RU-only, public-web RU/BY. No outbound website or Saturn client may be initialized in MVP-01. Source results are evidence records, **not** verified treatment events or legal rulings. Each evidence kind has a matching **typed payload**; source normalization must validate the kind/payload pair before publishing a record, and analyzers must validate this pairing at their boundary. `effective_window=None` and `EvidenceUncertainty.UNKNOWN` are explicit unknowns, not proof of validity or safety. An analyzer cannot cast arbitrary metadata into a forage window or ecological rule. Ecology fixtures carry explicit geometry and disposition; the site-screening algorithm evaluates actual spatial intersection rather than site ID. Future live source payload contracts may be added compatibly after source access verification.
 
 ### 2.4. `analyzers/api.py`
 
@@ -455,6 +402,7 @@ from enum import StrEnum
 from typing import Protocol
 from melliatlas.engine.api import ExecutionResult, ExecutionGraph
 from melliatlas.planning.api import SeasonPlan, TimeWindow
+from melliatlas.sources.api import EvidenceKind, EvidenceUncertainty
 
 class AgentAction(StrEnum):
     OBSERVE = "observe"
@@ -477,6 +425,14 @@ class DecisionEvent:
     revised_site_ids: tuple[str, ...]
 
 @dataclass(frozen=True)
+class EvidenceSummary:
+    evidence_id: str
+    source_id: str
+    kind: EvidenceKind
+    synthetic: bool
+    uncertainty: EvidenceUncertainty
+
+@dataclass(frozen=True)
 class AgentOutcome:
     plan: SeasonPlan | None
     decisions: tuple[DecisionEvent, ...]
@@ -496,15 +452,21 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Protocol
 from uuid import UUID
-from melliatlas.agent.api import AgentOutcome
+from melliatlas.agent.api import AgentOutcome, EvidenceSummary
 from melliatlas.planning.api import TimeWindow
-from melliatlas.territories.api import CountryCode, GeoPoint
+from melliatlas.territories.api import CountryCode
+from melliatlas.planning.api import GeoPoint
 
 class InvestigationStatus(StrEnum):
     QUEUED = "queued"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
+
+class InvestigationOutcomeKind(StrEnum):
+    PLAN_FOUND = "plan_found"
+    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
+    NO_FEASIBLE_ALTERNATIVE = "no_feasible_alternative"
 
 @dataclass(frozen=True)
 class InvestigationRequest:
@@ -516,7 +478,6 @@ class InvestigationRequest:
 
 class InvestigationErrorCode(StrEnum):
     INVALID_REQUEST = "invalid_request"
-    NO_VALID_PLAN = "no_valid_plan"
     TIME_LIMIT = "time_limit"
     EXECUTION_FAILED = "execution_failed"
 
@@ -529,6 +490,10 @@ class InvestigationSnapshot:
     # Populated only after a terminal lifecycle transition.
     finished_at: datetime | None
     outcome: AgentOutcome | None
+    # Set on completion, including completed analyses without a viable plan.
+    outcome_kind: InvestigationOutcomeKind | None
+    reference_id: str | None
+    evidence_summaries: tuple[EvidenceSummary, ...]
     error_code: InvestigationErrorCode | None
 
 class InvestigationStore(Protocol):
@@ -540,7 +505,7 @@ class InvestigationService(Protocol):
     async def get(self, investigation_id: UUID) -> InvestigationSnapshot | None: ...
 ```
 
-**Proposed `jobs/contract.md` v1:** owns investigation IDs, lifecycle, request validation, bounded in-process scheduling, and the completed-result storage port. **Failure is not completion**. A persistent completed result must survive restart; in-process unfinished work may not. Decide the exact queue/async model before implementation and test response semantics consistently. The service owns a finite concurrent-run limit and does not log sensitive starting points. The `InvestigationErrorCode` enum is the only source of lifecycle error codes; HTTP error mapping is defined at the API boundary.
+**Proposed `jobs/contract.md` v1:** owns investigation IDs, lifecycle, request validation, bounded in-process scheduling, and the completed-result storage port. **Failure is not completion**. A completed analysis may have `PLAN_FOUND`, `INSUFFICIENT_EVIDENCE`, or `NO_FEASIBLE_ALTERNATIVE`; it must not label the latter two as execution failures. A persistent completed result must survive restart; in-process unfinished work may not. Decide the exact queue/async model before implementation and test response semantics consistently. The service owns a finite concurrent-run limit and does not log sensitive starting points. The `InvestigationErrorCode` enum is the only source of lifecycle error codes; HTTP error mapping is defined at the API boundary.
 
 ### 2.8. `persistence/api.py`
 
@@ -566,21 +531,20 @@ class PostgisTerritoryStore(TerritoryCatalog, TerritoryImport, Protocol):
 
 ### 2.9. `api/public.py` and `api/app.py`
 
+**Implemented HTTP composition:** `melliatlas.api.app.create_app(*, settings: AppSettings | None = None, territories: TerritoryCatalog | None = None) -> FastAPI`. The `settings` and `territories` keyword arguments are covered by current tests. `GET /health`, `/openapi.json`, and the `/api/v1/territories/*` routes described in [`api/contract.md`](../../../../backend/src/melliatlas/api/contract.md) are implemented. In particular, the supported district and geometry routes are `/districts?region_id=...` and `/geometry/{territory_id}` within the territory prefix. No investigation/source routes are implemented yet.
+
+**Future additive HTTP contracts (not implemented):**
+
 ```python
-from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
-from fastapi import FastAPI
 from pydantic import BaseModel, Field
-from melliatlas.jobs.api import InvestigationService
-from melliatlas.sources.api import SourceRegistry
-from melliatlas.territories.api import TerritoryCatalog, CountryCode
+from melliatlas.territories.api import CountryCode
 
 class ApiErrorCode(StrEnum):
     INVALID_REQUEST = "invalid_request"
     UNKNOWN_TERRITORY = "unknown_territory"
     UNSUPPORTED_DEPTH = "unsupported_depth"
-    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
     CAPABILITY_UNAVAILABLE = "capability_unavailable"
     LIMIT_EXCEEDED = "limit_exceeded"
     EXECUTION_FAILED = "execution_failed"
@@ -592,28 +556,27 @@ class ErrorDetail(BaseModel):
 class ErrorResponse(BaseModel):
     error: ErrorDetail
 
+class GeoPointDto(BaseModel):
+    longitude: float
+    latitude: float
+
 class CreateInvestigationDto(BaseModel):
     country: CountryCode
     territory_id: str = Field(min_length=1)
     start_date: date
     end_date: date
-    # Identifier of the selected synthetic demo scenario.
     scenario_id: str
-
-@dataclass(frozen=True)
-class ApiDependencies:
-    territories: TerritoryCatalog
-    sources: SourceRegistry
-    investigations: InvestigationService
-
-def create_app(dependencies: ApiDependencies) -> FastAPI: ...
+    # Private optional start location; never include it in public error details.
+    starting_point: GeoPointDto | None = None
 ```
 
-**Proposed complete `api/contract.md` v1 (health and OpenAPI subset implemented):** owns versioned URL routes, OpenAPI, request/response DTOs, error mapping and composition. Additional typed response DTOs for territories, GeoJSON, source descriptors, status, seasonal plan and decision trace must be fully defined during the API TDD task, with no dynamic arbitrary serialization. Schema changes after Web work begins require deliberate contract review. Routes must not import private domain implementation files or perform spatial operations themselves. `create_app` accepts test-injected implementations; startup/shutdown safely manages adapters.
+The future investigation/source collaborators should be supplied through **additional optional keyword parameters** or a backwards-compatible composition mechanism; replacing `create_app(settings=..., territories=...)` with a mandatory `ApiDependencies` parameter is not allowed. Explicitly validate WGS84 coordinates, date order, scenario eligibility, and the outcome/status distinction. Define response DTOs and stable error codes during their own implementation task; do not present these sketches as existing Python declarations.
+
+**Proposed complete `api/contract.md` v1:** owns versioned URL routes, OpenAPI, request/response DTOs, error mapping and composition. Additional typed response DTOs for source descriptors, investigation status and outcome, seasonal plans, evidence, and decision traces must be defined and tested when those routes are implemented. Once the Web client uses an endpoint, review public changes for backwards compatibility. Routes must not import private domain implementations or perform spatial operations themselves; application composition owns adapter lifetime.
 
 ### 2.10. Contract drafting and real files
 
-The paragraphs headed **Proposed `<module>/contract.md` v1** are the first contract drafts for all nine proposed modules (`territories`, `planning`, `sources`, `analyzers`, `engine`, `agent`, `jobs`, `persistence`, `api`). At implementation time, write the corresponding owned `contract.md` **before** the module's internal implementation, preserving these public contracts or amending this active plan with developer approval. Avoid empty boilerplate or duplicating code line-for-line in the contracts. Explicitly note in each implemented contract the public import path, input/output invariants, errors, invariants and forbidden imports.
+The paragraphs headed **Proposed `<module>/contract.md` v1** are drafts for modules not yet implemented (`planning`, `sources`, `analyzers`, `engine`, `agent`, `jobs`, `persistence`) and future extensions of `api`. Existing `territories` and `api` contracts are maintained in their real module `contract.md` files; changes must be reviewed against their existing tests. At implementation time, introduce only the relevant new module contract, keeping the approved requirements and current public code compatible. Avoid empty boilerplate or duplicating code line-for-line in the contracts. Explicitly note in each implemented contract the public import path, input/output invariants, errors, invariants and forbidden imports.
 
 ## 3. Data schema and import strategy
 
@@ -646,13 +609,13 @@ Use database enums or constrained text consistently, not free-form arbitrary sta
 
 ## 4. Proposed file changes for later implementation
 
-The initial Python manifest, package entry point, API composition and first tests now exist; other paths below remain proposed. Existing placeholder capability directories contain `.gitkeep` entries. Implementation patches should add source files incrementally and remove placeholder `.gitkeep` only when the owning directory becomes populated, where appropriate.
+The initial Python manifest, package entry point, API composition, territory contracts/validation/catalog and relevant tests now exist; other paths below remain proposed. Existing placeholder capability directories contain `.gitkeep` entries. Implementation patches should add source files incrementally and remove placeholder `.gitkeep` only when the owning directory becomes populated, where appropriate.
 
 | Path / pattern | Purpose |
 | --- | --- |
 | `backend/pyproject.toml` | Python package, declared dependencies, Ruff, pyright and pytest configuration (requires dependency approval) |
 | `backend/src/melliatlas/__init__.py`, `main.py` | Package identity and application entry point |
-| `backend/src/melliatlas/territories/{api.py,models.py,validation.py,importer.py,contract.md}` | Territory domain contracts, geometry validation, reference import |
+| `backend/src/melliatlas/territories/{api.py,catalog.py,validation.py,contract.md}` | Implemented territory API and memory-based validation/catalog; PostGIS importer remains proposed |
 | `backend/src/melliatlas/planning/{api.py,forage.py,ecology.py,season.py,contract.md}` | Pure site/season models and deterministic planning rules |
 | `backend/src/melliatlas/sources/{api.py,registry.py,fixtures.py,contract.md}` | Typed provider registry and fixture-only samples |
 | `backend/src/melliatlas/analyzers/{api.py,forage.py,ecology.py,season.py,contract.md}` | Pure analyzers, typed registry |
@@ -665,9 +628,9 @@ The initial Python manifest, package entry point, API composition and first test
 | `backend/tests/conftest.py`, `backend/tests/unit/*`, `backend/tests/contract/*`, `backend/tests/integration/*`, `backend/tests/architecture/*` | Fixtures, pure/contract/PostGIS/import-boundary tests |
 | `config/countries/{ru,by}.yaml` | Declarative country and source availability; verified schema required |
 | `backend/tests/fixtures/{geography,scenarios,source_responses}/*` | Small controlled fixtures with provenance and explicit synthetic markers |
-| `backend/scripts/import_reference.py` | Reproducible reference import, coverage report and checksum verification |
+| `backend/scripts/import_reference.py` | Implemented offline reference validation/report (no database import or dataset approval) |
 | `docs/INSTALLATION.md`, `docs/TESTS.md`, `docs/USAGE.md` | Actual environment/install/test/demo procedures when executable functionality exists |
-| `docs/specs/feature-cross-ref.yaml` | Add **verified** owners/test paths as files are created |
+| `docs/specs/feature-cross-ref.yaml` | Maintain schema-v2 `planned`/`partial`/`verified` status and link only real code and test owners |
 | `run-tests.sh` | Extend the existing fail-fast checks to include real backend dependencies and architecture/integration gates once tooling is approved |
 
 **Removals:** only obsolete `.gitkeep` files inside directories where real files are introduced; no current tracked product files are replaced. **No Web source files** in this backend implementation plan.
@@ -853,6 +816,13 @@ For every listed public method: valid representative input; invalid type/value; 
 
 ### 6.2. Architecture enforcement choices
 
+**Implemented enforcement (R2):** the architecture suite now checks the explicit module
+dependency matrix in section 1.2, relative and absolute imports, public `api.py` modules
+and explicit package facades, and forbidden framework/database/network-client imports.
+Negative and permitted-import fixtures exercise the gate independently. This does not
+claim full `MVP01-BE-A11` acceptance: runtime no-network fixture tests, dependency
+injection checks, and real database integration tests remain pending.
+
 - Baseline: a small read-only `ast` import inspection plus dependency matrix can cover public-only imports, forbidden imports, and simple cycles without adding a dependency.
 - Candidate alternative: **Import Linter / Grimp** enforces explicit independence, acyclic siblings and forbidden imports; use only if separately approved as a new development dependency.
 - Mutation checks: construct a deliberately forbidden cross-module import in an isolated **temporary fixture**, verify the architecture check fails, then remove it. Never weaken tests or source rules to force a pass.
@@ -909,5 +879,5 @@ Check real catalog completeness and PostGIS geometry against **verified authoriz
 | Source unexpectedly calls a live website/Saturn | Offline fixture test forbids outbound calls and fails immediately |
 | Complex initialization or partial deployment | Verify `run-tests.sh`, a clean environment and read-only integration checks; keep scaffolding usable |
 
-**Implementation status:** Step 1 has executable FastAPI health/OpenAPI code and tests. Step 2 has partial territory contracts and HTTP reads; its full-reference and PostGIS gates, steps 3–12, and all full-backend acceptance checks remain open. The current checkpoint does not imply MVP-01 acceptance.
+**Implementation status:** Step 1 has executable FastAPI health/OpenAPI code and tests. Step 2 has an implemented *partial* territory catalog, offline validator and HTTP reads, but full verified RU/BY datasets, approved geometry precision/topology and PostGIS imports remain open. Steps 3–12 and all full-backend acceptance checks remain open. Normative requirements and actual APIs take precedence over historical proposed declarations.
 

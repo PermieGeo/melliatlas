@@ -21,5 +21,7 @@ For a selected stage:
 3. Record requirements approval and implementation authorization separately. Keep external approval gates attached to affected tasks; successful tests and commits do not constitute acceptance or advance the checkpoint.
 4. After completed implementation and explicit acceptance, archive the sub-spec and linked plan together, then update references and the developer-controlled state.
 
+The version 2 feature cross-reference records implementation maturity independently of workstream approval: `planned` means no feature implementation or test owner is registered, `partial` means actual code and tests exist but feature acceptance is not established, and `verified` requires completed feature-level verification. A health endpoint or a geometry validator alone must not be used as evidence that investigation UI or map rendering exists.
+
 Feature identifiers and short descriptions belong in [`docs/FEATURES.md`](../FEATURES.md); specification, implementation, and test links belong in [`feature-cross-ref.yaml`](feature-cross-ref.yaml). Validate the checkpoint against [`state.schema.json`](state.schema.json) when initialized.
 
