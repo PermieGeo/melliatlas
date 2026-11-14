@@ -78,11 +78,12 @@ The API differentiates **real reference geography** from **synthetic planning fa
 - `SeasonPlan`: ordered stops (minimum two for the successful demo), at least one transition, excluded candidates, optional alternatives and warnings; no numeric honey yield.
 - `DecisionTrace`: initial candidate/order, evidence-requested check, observed assessment, revision or bounded termination, and final rationale.
 
-Plan windows must fit the requested season, be chronologically ordered and must not overlap in ways the MVP cannot justify. A plan with fewer than two valid stops is **not successful**: return an explicit partial/insufficient outcome with causes. Deterministic tie-breaking is required for repeatable tests.
+Plan windows must fit the requested season, be chronologically ordered and must not overlap in ways the MVP cannot justify. A plan with fewer than two valid stops is **not a supported recommendation**: complete the analysis with an explicit insufficient/no-alternative outcome and causes, rather than reporting a technical execution error. Deterministic tie-breaking is required for repeatable tests.
 
 ### 2.4. Jobs and persistence
 
-- `InvestigationStatus`: `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`.
+- `InvestigationStatus`: `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`; describes technical execution and persistence, not whether a viable seasonal plan was found.
+- `InvestigationOutcomeKind`: `PLAN_FOUND`, `INSUFFICIENT_EVIDENCE`, `NO_FEASIBLE_ALTERNATIVE`. A technically completed investigation may have any of these outcomes. `FAILED` is reserved for execution or persistence failure; an unsupported recommendation is never fabricated.
 - `InvestigationRequest`: country, canonical selected territory ID, season window, fixture scenario ID, optional synthetic apiary starting point.
 - `InvestigationSnapshot`: opaque UUID, status, validated request, timestamps, optional plan, decision trace, evidence summaries, geography/reference version and diagnostics.
 - Store completed result transactionally, including the planned stops and geometries necessary to reopen the result.
@@ -91,14 +92,14 @@ Plan windows must fit the requested season, be chronologically ordered and must 
 
 ## 3. Public backend operations
 
-The endpoint names below are the proposed **normative external contract for the MVP-01 Web client**, subject to explicit sub-spec approval; implementation details live in the linked plan.
+The endpoint names below are the approved **normative external contract for the MVP-01 Web client**. The existing territory routes and their HTTP contract are authoritative for already implemented behavior; source and investigation operations are not yet implemented. Additive changes require contract review before the Web client depends on them.
 
 | ID | HTTP operation | Required behavior |
 | --- | --- | --- |
 | `BE-API-01` | `GET /api/v1/territories/countries` | Return available `RU` and `BY` codes and display metadata. |
 | `BE-API-02` | `GET /api/v1/territories/regions?country=RU\|BY` | Return complete first-order regions for the selected dated reference. |
-| `BE-API-03` | `GET /api/v1/territories/{region_id}/districts` | Return full Smolensk/Vitebsk district catalogs; other regions explicitly indicate `not_supported`, never an invented empty-completeness claim. |
-| `BE-API-04` | `GET /api/v1/territories/{territory_id}/geometry` | Return valid GeoJSON geometry and provenance, or a structured error/diagnostic if absent. |
+| `BE-API-03` | `GET /api/v1/territories/districts?region_id=...` | Return full Smolensk/Vitebsk district catalogs; other regions explicitly indicate `not_supported`, never an invented empty-completeness claim. |
+| `BE-API-04` | `GET /api/v1/territories/geometry/{territory_id}` | Return valid GeoJSON geometry and provenance, or a structured error/diagnostic if absent. |
 | `BE-API-05` | `GET /api/v1/sources?country=RU\|BY` | List applicable source descriptors, modes and fixture limitations; never list Saturn for BY. |
 | `BE-API-06` | `GET /api/v1/scenarios` | Return the approved synthetic demonstration scenarios and supported territories. |
 | `BE-API-07` | `POST /api/v1/investigations` | Validate and start a bounded synthetic investigation; return a stable ID and initial/current status. |
@@ -111,6 +112,7 @@ The endpoint names below are the proposed **normative external contract for the 
 - Coordinates use GeoJSON `[longitude, latitude]` order; latitude is within `[-90,90]`, longitude within `[-180,180]`. Never calculate meter distances directly on raw degrees.
 - Responses distinguish HTTP validation (`400`/`422`), absence (`404`), unsupported capability (`409`), unprocessable investigation (`422`), internal failures (`500`), and a still-running investigation (`200` status payload or appropriately documented `202` on creation).
 - All failure responses use `{error: {code, message, details?}}`; error codes are a finite enum. No stack traces, database details, exact private coordinates or credentials are included in client errors.
+- Completed analysis without a supported plan is a domain outcome (`INSUFFICIENT_EVIDENCE` or `NO_FEASIBLE_ALTERNATIVE`), not an execution failure. The investigation response includes that outcome separately from the technical status.
 - OpenAPI must expose schemas for the operations and enums; internal Python objects are not serialized ad hoc.
 
 ## 4. Requirement-to-umbrella mapping
@@ -148,7 +150,7 @@ The endpoint names below are the proposed **normative external contract for the 
 | `MVP01-BE-A05` | Engine orders dependencies, rejects cycles, missing operators and incompatible artifact types, and propagates failures. |
 | `MVP01-BE-A06` | At least one scenario initially favors a later-excluded candidate, triggers a separate restriction check, and records an evidence-caused alternative decision without a hardcoded candidate-ID rule. |
 | `MVP01-BE-A07` | A precautionary finding remains non-binding; unknown condition is explicit; missing viable stops terminates without fabricated recommendation. |
-| `MVP01-BE-A08` | A valid run returns an ordered seasonal plan with two stops, one transition, bounded decisions, evidence references and explicit synthetic disclaimers. |
+| `MVP01-BE-A08` | A valid run with sufficient evidence returns an ordered seasonal plan with two stops, one transition, bounded decisions, evidence references and explicit synthetic disclaimers; a completed but unsupported plan reports its distinct domain outcome. |
 | `MVP01-BE-A09` | A completed plan with geometry and trace can be retrieved from a fresh API/database session; failed transaction cannot appear completed. |
 | `MVP01-BE-A10` | Country/territory/geometry/date/scenario errors, engine faults and step limits produce stable, sanitized diagnostics. |
 | `MVP01-BE-A11` | Automated tests enforce allowed module dependencies, public API imports, acyclic graph and provider/transport isolation. |

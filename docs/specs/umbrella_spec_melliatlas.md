@@ -214,7 +214,7 @@ The stage descriptions below are deliberate **umbrella-level detail**. Only the 
 - Future sub-specs may refine these into more granular testable requirements without changing their parent references.
 - Stable product capability `feature_id` values belong **only** in `docs/FEATURES.md`, with stage/spec/owner/test associations in `docs/specs/feature-cross-ref.yaml`. Do not use stage or requirement IDs as substitutes for stable feature IDs.
 
-The stable *planned capability IDs* are predeclared in `docs/FEATURES.md`. `docs/specs/feature-cross-ref.yaml` remains empty until an active sub-spec and verified implementation ownership exist; never fabricate code or sub-spec paths.
+The stable *planned capability IDs* are predeclared in `docs/FEATURES.md`. `docs/specs/feature-cross-ref.yaml` records planned features with no implementation owners and links only actual partial or verified implementations to existing code and tests; never fabricate code or sub-spec paths.
 
 ### 6.4. Test-first and architecture verification
 
