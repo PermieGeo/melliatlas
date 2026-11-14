@@ -1,10 +1,10 @@
 # MVP-01 Backend — Territory, Evidence, Analysis, and Investigation API
 
-**Stage:** `MVP-01` — Working sustainable-beekeeping MVP  
-**Workstream:** `mvp-01-backend`  
-**Status:** Draft for developer review; not approved for implementation  
-**Normative parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md), especially `MVP-01.R01`–`R14`, `MVP-01.A01`–`A09`, and applicable `SYS-01`–`SYS-20`  
-**Linked advisory plan:** [Backend implementation plan](subspec-01-backend-planning_implementation_plan.md)  
+- **Stage:** `MVP-01` — Working sustainable-beekeeping MVP
+- **Workstream:** `mvp-01-backend`
+- **Status:** Approved for implementation; MVP-01 backend work in progress. Acceptance pending
+- **Normative parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md), especially `MVP-01.R01`–`R14`, `MVP-01.A01`–`A09`, and applicable `SYS-01`–`SYS-20`
+- **Linked advisory plan:** [Backend implementation plan](subspec-01-backend-planning_implementation_plan.md)
 **Next dependent sub-spec:** MVP-01 React/Web interface; not yet activated or written
 
 ## 1. Purpose and boundary

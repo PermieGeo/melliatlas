@@ -280,7 +280,7 @@ class DocumentationTests(unittest.TestCase):
                 self.assertIn(f'{module}/contract.md', plan)
                 public_file = 'api/public.py' if module == 'api' else f'{module}/api.py'
                 self.assertIn(public_file, plan)
-        self.assertIn('No code has been generated', plan)
+        self.assertIn('Step 1 has executable FastAPI health/OpenAPI code and tests', plan)
 
     def test_link_validator_detects_broken_targets(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

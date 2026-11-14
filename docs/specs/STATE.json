@@ -7,7 +7,7 @@
       "id": "mvp-01-backend",
       "specPath": "docs/specs/active/subspecs/subspec-01-backend-planning.md",
       "stageId": "MVP-01",
-      "phase": "DESIGN"
+      "phase": "READY_FOR_IMPLEMENTATION"
     }
   ]
 }
