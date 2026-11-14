@@ -19,7 +19,15 @@ python -m ruff format --check backend
 python -m pyright --project backend
 ```
 
-These tests currently exercise only FastAPI health/OpenAPI behavior and import architecture constraints. Real geography completeness, PostGIS, source adapters, agent behavior, and browser acceptance are not implemented or tested yet.
+Current tests cover FastAPI health/OpenAPI, versioned territory endpoints, offline territory-reference validation, independent inventory comparisons, simple WGS84 polygon checks, idempotent in-memory loading, and architecture import boundaries. These tests use synthetic administrative snapshots; **they do not establish complete real RU/BY coverage or PostGIS topology correctness**. No approved full reference, PostGIS import, source adapter, agent, or browser acceptance test exists yet.
+
+To validate externally obtained normalized reference files after verifying permission, provenance, and independent inventories, run from an installed backend environment:
+
+```bash
+python backend/scripts/import_reference.py path/to/reference.json path/to/independent-inventory.json
+```
+
+This command only validates the local input and prints a report; it does not import into PostGIS or mark a reference approved.
 
 ## Formatting and apatch
 

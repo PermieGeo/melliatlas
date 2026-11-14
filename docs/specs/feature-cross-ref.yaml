@@ -3,23 +3,31 @@ features:
   - feature_id: GEOGRAPHY.RU_REGIONS
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
-    owners: []
-    test_files: []
+    owners:
+      - backend/src/melliatlas/territories/api.py#TerritoryCatalog
+    test_files:
+      - backend/tests/contract/test_territory_api.py
   - feature_id: GEOGRAPHY.BY_REGIONS
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
-    owners: []
-    test_files: []
+    owners:
+      - backend/src/melliatlas/territories/catalog.py#InMemoryTerritoryCatalog
+    test_files:
+      - backend/tests/contract/test_territory_http.py
   - feature_id: GEOGRAPHY.PILOT_DISTRICTS
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
-    owners: []
-    test_files: []
+    owners:
+      - backend/src/melliatlas/territories/api.py#TerritoryImport
+    test_files:
+      - backend/tests/contract/test_territory_api.py
   - feature_id: MAP.BASEMAP
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
-    owners: []
-    test_files: []
+    owners:
+      - backend/src/melliatlas/territories/validation.py#validate_geometry
+    test_files:
+      - backend/tests/unit/test_reference_validation.py
   - feature_id: SOURCES.CATALOG
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]

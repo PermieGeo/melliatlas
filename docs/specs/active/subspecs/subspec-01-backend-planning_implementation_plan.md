@@ -6,7 +6,7 @@
 - **Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)
 **Execution order:** backend contract and tests first; dependent React sub-spec/plan next, after backend verification
 
-This document defines **proposed** source files and executable API designs. The initial package, FastAPI health/OpenAPI composition, and basic contract and architecture tests are now implemented. Public API declarations below remain *proposals* unless explicitly listed as implemented in the current module `contract.md`; real geography, PostGIS, source adapters and the agent are still absent. Later steps require verified geography inputs and independent dependency decisions.
+This document defines **proposed** source files and executable API designs. The initial package, FastAPI health/OpenAPI composition, basic contract tests, and a partial territory slice are now implemented. Step 2 includes typed territory catalog/import APIs, independently checked normalized snapshots, HTTP reads, and contract tests; approved complete RU/BY source snapshots, PostGIS-backed imports, and full geometry topology checks remain pending. Public API declarations below remain *proposals* unless explicitly listed as implemented in the current module `contract.md`; real geography, PostGIS, source adapters and the agent are still absent. Later steps require verified geography inputs and independent dependency decisions.
 
 ## 1. Architecture decision and scope control
 
