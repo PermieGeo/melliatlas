@@ -272,7 +272,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn('Next bounded delivery task', plan)
         self.assertIn('Acceptance test inventory', plan)
         self.assertIn('Convergence review after each task', plan)
-        self.assertIn('MVP01-BE-V01', plan)
+        self.assertRegex(plan, r'\*\*Task ID:\*\* `MVP01-BE-V\d{2}`')
         self.assertIn('BE-T001', plan)
         self.assertIn('BE-T060', plan)
         self.assertIn('**Acceptance:** PENDING', plan)

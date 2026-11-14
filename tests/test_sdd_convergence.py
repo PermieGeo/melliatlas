@@ -107,28 +107,39 @@ class SddConvergenceTests(unittest.TestCase):
     def _current(self) -> tuple[str, str]:
         return PLAN.read_text(encoding="utf-8"), SPEC.read_text(encoding="utf-8")
 
+    @staticmethod
+    def _set_task_field(plan: str, label: str, value: str) -> str:
+        heading = "## 4. Next bounded delivery task"
+        prefix, _, remainder = plan.partition(heading)
+        assert remainder, "Missing next-task heading"
+        section, sep, following = remainder.partition("## 5.")
+        pattern = rf"(?m)^- \*\*{re.escape(label)}:\*\* .+$"
+        changed, count = re.subn(pattern, f"- **{label}:** {value}", section, count=1)
+        assert count == 1, f"Missing current-task field {label}"
+        return prefix + heading + changed + sep + following
+
     def test_current_task_maps_to_real_requirements_and_inventory(self) -> None:
         self.assertEqual([], convergence_errors(*self._current(), ROOT))
 
     def test_unknown_requirement_is_rejected(self) -> None:
         plan, spec = self._current()
-        broken = plan.replace("`MVP01-BE-R06`,", "`MVP01-BE-R99`,", 1)
+        broken = self._set_task_field(plan, "Requirement IDs", "`MVP01-BE-R99`")
         self.assertIn("Unknown requirement: MVP01-BE-R99", convergence_errors(broken, spec, ROOT))
 
     def test_unknown_test_reference_is_rejected(self) -> None:
         plan, spec = self._current()
-        broken = plan.replace("`BE-T019`,", "`BE-T999`,", 1)
+        broken = self._set_task_field(plan, "Test inventory IDs", "`BE-T999`")
         self.assertIn("Unknown test inventory ID: BE-T999", convergence_errors(broken, spec, ROOT))
 
     def test_false_task_acceptance_is_rejected(self) -> None:
         plan, spec = self._current()
-        broken = plan.replace("**Status:** Implemented; acceptance PENDING", "**Status:** Accepted", 1)
+        broken = self._set_task_field(plan, "Status", "Accepted")
         self.assertIn("Next task has invalid status or acceptance claim", convergence_errors(broken, spec, ROOT))
 
     def test_nonexistent_implemented_interface_is_rejected(self) -> None:
         plan, spec = self._current()
-        broken = plan.replace(
-            "`backend/src/melliatlas/api/app.py`", "`backend/src/melliatlas/api/missing.py`", 1
+        broken = self._set_task_field(
+            plan, "Existing interfaces", "`backend/src/melliatlas/api/missing.py`"
         )
         self.assertIn(
             "Unknown existing interface: backend/src/melliatlas/api/missing.py",
@@ -149,11 +160,7 @@ class SddConvergenceTests(unittest.TestCase):
 
     def test_task_tests_must_cover_a_relevant_requirement(self) -> None:
         plan, spec = self._current()
-        broken = plan.replace(
-            "- **Test inventory IDs:** `BE-T019`, `BE-T020`, `BE-T021`, `BE-T026`, `BE-T027`, `BE-T045`, `BE-T047`, `BE-T052`, `BE-T053`",
-            "- **Test inventory IDs:** `BE-T001`, `BE-T002`",
-            1,
-        )
+        broken = self._set_task_field(plan, "Test inventory IDs", "`BE-T001`, `BE-T002`")
         self.assertIn(
             "Selected tests do not cover current task requirements",
             convergence_errors(broken, spec, ROOT),
@@ -161,13 +168,9 @@ class SddConvergenceTests(unittest.TestCase):
 
     def test_each_task_requirement_needs_a_selected_test(self) -> None:
         plan, spec = self._current()
-        broken = plan.replace(
-            "- **Test inventory IDs:** `BE-T019`, `BE-T020`, `BE-T021`, `BE-T026`, `BE-T027`, `BE-T045`, `BE-T047`, `BE-T052`, `BE-T053`",
-            "- **Test inventory IDs:** `BE-T019`",
-            1,
-        )
+        broken = self._set_task_field(plan, "Test inventory IDs", "`BE-T040`")
         self.assertIn(
-            "Selected tests do not cover task requirement: MVP01-BE-R06",
+            "Selected tests do not cover task requirement: MVP01-BE-R04",
             convergence_errors(broken, spec, ROOT),
         )
 

@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
+from starlette.concurrency import run_in_threadpool
 
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse
 from melliatlas.jobs.api import (
@@ -16,6 +17,7 @@ from melliatlas.jobs.api import (
     InvestigationService,
     InvestigationSnapshot,
     InvestigationStatus,
+    InvestigationStorageError,
 )
 from melliatlas.planning.api import TimeWindow
 from melliatlas.territories.api import CountryCode
@@ -170,14 +172,15 @@ def create_investigation_router(service: InvestigationService) -> APIRouter:
                 if request.starting_point is not None
                 else None
             )
-            snapshot = service.submit(
+            snapshot = await run_in_threadpool(
+                service.submit,
                 InvestigationRequest(
                     country=request.country,
                     territory_id=request.territory_id,
                     scenario_id=request.scenario_id,
                     season=season,
                     starting_point=point,
-                )
+                ),
             )
         except (InvalidInvestigationRequest, ValueError):
             return _error(
@@ -191,10 +194,21 @@ def create_investigation_router(service: InvestigationService) -> APIRouter:
     @router.get(
         "/{id}",
         response_model=InvestigationResponse,
-        responses={404: {"model": ErrorResponse}, 422: {"model": ErrorResponse}},
+        responses={
+            404: {"model": ErrorResponse},
+            422: {"model": ErrorResponse},
+            503: {"model": ErrorResponse},
+        },
     )
     async def read_investigation(id: UUID) -> InvestigationResponse | JSONResponse:
-        snapshot = service.get(id)
+        try:
+            snapshot = await run_in_threadpool(service.get, id)
+        except InvestigationStorageError:
+            return _error(
+                503,
+                ApiErrorCode.INVESTIGATION_STORAGE_UNAVAILABLE,
+                "Investigation storage is unavailable",
+            )
         if snapshot is None:
             return _error(404, ApiErrorCode.INVESTIGATION_NOT_FOUND, "Unknown investigation")
         return _present(snapshot)
