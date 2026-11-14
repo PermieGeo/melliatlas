@@ -121,6 +121,28 @@ class SddConvergenceTests(unittest.TestCase):
     def test_current_task_maps_to_real_requirements_and_inventory(self) -> None:
         self.assertEqual([], convergence_errors(*self._current(), ROOT))
 
+    def test_current_task_has_contract_first_integration_design(self) -> None:
+        plan, _ = self._current()
+        section = re.search(
+            r"(?ms)^### (?:\d+\.\d+ )?Public contracts and integration design\n"
+            r"(.*?)(?=^### |^## |\Z)",
+            plan,
+        )
+        self.assertIsNotNone(section, "Current task lacks a public-contract design section")
+        assert section is not None
+        design = section.group(1)
+        for heading in (
+            "Public types and signatures",
+            "Module interactions",
+            "Failure contracts",
+            "Compatibility",
+            "Contract-first tests",
+        ):
+            with self.subTest(heading=heading):
+                self.assertIn(f"#### {heading}", design)
+        self.assertIn("backend/src/", design)
+        self.assertIn("acceptance", design.casefold())
+
     def test_unknown_requirement_is_rejected(self) -> None:
         plan, spec = self._current()
         broken = self._set_task_field(plan, "Requirement IDs", "`MVP01-BE-R99`")
