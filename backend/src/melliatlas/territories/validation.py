@@ -6,6 +6,10 @@ import re
 from datetime import timezone
 from math import isfinite
 
+from shapely.errors import GEOSException
+from shapely.geometry import shape
+from shapely.validation import explain_validity
+
 from melliatlas.territories.api import (
     CountryCode,
     ExpectedInventory,
@@ -53,29 +57,6 @@ def snapshot_checksum(snapshot: ReferenceSnapshot) -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def _segments_intersect(a: Position, b: Position, c: Position, d: Position) -> bool:
-    def orientation(p: Position, q: Position, r: Position) -> float:
-        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
-
-    def on_segment(p: Position, q: Position, r: Position) -> bool:
-        return min(p[0], r[0]) <= q[0] <= max(p[0], r[0]) and min(p[1], r[1]) <= q[1] <= max(
-            p[1], r[1]
-        )
-
-    o1, o2 = orientation(a, b, c), orientation(a, b, d)
-    o3, o4 = orientation(c, d, a), orientation(c, d, b)
-    if ((o1 > 0 and o2 < 0) or (o1 < 0 and o2 > 0)) and (
-        (o3 > 0 and o4 < 0) or (o3 < 0 and o4 > 0)
-    ):
-        return True
-    return (
-        (o1 == 0 and on_segment(a, c, b))
-        or (o2 == 0 and on_segment(a, d, b))
-        or (o3 == 0 and on_segment(c, a, d))
-        or (o4 == 0 and on_segment(c, b, d))
-    )
-
-
 def _validate_ring(ring: list[Position]) -> None:
     if len(ring) < 4 or ring[0] != ring[-1]:
         raise TerritoryReferenceError("Polygon rings must contain four positions and be closed")
@@ -86,22 +67,10 @@ def _validate_ring(ring: list[Position]) -> None:
             raise TerritoryReferenceError("GeoJSON coordinates must use WGS84 longitude/latitude")
     if any(a == b for a, b in zip(ring, ring[1:])):
         raise TerritoryReferenceError("Polygon rings contain repeated adjacent coordinates")
-    area = sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(ring, ring[1:]))
-    if abs(area) < 1e-12:
-        raise TerritoryReferenceError("Polygon rings cannot have zero signed area")
-    segments = list(zip(ring, ring[1:]))
-    for index, (a, b) in enumerate(segments):
-        for next_index in range(index + 1, len(segments)):
-            if next_index in {index + 1, len(segments) - 1} and index == 0:
-                continue
-            if next_index == index + 1:
-                continue
-            c, d = segments[next_index]
-            if _segments_intersect(a, b, c, d):
-                raise TerritoryReferenceError("Self-intersecting polygon ring")
 
 
 def validate_geometry(geometry: GeometryWgs84) -> None:
+    """Validate WGS84 coordinate structure and GEOS polygon topology."""
     polygon_groups = (
         [geometry["coordinates"]] if geometry["type"] == "Polygon" else geometry["coordinates"]
     )
@@ -112,7 +81,15 @@ def validate_geometry(geometry: GeometryWgs84) -> None:
             raise TerritoryReferenceError("GeoJSON polygon has no rings")
         for ring in polygon:
             _validate_ring(ring)
-    # Full hole topology and inter-polygon validity require a spatial database check.
+
+    try:
+        parsed = shape(dict(geometry))
+    except (GEOSException, ValueError, TypeError) as exc:
+        raise TerritoryReferenceError("Malformed GeoJSON polygon topology") from exc
+    if parsed.is_empty or parsed.area == 0 or not parsed.is_valid:
+        raise TerritoryReferenceError(
+            f"Invalid GeoJSON polygon topology: {explain_validity(parsed)}"
+        )
 
 
 def _require_catalogs(snapshot: ReferenceSnapshot, inventory: ExpectedInventory) -> None:

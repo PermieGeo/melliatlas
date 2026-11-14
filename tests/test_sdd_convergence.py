@@ -44,8 +44,8 @@ def convergence_errors(plan: str, spec: str, root: Path) -> list[str]:
     if not re.fullmatch(r"`MVP01-BE-V\d{2}`", task_id):
         errors.append("Invalid bounded task identifier")
     status = task_field(task, "Status").casefold()
-    if not status.startswith("proposed"):
-        errors.append("Next task must not claim implementation or acceptance")
+    if not (status.startswith("proposed") or status == "implemented; acceptance pending"):
+        errors.append("Next task has invalid status or acceptance claim")
 
     requirements = re.findall(r"`(MVP01-BE-R\d{2})`", task_field(task, "Requirement IDs"))
     inventory_refs = re.findall(r"`(BE-T\d{3})`", task_field(task, "Test inventory IDs"))
@@ -122,8 +122,8 @@ class SddConvergenceTests(unittest.TestCase):
 
     def test_false_task_acceptance_is_rejected(self) -> None:
         plan, spec = self._current()
-        broken = plan.replace("**Status:** Proposed", "**Status:** Accepted", 1)
-        self.assertIn("Next task must not claim implementation or acceptance", convergence_errors(broken, spec, ROOT))
+        broken = plan.replace("**Status:** Implemented; acceptance PENDING", "**Status:** Accepted", 1)
+        self.assertIn("Next task has invalid status or acceptance claim", convergence_errors(broken, spec, ROOT))
 
     def test_nonexistent_implemented_interface_is_rejected(self) -> None:
         plan, spec = self._current()

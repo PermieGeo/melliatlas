@@ -145,25 +145,28 @@ class DocumentationTests(unittest.TestCase):
 
         interaction = next((item for item in diagrams if 'sequenceDiagram' in item), None)
         self.assertIsNotNone(interaction)
-        for expected in (
-            'actor Beekeeper',
-            'participant Server',
-            'participant Cache',
-            'participant Results',
-            'loop Beekeeper checks the investigation status',
-            'alt Result not ready yet',
-            'else Result available',
+        for participant in ('Beekeeper', 'Jobs', 'Sources', 'Cache', 'Engine', 'Store'):
+            with self.subTest(participant=participant):
+                self.assertRegex(interaction, rf'(?:actor|participant) {participant}\b')
+        for statement in (
             'Request investigation for point X',
-            'Point availability and recommended nearby points',
+            'alt Result not ready yet',
+            'else Analysis completed',
+            'else Investigation failed',
+            'Jobs->>Store:',
+            'Store-->>Jobs:',
+            'Save a new immutable investigation/version',
+            'Completed historical results are never overwritten',
         ):
-            with self.subTest(expected=expected):
-                self.assertIn(expected, interaction)
+            with self.subTest(statement=statement):
+                self.assertIn(statement, interaction)
+        self.assertNotIn('Engine->>Store:', interaction)
 
         lowered = readme.casefold()
-        self.assertIn('conceptual interaction diagram', lowered)
-        self.assertIn('request-and-result interaction flow', lowered)
+        self.assertIn('conceptual interaction flow', lowered)
         self.assertIn('synthetic or fixture-based', lowered)
-        self.assertIn('cache or source-oriented store', lowered)
+        self.assertIn('outside `mvp-01`', lowered)
+        self.assertIn('immutable', lowered)
 
     def test_umbrella_roadmap_and_requirements_are_complete(self) -> None:
         umbrella = (ROOT / 'docs/specs/umbrella_spec_melliatlas.md').read_text(encoding='utf-8')

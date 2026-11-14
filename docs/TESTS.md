@@ -19,7 +19,7 @@ python -m ruff format --check backend
 python -m pyright --project backend
 ```
 
-Current tests cover FastAPI health/OpenAPI, versioned territory endpoints, offline territory-reference validation, independent inventory comparisons, simple WGS84 polygon checks, idempotent in-memory loading, and architecture import boundaries. These tests use synthetic administrative snapshots; **they do not establish complete real RU/BY coverage or PostGIS topology correctness**. No approved full reference, PostGIS import, source adapter, agent, or browser acceptance test exists yet.
+Current tests cover FastAPI health/OpenAPI, versioned territory endpoints, the synthetic V01 investigation POST/GET path with successful and insufficient-evidence results, rejected malformed and unsupported requests, independent fixture determinism, process-local store isolation and network-free execution, offline territory-reference validation, independent inventory comparisons, WGS84 coordinate checks and Shapely/GEOS polygon topology, idempotent in-memory loading, and architecture import boundaries. These tests use synthetic administrative snapshots; **they do not establish complete real RU/BY coverage or PostGIS topology correctness**. No approved full reference, real provider adapter, PostGIS import, full engine/agent, or browser acceptance test exists yet. V01 tests establish only the provisional, non-durable synthetic backend slice.
 
 To validate externally obtained normalized reference files after verifying permission, provenance, and independent inventories, run from an installed backend environment:
 

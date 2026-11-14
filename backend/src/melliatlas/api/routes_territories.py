@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 
+from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse
 from melliatlas.territories.api import (
     CatalogDepthUnsupported,
     CountryCode,
@@ -66,23 +67,24 @@ def _geometry_response(item: TerritoryGeometry) -> GeometryResponse:
     )
 
 
-def _failure(status: int, code: str, message: str) -> JSONResponse:
-    return JSONResponse(status_code=status, content={"error": {"code": code, "message": message}})
+def _failure(status: int, code: ApiErrorCode, message: str) -> JSONResponse:
+    response = ErrorResponse(error=ErrorDetail(code=code, message=message))
+    return JSONResponse(status_code=status, content=response.model_dump(mode="json"))
 
 
 def _catalog_failure(exc: Exception) -> JSONResponse:
     if isinstance(exc, ReferenceUnavailableError):
-        return _failure(503, "TERRITORY_REFERENCE_UNAVAILABLE", str(exc))
+        return _failure(503, ApiErrorCode.TERRITORY_REFERENCE_UNAVAILABLE, str(exc))
     if isinstance(exc, TerritoryNotFound):
-        return _failure(404, "TERRITORY_NOT_FOUND", "Unknown territory")
+        return _failure(404, ApiErrorCode.TERRITORY_NOT_FOUND, "Unknown territory")
     if isinstance(exc, CatalogDepthUnsupported):
         return _failure(
             409,
-            "DISTRICT_COVERAGE_UNSUPPORTED",
+            ApiErrorCode.DISTRICT_COVERAGE_UNSUPPORTED,
             "District catalog is not supported for this region",
         )
     if isinstance(exc, TerritoryReferenceError):
-        return _failure(422, "INVALID_TERRITORY_REQUEST", str(exc))
+        return _failure(422, ApiErrorCode.INVALID_TERRITORY_REQUEST, str(exc))
     raise exc
 
 
@@ -96,7 +98,14 @@ def create_territory_router(catalog: TerritoryCatalog | None) -> APIRouter:
             CountryResponse(code=CountryCode.BY, name="Belarus"),
         ]
 
-    @router.get("/regions", response_model=list[TerritoryResponse])
+    @router.get(
+        "/regions",
+        response_model=list[TerritoryResponse],
+        responses={
+            422: {"model": ErrorResponse},
+            503: {"model": ErrorResponse},
+        },
+    )
     async def list_regions(country: CountryCode) -> list[TerritoryResponse] | JSONResponse:
         if catalog is None:
             return _catalog_failure(
@@ -107,7 +116,16 @@ def create_territory_router(catalog: TerritoryCatalog | None) -> APIRouter:
         except (ReferenceUnavailableError, TerritoryReferenceError) as exc:
             return _catalog_failure(exc)
 
-    @router.get("/districts", response_model=list[TerritoryResponse])
+    @router.get(
+        "/districts",
+        response_model=list[TerritoryResponse],
+        responses={
+            404: {"model": ErrorResponse},
+            409: {"model": ErrorResponse},
+            422: {"model": ErrorResponse},
+            503: {"model": ErrorResponse},
+        },
+    )
     async def list_districts(region_id: str) -> list[TerritoryResponse] | JSONResponse:
         if catalog is None:
             return _catalog_failure(
@@ -123,7 +141,15 @@ def create_territory_router(catalog: TerritoryCatalog | None) -> APIRouter:
         ) as exc:
             return _catalog_failure(exc)
 
-    @router.get("/geometry/{territory_id}", response_model=GeometryResponse)
+    @router.get(
+        "/geometry/{territory_id}",
+        response_model=GeometryResponse,
+        responses={
+            404: {"model": ErrorResponse},
+            422: {"model": ErrorResponse},
+            503: {"model": ErrorResponse},
+        },
+    )
     async def get_geometry(territory_id: str) -> GeometryResponse | JSONResponse:
         if catalog is None:
             return _catalog_failure(
@@ -135,11 +161,19 @@ def create_territory_router(catalog: TerritoryCatalog | None) -> APIRouter:
             return _catalog_failure(exc)
         if item is None:
             return _failure(
-                404, "TERRITORY_GEOMETRY_MISSING", "No validated geometry for territory"
+                404, ApiErrorCode.TERRITORY_GEOMETRY_MISSING, "No validated geometry for territory"
             )
         return _geometry_response(item)
 
-    @router.get("/{territory_id}", response_model=TerritoryResponse)
+    @router.get(
+        "/{territory_id}",
+        response_model=TerritoryResponse,
+        responses={
+            404: {"model": ErrorResponse},
+            422: {"model": ErrorResponse},
+            503: {"model": ErrorResponse},
+        },
+    )
     async def get_territory(territory_id: str) -> TerritoryResponse | JSONResponse:
         if catalog is None:
             return _catalog_failure(
@@ -150,7 +184,7 @@ def create_territory_router(catalog: TerritoryCatalog | None) -> APIRouter:
         except (ReferenceUnavailableError, TerritoryReferenceError) as exc:
             return _catalog_failure(exc)
         if item is None:
-            return _failure(404, "TERRITORY_NOT_FOUND", "Unknown territory")
+            return _failure(404, ApiErrorCode.TERRITORY_NOT_FOUND, "Unknown territory")
         return _territory_response(item)
 
     return router
