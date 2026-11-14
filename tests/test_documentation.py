@@ -136,42 +136,41 @@ class DocumentationTests(unittest.TestCase):
         self.assertNotIn('BeeGeoTrace', readme)
         self.assertNotIn('melliatlas_v01', readme)
 
-    def test_root_readme_contains_overview_and_source_dag(self) -> None:
+    def test_root_readme_contains_overview_and_investigation_states(self) -> None:
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')
         diagrams = MERMAID_BLOCK.findall(readme)
-        self.assertGreaterEqual(len(diagrams), 2, 'Expected overview and source/analysis DAG')
-        overview, dag = diagrams[:2]
+        self.assertEqual(2, len(diagrams), 'Expected concept and investigation-state diagrams')
+        overview, lifecycle = diagrams
         self.assertIn('flowchart LR', overview)
         self.assertIn('Beekeeper', overview)
         self.assertIn('Wild pollinators', overview)
-        self.assertIn('flowchart TD', dag)
-        self.assertIn('Potential sources', dag)
-        self.assertIn('Adapters and analyzers', dag)
-        self.assertIn('agent', dag.casefold())
-        self.assertIn('map', dag.lower())
-        self.assertGreaterEqual(dag.count('-->'), 12, 'DAG must show explicit dependencies')
-        self.assertIn('not yet integrated', dag, 'Planned sources must not appear live')
-        edges = re.findall(r'^\s*([A-Z][A-Z0-9_]*)\s*-->\s*([A-Z][A-Z0-9_]*)', dag, re.MULTILINE)
+        self.assertIn('stateDiagram-v2', lifecycle)
+        self.assertIn('direction TB', lifecycle)
+
+        edges = re.findall(
+            r'^\s*(\[\*\]|[A-Za-z]+)\s*-->\s*'
+            r'(\[\*\]|[A-Za-z]+)', lifecycle, re.MULTILINE,
+        )
         self.assertGreaterEqual(len(edges), 12)
-        adjacency: dict[str, set[str]] = {}
-        for source, destination in edges:
-            adjacency.setdefault(source, set()).add(destination)
-            adjacency.setdefault(destination, set())
-        visited: set[str] = set()
-        visiting: set[str] = set()
-
-        def visit(node: str) -> None:
-            self.assertNotIn(node, visiting, f'Documented DAG contains a cycle at {node}')
-            if node in visited:
-                return
-            visiting.add(node)
-            for destination in adjacency[node]:
-                visit(destination)
-            visiting.remove(node)
-            visited.add(node)
-
-        for node in adjacency:
-            visit(node)
+        self.assertIn(('[*]', 'Selection'), edges)
+        for transition in (
+            ('Selection', 'Validation'),
+            ('Validation', 'Rejected'),
+            ('Validation', 'Analysis'),
+            ('Assessment', 'Revision'),
+            ('Revision', 'Analysis'),
+            ('Assessment', 'Result'),
+            ('Revision', 'Unresolved'),
+            ('Analysis', 'Failed'),
+            ('Result', 'Viewed'),
+        ):
+            with self.subTest(transition=transition):
+                self.assertIn(transition, edges)
+        for terminal in ('Viewed', 'Rejected', 'Unresolved', 'Failed'):
+            self.assertIn((terminal, '[*]'), edges)
+        self.assertIn('conceptual state diagram', readme.lower())
+        self.assertIn('synthetic or fixture-based', readme.lower())
+        self.assertIn('investigation ID', readme)
 
     def test_umbrella_roadmap_and_requirements_are_complete(self) -> None:
         umbrella = (ROOT / 'docs/specs/umbrella_spec_melliatlas.md').read_text(encoding='utf-8')
