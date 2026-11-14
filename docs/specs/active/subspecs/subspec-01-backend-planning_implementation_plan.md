@@ -8,7 +8,7 @@
 - **Normative sub-spec:** [MVP-01 Backend requirements](subspec-01-backend-planning.md)
 - **Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)
 
-The normative sub-spec defines **what** the system must do; this advisory plan defines **how the current bounded task will cross public boundaries**. Before generating code for a *new* boundary needed by the current task, review the typed declarations, module interactions, failures, compatibility constraints and contract tests in section 4.1. Once implemented, source declarations, module `contract.md`, OpenAPI and executable contract tests become authoritative; replace detailed proposed declarations in the plan with links rather than maintaining a second copy. Do not design every future module from this plan. Backend APIs needed by the React client must be verified before its dependent slice; the first browser slice need not wait for all backend capabilities.
+The [active backend sub-spec](subspec-01-backend-planning.md) owns normative behavior and acceptance; this plan records **current implementation choices, public-boundary design, task sequencing, and test oracles**. The [specification guidance](../../AGENTS.md) governs contract-first design and approval. Section 4.1 maps the already implemented V02 contracts to code and tests; it is not another source of normative requirements.
 
 ## 1. Current implementation evidence
 
@@ -38,23 +38,15 @@ Implemented APIs are defined by their linked Python source and `contract.md`, **
 
 The automated import matrix lives in `backend/tests/architecture/import_policy.py`. Peer modules may import only exposed `api.py` interfaces or deliberate public package facades. Domain logic must not import FastAPI, SQL implementations or network clients; `api` is a composition boundary. No cycles, hidden service locators, arbitrary submitted DAG definitions or live public-web/Saturn I/O in `MVP-01`. Explicitly inject I/O collaborators. For the names `forage`, `ecology` and `season`, **planning owns domain policy**, **analyzers owns calculations**, and **agent owns decisions about re-evaluation**. Do not create a `common` package without independently identified consumers.
 
-## 3. Domain and interface invariants for future tasks
+## 3. Technical decisions for upcoming slices
 
-These are **constraints**, not approved declarations for future modules. When a boundary becomes necessary for the **selected task**, define its typed inputs, outputs, import path, errors, and contract-first tests **before implementation begins**; obtain developer review for architectural decisions. The current task's design belongs in section 4.1, not in the future backlog. Code is authoritative once that boundary is implemented; do not duplicate it indefinitely.
+The [normative information model](subspec-01-backend-planning.md#2-information-model-and-invariants), [HTTP obligations](subspec-01-backend-planning.md#3-public-backend-operations), and [approval gates](subspec-01-backend-planning.md#7-outstanding-decisions--approval-gates) live in the sub-spec. Do not redefine their enumerations, evidence fields, exclusion rules, persistence guarantees or acceptance thresholds here. Use the relevant requirement IDs when selecting a task.
 
-| Boundary | Required semantics |
-| --- | --- |
-| `territories` | Preserve the implemented `TerritoryCatalog` and `TerritoryImport(snapshot, inventory)` protocols; retain source/date/reference identity and explicit missing/unsupported geometry. Precision/unknown accuracy and real PostGIS topology still need reviewed decisions. |
-| `planning` | WGS84 points, inclusive valid season windows, stable candidate IDs, forage opportunities and ordered stops. An `EXCLUDED` demo site cannot appear in a recommended plan; `CAUTION` is not a prohibition; missing evidence is not proof of safety. No honey-yield prediction. |
-| `sources` | Country-aware descriptors: cartography in RU/BY, fixture public-web in RU/BY, fixture Saturn only in RU. Evidence must retain source ID, kind, verified kind/payload pairing, synthetic/mode, collection time, **effective interval**, geographic/reference scope and meaningful **uncertainty**. Missing interval/coverage is unknown, not a permissive default. No fixture network requests. |
-| `analyzers` | Pure calculations receive typed inputs; dispatch checks analyzer kind/input/output compatibility. Spatial exclusion uses geometry and explicit fictional rule evidence, never candidate-name matching. |
-| `engine` | A small bounded execution sequence or typed DAG, as required by actual operations. Distinguish `SourceStep(source_id)` from `AnalyzerStep(analyzer_kind)`, validate dependency ordering, artifact bindings, duplicates, cycles and limits. Do not build a universal workflow engine. |
-| `agent` | Deterministic observe/replan/stop decisions, limited steps and time, trace with triggering evidence IDs and revised candidates. Do not label unsupported plans as successful. |
-| `jobs` | Technical `QUEUED/RUNNING/COMPLETED/FAILED` is distinct from domain `PLAN_FOUND/INSUFFICIENT_EVIDENCE/NO_FEASIBLE_ALTERNATIVE`. A completed analysis may lack a plan; an execution failure is not successful completion. Request includes an optional private starting point. Snapshot retains reference version, evidence summaries, diagnostics and decision trace. |
-| `persistence` | PostGIS adapters implement domain-owned ports rather than inheritance-only wrappers; transactional complete-result save, stable UUID, immutable history, spatial SRID/topology checks and fresh-connection reopen. No claim of durable in-flight job recovery. |
-| `api` | Preserve the current `create_app` keyword parameters; inject new dependencies additively. Typed HTTP inputs/outputs, validated WGS84 and dates, stable sanitized `{error: {code, message, details?}}` responses, synthetic disclaimer, result/trace and evidence summary. Public route changes require contract review. |
+The remaining **technical choices** should be reviewed at the task that first needs them:
 
-The approved HTTP operations and details remain in the [active backend sub-spec](subspec-01-backend-planning.md). Once a module exists, its public API and `contract.md` are the source of truth. Avoid predeclaring speculative protocols; record only the decision a bounded implementation task cannot safely make itself.
+- **Execution (`V04`):** start with a bounded typed sequence; introduce a dependency DAG only if actual operations need it. If a DAG becomes necessary, distinguish `SourceStep(source_id)` from `AnalyzerStep(analyzer_kind)` and test artifact binding, ordering and cycle rejection instead of building a generic workflow platform.
+- **Ecology and replanning (`V04`):** place eligibility policy in `planning`, pure spatial evaluation in `analyzers`, and decisions about additional evidence in `agent`. Use the actual geometry evaluation output to trigger replanning; do not couple policy to candidate labels. Select exact typed contracts only when `V04` becomes current.
+- **Geographic import (`V03`):** choose the catalog-loading and reference-version selection boundary when approved datasets exist. The current [`import_reference.py`](../../../../backend/scripts/import_reference.py) validates normalized files offline; it is not a PostGIS import adapter.
 
 ## 4. Next bounded delivery task
 
@@ -125,35 +117,19 @@ This section covers **only the current V02 verification task**. The V01 and V02 
 
 The V01 investigation slice remains implemented but unaccepted. Its fixed fictional RU/Smolensk scenario, in-process task, typed HTTP contract and temporary default store are covered by `backend/tests/contract/test_investigations_http.py` and `backend/tests/unit/test_synthetic_investigation.py`. V02 adds an opt-in completed-only persistence bridge without changing the default `melliatlas.main:app` configuration. Its typed codec, adapter transaction intentions, and fake-backed HTTP reopen tests are executable, but **none** establishes real PostGIS acceptance. `backend/scripts/verify_postgis_investigations.py` is an explicit real-database check to run only after the open approvals and environment prerequisites have been satisfied.
 
-## 5. Follow-on vertical slices and external gates
+## 5. Upcoming vertical slices
 
-| Slice | Product result | Verification and open decisions |
+The active V02 verification task is in section 4; these later slices identify **implementation work**, not new requirements or approved designs. Their normative scope and external gates remain in [sub-spec sections 4–7](subspec-01-backend-planning.md#4-requirement-to-umbrella-mapping). Select and review public interfaces only when each slice becomes current.
+
+| Slice | Implementation decision to make when selected | Planned test IDs |
 | --- | --- | --- |
-| `V02` — persistence and reopen (partial) | Optional completed snapshots and fictional site points have an adapter/migration; real PostGIS evidence is pending | Run real migration, rollback and fresh-session tests (`BE-T040`–`BE-T044`); approve DB driver/test environment |
-| `V03` — complete geography | Approved dated RU/BY regions, two pilot district catalogs and valid provenance/topology | Independent inventories, licensing, geometry accuracy and PostGIS validation (`BE-T001`–`BE-T012`, `BE-T058`); existing fail-closed routes remain |
-| `V04` — evidence-driven replanning | Explicit restriction/precaution, source modes, typed dependencies, bounded agent and alternate sites | No outbound calls, kind/payload validation, actual geometry intersection, bounded replan and trace (`BE-T013`–`BE-T039`, `BE-T054`–`BE-T059`) |
-| `V05` — backend/Web contract handoff | Full typed source/investigation API, frozen fixtures and documented client states | OpenAPI and route checks (`BE-T048`–`BE-T053`, `BE-T060`), separate React sub-spec then first browser E2E |
-
-These are *work-order groupings*, not additional normative MVP stages. Reorder small tasks if dependencies require, but do not remove existing acceptance requirements. A small backend-to-Web contract can be verified early, so the separate Web sub-spec may start after its actual API dependency is accepted rather than after every backend module is finished. Preserve the existing developer-controlled workstream and do not mark umbrella `MVP-01` complete until backend, real geography, PostGIS and browser acceptance evidence exist.
-
-### Persistent storage considerations
-
-Proposed PostGIS entities include versioned reference/territory/inventory, investigations, plans, evidence, decisions and site geometries. Required constraints: immutable reference identity, independent expected inventory, foreign keys, transactional completed-result persistence, SRID 4326, appropriate spatial indexing, and reviewable migrations. Choose concrete table definitions when building the persistence slice; do not invent a generalized storage abstraction now. In-flight task durability is not part of MVP-01.
-
-### Geographic reference approval
-
-A complete reference requires an independently sourced dated RU/BY inventory, separate Smolensk/Vitebsk district inventories, documented licensing/attribution, full normalized payload hash, canonical ID mappings and reviewed topology/precision. Do not infer completeness from imported rows or OSM-only data. Large licensed reference downloads remain outside PATCH archives. `backend/scripts/import_reference.py` currently **validates local normalized files only**; it does not populate PostGIS or approve the source.
-
-### Tooling and dependencies
-
-The project check command is `bash ./run-tests.sh`; `sh ./run-format.sh` is the mutating formatter. Existing backend tests, Ruff and Pyright checks are configured in `backend/pyproject.toml`. PostGIS, Shapely/pyproj, GeoPandas/pyogrio, and Import Linter/Grimp are candidates only where a task demonstrates value and approval conditions are met. Never describe proposed commands, dependencies or reference sources as already installed.
+| `V03` — complete geography | Build and inject a versioned territory catalog from approved normalized references, replacing validation-only offline tooling where necessary; choose concrete importer and storage interfaces at task selection. | `BE-T001`–`BE-T012`, `BE-T058` |
+| `V04` — evidence-driven replanning | Connect source and analyzer adapters to a bounded execution loop; run geometry-derived eligibility checks and request targeted follow-up analysis. | `BE-T013`–`BE-T039`, `BE-T054`–`BE-T059` |
+| `V05` — backend/Web contract handoff | Verify source/investigation response schemas and fixture examples before the separately scoped Web slice consumes them. | `BE-T048`–`BE-T053`, `BE-T060` |
 
 ## 6. Acceptance test inventory
 
-The 60 `BE-Txxx` entries below are the **full planned inventory**, not 60 tests to implement in a single task. `U` = unit; `C` = public contract; `I` = real integration; `A` = architecture; `N` = negative; `B` = boundary. Each task selects a relevant subset and records independent oracles and actual execution evidence.
-
-
-This matrix is a **target acceptance inventory**, not a claim that its named tests have run. `U` = unit; `C` = public contract; `I` = real PostGIS/HTTP integration; `A` = architecture; `N` = negative; `B` = boundary. Expected results are independent of the implementation's private algorithms.
+The 60 `BE-Txxx` entries are a **planned inventory**, not claims that each test has run. `U` = unit; `C` = public contract; `I` = real integration; `A` = architecture; `N` = negative; `B` = boundary. Each bounded task selects relevant IDs with independent oracles and records actual execution evidence.
 
 | Test ID | Category | Module/API | Input / observable assertion | Requirement |
 | --- | --- | --- | --- | --- |
@@ -223,27 +199,10 @@ This matrix is a **target acceptance inventory**, not a claim that its named tes
 
 ## 7. Convergence review after each task
 
-Perform a bounded diff review against the task's requirement and test IDs, public contracts and architecture policy. Record:
+Apply the shared [SDD convergence rules](../../AGENTS.md) to the selected task; record only **task-specific evidence** here:
 
-1. **Scope:** Every added file and dependency has a task purpose; no unrelated requirements or API changes appeared.
-2. **Behavior:** Positive, negative, boundary and failure results are supported by executed tests. Explicitly identify acceptance tests still unrun.
-3. **Contracts:** Check that typed public interfaces, module interactions and failure mappings were reviewed **before** implementing any new boundary for the current task. Existing Python imports, HTTP routes and error envelopes remain compatible; after implementation, replace draft declarations with links to code, `contract.md`, OpenAPI and executable tests. Record the approval and any justified deviations.
-4. **Architecture:** Review import-policy checks, actual dependencies, duplication of domain rules, I/O ownership and speculative interfaces.
-5. **Traceability:** Match current task → requirements → test inventory → implemented paths → `feature-cross-ref.yaml`; do not promote `planned`/`partial` to `verified` on test existence alone.
-6. **Evidence and provenance:** Differentiate real geography from synthetic evidence, missing information from safety, and implementation authorization from acceptance.
-7. **Delivery:** Report exact checks/results, unavailable tools, unresolved approvals and recovery steps. A ZIP or a commit is not implementation acceptance.
-
-The repository tests check machine-verifiable consistency and detect several deliberately introduced contradictions; they cannot replace critical architectural review or validate the real-world completeness of RU/BY geography.
-
-## 8. Risks and recovery
-
-| Risk | Mitigation |
-| --- | --- |
-| Unapproved or incomplete source geography | Keep real-reference acceptance blocked; record license/date/accuracy/inventory decisions, never fabricate shapes or counts |
-| Fictional ecology mistaken for legal restriction | Preserve fixture provenance and applicability in every result; restriction is demo-only |
-| Untyped evidence or unbounded execution | Validate kind/payload pairing, artifact compatibility, limits and errors at owned boundaries |
-| Failed database transaction interpreted as success | Atomic persistence and real PostGIS integration tests before `A09` |
-| Architectural drift despite passing tests | Negative import-policy tests plus change-focused convergence review |
-| API changes disrupting downstream Web work | Preserve accepted routes and add contract/regression tests before altering public schemas |
-
-**Implementation status:** FastAPI bootstrap, partial territory contracts/API, the V01 synthetic in-process investigation path, and an opt-in V02 PostGIS completed-snapshot adapter/migration are implemented. Real PostGIS integration, complete RU/BY datasets, full evidence-driven Agent/Engine and Web are not. No full backend or product acceptance has been claimed.
+1. Link the task's requirement IDs, reviewed public boundaries and selected `BE-Txxx` cases to the actual changed paths, contract tests and results; report unrun integration checks explicitly.
+2. Compare changed public signatures, HTTP errors, module imports and storage behavior with the source-of-truth code, OpenAPI and approved requirements; record justified deviations and any required review.
+3. For V02, capture the test database/migration identity, executed `BE-T040`–`BE-T044` results, transaction/geometry oracles and open driver/environment approvals. Mock-backed tests do not substitute for real PostGIS evidence.
+4. Update feature traceability and draft-plan links only after implementation review. Keep V02 acceptance pending until the required independent evidence and developer decision exist.
+5. If a real-DB check fails, capture its migration identity, failing assertion and DB state; fix the bounded defect and rerun the affected integration case before claiming any acceptance evidence.
