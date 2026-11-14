@@ -2,7 +2,10 @@
 
 - **Stage:** `MVP-01` — Working sustainable-beekeeping MVP
 - **Workstream:** `mvp-01-backend`
-- **Status:** Approved for implementation; MVP-01 backend work in progress. Acceptance pending
+- **Status:** Active
+- **Requirements approval:** Approved for `MVP-01` backend scope; unresolved external decisions remain explicit
+- **Implementation authorization:** Active workstream authorized; task-specific external gates remain open
+- **Acceptance:** Pending; no complete backend acceptance criterion or overall `MVP-01` stage accepted
 - **Normative parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md), especially `MVP-01.R01`–`R14`, `MVP-01.A01`–`A09`, and applicable `SYS-01`–`SYS-20`
 - **Linked advisory plan:** [Backend implementation plan](subspec-01-backend-planning_implementation_plan.md)
 **Next dependent sub-spec:** MVP-01 React/Web interface; not yet activated or written
@@ -157,17 +160,18 @@ The endpoint names below are the proposed **normative external contract for the 
 - Tests must be initially failing after public API stubs exist and before logic is implemented; no placeholder `assert False`, skipped assertions, or tests based solely on mocked persistence/HTTP semantics.
 - Pure tests may use isolated fixtures. PostGIS geometry, migration, SQL and persistence claims require a real PostgreSQL/PostGIS test database. Real RU/BY catalog completeness requires verified source snapshots and their independent inventories; a tiny mock catalog is insufficient.
 - No automated test may call live public-web, Saturn, or uncontrolled map-provider endpoints. Controlled fixtures must make the distinction apparent in response payloads and test names.
-- No unauthorized dependencies, altered enforcement policies, weakened checks or edits to `AGENTS.md` may be introduced when implementing the sub-spec.
+- Runtime dependencies and relaxation of approved enforcement constraints require explicit approval. Task-scoped development tooling may be justified and added without weakening checks. Changes to `AGENTS.md` require an explicit developer request.
 - The dependent frontend stage must separately test browser navigation, map overlays, timeline and saved-investigation behavior.
 
 ## 7. Outstanding decisions / approval gates
 
-The following are **not** silently resolved by this draft:
+The following remain **task-specific approval gates** even though the backend workstream is authorized:
 
 1. Select the reference-date, license-compatible and complete territory/boundary datasets for Russia and Belarus, including how the source represents administrative boundaries or contested/ambiguous units; record coverage statements rather than political or administrative assumptions.
 2. Select the exact synthetic season, Smolensk/Vitebsk scenario sites, forage fixture intervals and demonstration-only exclusion/precaution rules; ensure fictional values are never presented as real environmental restrictions.
-3. Approve dependency additions and supported Python version, database access/migration tooling, geometry validator, and backend test integration approach.
+3. Approve runtime dependency additions, supported Python version, database access/migration tooling and geometry validator. Justify task-scoped development/test tooling without weakening existing checks.
 4. Approve the exact API request/response envelope and whether MVP-01 runs synchronously or through a bounded in-process task queue. Both must preserve stable investigation identifiers and completed-result retrieval.
 5. Confirm local PostGIS startup/testing mechanism and how licensed boundary datasets are acquired and pinned without packaging runtime/private data into patches.
 
-**Implementation authorization:** none. Developer review and explicit approval of this sub-spec are required before product code is written.
+**Authorization checkpoint:** Developer-approved backend requirements and implementation authorization are in effect for the active `MVP-01` backend workstream. This authorization does not approve missing reference sources, licenses, runtime dependencies, or database arrangements listed above. Steps 1 and part of 2 have implementation; no full backend acceptance criterion is verified. The `MVP-01` stage remains unaccepted until the separate Web workstream and browser checks are complete.
+

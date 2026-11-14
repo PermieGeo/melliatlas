@@ -1,11 +1,13 @@
 # MelliAtlas — Umbrella Product Specification
 
-**Version:** 0.5 (geographic coverage and early live sources draft)  
-**Status:** Draft — requires explicit developer approval  
-**Product:** Sustainable migratory beekeeping, pollinator conservation, and ecological research  
+**Version:** 0.5 (geographic coverage and early live sources draft)
+**Status:** Working roadmap; future workstreams remain proposals, not automatically authorized
+**Active authorization:** The `MVP-01` backend sub-spec is approved for implementation; its external approval gates remain open
+**Acceptance:** No `MVP-01` stage acceptance has been granted
+**Product:** Sustainable migratory beekeeping, pollinator conservation, and ecological research
 **Delivery approach:** A functioning vertical-slice MVP in stage `MVP-01`; every later stage incrementally improves the working application.
 
-> **Specification boundary.** This document defines intended product outcomes, cross-cutting constraints, and the ordered stage roadmap. It does **not** assert that any planned feature is implemented, authorize work on a stage, or substitute for its future active sub-specification and separate implementation plan. Technical details marked *to be decided in sub-spec* are deliberately unresolved, not tacit requirements.
+> **Specification boundary.** This document defines intended product outcomes, cross-cutting constraints, and the ordered stage roadmap. It does **not** assert that planned features are implemented or authorize any workstream by itself; authorization for the active `MVP-01` backend comes from the separately approved sub-specification and developer decision. Technical details marked *to be decided in sub-spec* are deliberately unresolved, not tacit requirements.
 
 ## 1. Mission and decision framework
 
@@ -638,11 +640,11 @@ The primary web experience must remain comprehensible on desktop and mobile brow
 
 An umbrella stage is **not** an active sub-spec. The developer chooses the next workstream and stage. Only then:
 
-1. Read the approved umbrella and relevant active-stage context; read dependent modules' `contract.md` and public APIs without loading unrelated source trees.
+1. Read the umbrella and the approved active-scope requirements; read dependent modules' `contract.md` and public APIs without loading unrelated source trees.
 2. Draft an active sub-spec under `docs/specs/active/` with testable requirement IDs, user journeys, input/output contracts, failure cases, security/privacy implications, migration constraints, and independent acceptance criteria.
 3. Create **one separate advisory implementation plan** named `<spec_stem>_implementation_plan.md` next to that active sub-spec. It must contain proposed additions/edits/deletions by file, module ownership/contracts, ordered implementation tasks, TDD-first tests, architecture tests, test fixtures, commands, assumptions, recovery strategy, and representative pseudocode where genuinely useful.
-4. Research existing open-source or established methods for each nontrivial new capability, recording the findings and trade-offs in the active plan.
-5. Obtain explicit developer acceptance of the active requirement scope and implementation authorization before changing product code.
+4. Compare established solutions for consequential dependency and algorithm choices; record trade-offs when a custom implementation needs justification.
+5. Obtain developer approval of the active requirement scope and separate authorization to implement it; acceptance comes only after implementation and verification.
 
 **Do not pre-generate** sub-specs or implementation plans for unselected stages. Plans never authorize implementation by themselves.
 
@@ -681,4 +683,5 @@ These decisions should not block agreement on the product mission or the umbrell
 
 **Research and conservation maturity (`MVP-12`–`MVP-13`)** adds comparative analysis, controlled data sharing, field observations, and multi-year monitoring. Its scientific credibility depends on documented methods and evidence, not just software completeness.
 
-**Document status:** Draft. Approval of this umbrella is separate from selecting `MVP-01` and authorizing its implementation. No active sub-spec, implementation plan, checkpoint, or product implementation is created by this document.
+**Document status:** Working roadmap; this document is not blanket approval of future stages. The active `MVP-01` backend sub-spec has separate developer approval and authorization, while its implementation and acceptance remain incomplete. The umbrella itself does not create product code or stage acceptance.
+
