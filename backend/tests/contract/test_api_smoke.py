@@ -35,7 +35,8 @@ def test_openapi_is_served_with_health_contract() -> None:
         == "#/components/schemas/HealthResponse"
     )
     assert schema["components"]["schemas"]["HealthResponse"]["required"] == ["status"]
-    assert "/api/v1/investigations" not in schema["paths"]
+    assert "/api/v1/investigations" in schema["paths"]
+    assert "/api/v1/investigations/{id}" in schema["paths"]
 
 
 def test_app_settings_are_injected_without_shared_mutable_state() -> None:

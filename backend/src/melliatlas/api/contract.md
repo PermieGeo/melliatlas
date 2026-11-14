@@ -1,12 +1,12 @@
 # HTTP API Contract
 
-**Public Python interfaces:** `melliatlas.api.app.create_app`, `melliatlas.api.app.AppSettings`, `melliatlas.api.public.HealthResponse`, and versioned territory endpoints.
+**Public Python interfaces:** `melliatlas.api.app.create_app`, `melliatlas.api.app.AppSettings`, `melliatlas.api.public.HealthResponse`, `ApiErrorCode`, `ErrorResponse`, and versioned territory endpoints.
 
 ## Implemented
 
 - `create_app(settings=..., territories=...)` constructs an independent FastAPI application without network calls or implicit database connections. The territory catalog is injected through its public `TerritoryCatalog` protocol; omitting it leaves protected reference reads unavailable.
 - `GET /health` returns HTTP 200 and `{"status":"ok"}`. It measures process responsiveness, not readiness of references or databases.
-- `GET /openapi.json` exposes the response models and enums; `/docs` provides the framework API viewer.
+- `GET /openapi.json` exposes success and error response schemas, stable error codes, and applicable `404`, `409`, `422` and `503` statuses; `/docs` provides the framework API viewer.
 - `GET /api/v1/territories/countries` lists supported country codes RU/BY, **not** claims of loaded boundary data.
 - `GET /api/v1/territories/regions?country=RU|BY` returns typed first-order catalog entries when a validated reference has been injected.
 - `GET /api/v1/territories/districts?region_id=...` returns the complete supported pilot district catalog or an explicit unsupported-depth error.
@@ -15,8 +15,17 @@
 
 ## Error semantics
 
-Public domain errors have the envelope `{"error":{"code":"...","message":"..."}}`. Missing catalog -> `503/TERRITORY_REFERENCE_UNAVAILABLE`; unknown territory -> `404/TERRITORY_NOT_FOUND`; missing geometry -> `404/TERRITORY_GEOMETRY_MISSING`; unsupported districts -> `409/DISTRICT_COVERAGE_UNSUPPORTED`; malformed input -> `422/INVALID_REQUEST`. An unavailable catalog is **never** represented as a successfully loaded empty catalog.
+Public domain errors have the typed envelope `{"error":{"code":"...","message":"..."}}` (`ErrorResponse`, `ApiErrorCode`). Missing catalog -> `503/TERRITORY_REFERENCE_UNAVAILABLE`; unknown territory -> `404/TERRITORY_NOT_FOUND`; missing geometry -> `404/TERRITORY_GEOMETRY_MISSING`; unsupported districts -> `409/DISTRICT_COVERAGE_UNSUPPORTED`; malformed input -> `422/INVALID_REQUEST`. The shared FastAPI validation handler returns `422/INVALID_REQUEST` in the same envelope; OpenAPI documents this actual response instead of the framework default validation schema. An unavailable catalog is **never** represented as a successfully loaded empty catalog.
 
 ## Deferred
 
 Full versioned investigation/source endpoints, source provenance DTOs, PostGIS repositories and migrations, and durable server-side job processing remain deferred to later implementation-plan steps. The initial backend stages do not meet full `MVP01-BE-A01` or the browser MVP acceptance gate.
+
+## Synthetic investigation API (V01, development-only)
+
+- `create_app(..., investigations=...)` optionally injects an `InvestigationService`; when omitted, each app instance constructs an independent, non-durable `InMemoryInvestigationService` and offline `SyntheticFixtureProvider`. Existing `settings` and `territories` keyword arguments are unchanged.
+- `POST /api/v1/investigations` accepts `country`, `territory_id`, `scenario_id`, inclusive `season_start`/`season_end`, and an optional private `starting_point` in `{longitude, latitude}` WGS84 degrees. It returns `202` with a UUID, `QUEUED`, and typed optional result fields. Its background task performs a bounded **in-process** fixture calculation; no durability or restart recovery is promised.
+- `GET /api/v1/investigations/{id}` returns a typed snapshot with technical `status`, independent domain `outcome`, optional ordered `plan`, synthetic evidence summaries, `decision_trace`, diagnostics and limitations. The private starting point is deliberately omitted from the read response. A completed snapshot is immutable; `GET` never recomputes it.
+- The only recognized fixture is `synthetic-ru-2026-v01`, country `RU`, synthetic scope `ru:region:smolensk`, inclusive season `2026-05-01`–`2026-08-15`. All forage windows, coordinates and labels are fictional. Even though the scope label resembles a real administrative region, it does **not** establish geographic reference availability, real forage, ecological suitability, approved legal boundaries or a reliable travel recommendation.
+- A window with fewer than two suitable synthetic stops is `COMPLETED` with `INSUFFICIENT_EVIDENCE` and no fabricated plan. Invalid combinations return `422/INVALID_INVESTIGATION_REQUEST`, unknown UUIDs return `404/INVESTIGATION_NOT_FOUND`, and malformed JSON/UUIDs return `422/INVALID_REQUEST`. OpenAPI lists the typed error envelope.
+- This path does not implement the full Source registry, Agent, DAG executor, ecological conflict screening, PostGIS, live weather, cross-process jobs or full `MVP01-BE-A08/A09` acceptance. It must not be treated as production-ready.

@@ -25,25 +25,25 @@ def authorization_errors(
     errors: list[str] = []
     if phase != "READY_FOR_IMPLEMENTATION":
         return errors
+    def status(markdown: str, field: str) -> str:
+        return _field(markdown, field).split(" — ", maxsplit=1)[0].strip()
+
     for label, document in (("sub-spec", spec), ("plan", plan)):
-        approval = _field(document, "Requirements approval").casefold()
-        implementation = _field(document, "Implementation authorization").casefold()
-        acceptance = _field(document, "Acceptance").casefold()
-        if "approved" not in approval:
+        if status(document, "Requirements approval") != "APPROVED":
             errors.append(f"{label}: requirements not approved")
-        if "authorized" not in implementation or re.search(r"\bnone\b|\bnot authorized\b", implementation):
+        if status(document, "Implementation authorization") != "AUTHORIZED":
             errors.append(f"{label}: implementation authorization conflicts with checkpoint")
-        if not acceptance.startswith("pending"):
+        if status(document, "Acceptance") != "PENDING":
             errors.append(f"{label}: acceptance conflicts with unfinished checkpoint")
-    umbrella_authorization = _field(umbrella, "Active authorization").casefold()
-    if "mvp-01" not in umbrella_authorization or "backend" not in umbrella_authorization:
+    if status(umbrella, "Active authorization") != "AUTHORIZED":
         errors.append("umbrella: active backend authorization missing")
-    umbrella_acceptance = _field(umbrella, "Acceptance").casefold()
-    if "no" not in umbrella_acceptance or "accepted" in umbrella_acceptance:
+    if status(umbrella, "Acceptance") != "PENDING":
         errors.append("umbrella: whole-stage acceptance must remain pending")
-    if "backend requirements are approved" not in index.casefold():
+    if status(index, "Requirements approval") != "APPROVED":
         errors.append("index: active backend approval missing")
-    if "acceptance" not in index.casefold() or "pending" not in index.casefold():
+    if status(index, "Implementation authorization") != "AUTHORIZED":
+        errors.append("index: implementation authorization missing")
+    if status(index, "Acceptance") != "PENDING":
         errors.append("index: acceptance status missing")
     return errors
 
@@ -70,8 +70,8 @@ class SddAuthorizationTests(unittest.TestCase):
     def test_unauthorized_spec_mutation_is_rejected(self) -> None:
         phase, umbrella, spec, plan, index = self._inputs()
         changed = spec.replace(
-            "**Implementation authorization:** Active workstream authorized",
-            "**Implementation authorization:** none",
+            "**Implementation authorization:** AUTHORIZED — active workstream",
+            "**Implementation authorization:** none — active workstream",
             1,
         )
         self.assertIn(
@@ -81,7 +81,35 @@ class SddAuthorizationTests(unittest.TestCase):
 
     def test_premature_acceptance_is_rejected(self) -> None:
         phase, umbrella, spec, plan, index = self._inputs()
-        changed = plan.replace("**Acceptance:** Pending", "**Acceptance:** Accepted", 1)
+        changed = plan.replace("**Acceptance:** PENDING", "**Acceptance:** ACCEPTED", 1)
+        self.assertIn(
+            "plan: acceptance conflicts with unfinished checkpoint",
+            authorization_errors(phase, umbrella, spec, changed, index),
+        )
+
+    def test_unauthorized_word_is_not_treated_as_authorized(self) -> None:
+        phase, umbrella, spec, plan, index = self._inputs()
+        changed = spec.replace(
+            "**Implementation authorization:** AUTHORIZED — active workstream",
+            "**Implementation authorization:** unauthorized — active workstream",
+            1,
+        )
+        self.assertIn(
+            "sub-spec: implementation authorization conflicts with checkpoint",
+            authorization_errors(phase, umbrella, changed, plan, index),
+        )
+
+    def test_unapproved_word_is_not_treated_as_approved(self) -> None:
+        phase, umbrella, spec, plan, index = self._inputs()
+        changed = spec.replace("**Requirements approval:** APPROVED", "**Requirements approval:** unapproved", 1)
+        self.assertIn(
+            "sub-spec: requirements not approved",
+            authorization_errors(phase, umbrella, changed, plan, index),
+        )
+
+    def test_contradictory_pending_acceptance_is_rejected(self) -> None:
+        phase, umbrella, spec, plan, index = self._inputs()
+        changed = plan.replace("**Acceptance:** PENDING", "**Acceptance:** PENDING; accepted", 1)
         self.assertIn(
             "plan: acceptance conflicts with unfinished checkpoint",
             authorization_errors(phase, umbrella, spec, changed, index),

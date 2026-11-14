@@ -1,9 +1,9 @@
 # MVP-01 Backend — Implementation Plan
 
 - **Status:** Active; implementation partially complete
-- **Requirements approval:** Active backend sub-spec approved
-- **Implementation authorization:** Backend workstream authorized; external approvals are task-specific
-- **Acceptance:** Pending; no full backend acceptance criterion has been signed off
+- **Requirements approval:** APPROVED — active backend sub-spec
+- **Implementation authorization:** AUTHORIZED — backend workstream; external approvals are task-specific
+- **Acceptance:** PENDING — no full backend acceptance criterion has been signed off
 - **Stage/workstream:** `MVP-01` / `mvp-01-backend`
 - **Normative sub-spec:** [MVP-01 Backend requirements](subspec-01-backend-planning.md)
 - **Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)
@@ -17,7 +17,7 @@ The normative sub-spec defines obligations; this advisory plan organizes small d
 | HTTP bootstrap | [`api/app.py`](../../../../backend/src/melliatlas/api/app.py) and [`api/contract.md`](../../../../backend/src/melliatlas/api/contract.md); health, OpenAPI, injected settings and territory catalog | Investigation/source routes, complete OpenAPI and error contracts (`MVP01-BE-A01`, `A12`) |
 | Territory model and catalog | [`territories/api.py`](../../../../backend/src/melliatlas/territories/api.py), [`territories/contract.md`](../../../../backend/src/melliatlas/territories/contract.md); offline validation, in-memory catalog and versioned reads | Approved complete RU/BY references, verified topology/precision, PostGIS adapter (`A02`, `A03`) |
 | Architecture guard | [`backend/tests/architecture/test_module_boundaries.py`](../../../../backend/tests/architecture/test_module_boundaries.py) | Runtime no-network, DI and integration enforcement (`A11`) |
-| Planning, Sources, Analyzers, Engine, Agent, Jobs, Persistence, Web | Not implemented as product capabilities | All associated acceptance evidence pending |
+| Synthetic planning, fixture source, and in-memory jobs | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py), [`sources/api.py`](../../../../backend/src/melliatlas/sources/api.py), [`jobs/api.py`](../../../../backend/src/melliatlas/jobs/api.py); explicitly synthetic V01 POST/GET and provisional in-memory lifecycle | Real ecology, agent, typed DAG, PostGIS, Web and full acceptance remain pending |
 
 Implemented APIs are defined by their linked Python source and `contract.md`, **not** by future design notes. `create_app(*, settings=..., territories=...)` remains backwards compatible. Territory URLs include `/api/v1/territories/districts?region_id=...` and `/api/v1/territories/geometry/{territory_id}`. No real complete geography has been imported. No acceptance test may infer complete regional coverage from the synthetic fixtures.
 
@@ -58,10 +58,10 @@ The approved HTTP operations and details remain in the [active backend sub-spec]
 ## 4. Next bounded delivery task
 
 - **Task ID:** `MVP01-BE-V01`
-- **Status:** Proposed; no implementation or acceptance claimed
+- **Status:** Implemented; acceptance PENDING
 - **Goal:** First runnable *backend* investigation path using explicitly synthetic evidence: accepted API request → bounded analysis → typed domain outcome → read by stable investigation ID.
 - **Requirement IDs:** `MVP01-BE-R06`, `MVP01-BE-R10`, `MVP01-BE-R12`, `MVP01-BE-R13`, `MVP01-BE-R14`, `MVP01-BE-R15`
-- **Test inventory IDs:** `BE-T019`, `BE-T020`, `BE-T026`, `BE-T027`, `BE-T045`, `BE-T047`, `BE-T052`, `BE-T053`
+- **Test inventory IDs:** `BE-T019`, `BE-T020`, `BE-T021`, `BE-T026`, `BE-T027`, `BE-T045`, `BE-T047`, `BE-T052`, `BE-T053`
 - **Scope:** One controlled fixture scenario, explicit synthetic/source limitations, basic valid/invalid request paths, stable result ID and readable interim result. Use only the domain and orchestration interfaces genuinely necessary to deliver this path. Implement a minimal deterministic execution path first; elaborate it into typed DAG/Agent only when evidence-driven replanning is added.
 - **Not in scope:** Live providers, approved RU/BY geometry, durable PostGIS completion/reopen, full ecological replanning, browser UI or claiming `MVP01-BE-A08/A09` acceptance.
 - **Existing interfaces:** `backend/src/melliatlas/api/app.py`, `backend/src/melliatlas/api/contract.md`, `backend/src/melliatlas/territories/api.py`, `backend/src/melliatlas/territories/contract.md`.
@@ -70,7 +70,7 @@ The approved HTTP operations and details remain in the [active backend sub-spec]
 - **Test-first sequence (TDD):** Verify existing boundary contracts → add failing positive/negative API tests and independent synthetic scenario oracles → implement minimal typed model and deterministic path → run relevant pytest, architecture, Ruff, Pyright and full `run-tests.sh` → review API diff, dependency direction, traceability and data limitations.
 - **Exit evidence:** Runnable POST/GET contract tests for successful and evidence-limited outcomes, rejected invalid inputs with no side effects, deterministic repeatability, no network, explicit synthetic labels and no false persistence/coverage claims. Mark the task implemented only after actual tests run; do **not** advance stage acceptance.
 
-This task is a **proposed next slice**, not permission to silently choose an unapproved external dataset or weaken the normative MVP-01 acceptance requirements. The next implementation patch must select its concrete test cases from the inventory and report which assertions actually passed.
+The V01 implementation uses only an explicitly fictional RU/Smolensk-labeled fixture, a single-process memory store, and an in-process FastAPI background task. Its HTTP contract, deterministic planning output, error paths, and interim QUEUED representation are covered by `backend/tests/contract/test_investigations_http.py` and `backend/tests/unit/test_synthetic_investigation.py`. The previously selected inventory IDs remain **future full-acceptance targets**, not evidence that every source/analyzer/agent behavior in the normative sub-spec is complete. No live geography, durable storage, real weather, or verified ecological screening is claimed. The complete MVP backend acceptance remains PENDING.
 
 ## 5. Follow-on vertical slices and external gates
 
@@ -193,4 +193,4 @@ The repository tests check machine-verifiable consistency and detect several del
 | Architectural drift despite passing tests | Negative import-policy tests plus change-focused convergence review |
 | API changes disrupting downstream Web work | Preserve accepted routes and add contract/regression tests before altering public schemas |
 
-**Implementation status:** FastAPI bootstrap and partial territory contracts/API are implemented; complete RU/BY datasets, PostGIS, fixture investigation execution, Agent and Web are not. No full backend or product acceptance has been claimed.
+**Implementation status:** FastAPI bootstrap, partial territory contracts/API, and the V01 synthetic in-process investigation path are implemented. Complete RU/BY datasets, PostGIS persistence, full evidence-driven Agent/Engine and Web are not. No full backend or product acceptance has been claimed.

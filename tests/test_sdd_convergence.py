@@ -16,6 +16,21 @@ def task_field(task: str, label: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+def mapped_requirements(cell: str) -> set[str]:
+    """Expand explicit Rxx and Rxx–Ryy inventory references without guessing gaps."""
+    result: set[str] = set()
+    for part in cell.split("/"):
+        match = re.fullmatch(r"R(\d{2})(?:[–-]R(\d{2}))?", part.strip())
+        if match is None:
+            return set()
+        first = int(match.group(1))
+        last = int(match.group(2) or match.group(1))
+        if last < first:
+            return set()
+        result.update(f"MVP01-BE-R{number:02d}" for number in range(first, last + 1))
+    return result
+
+
 def convergence_errors(plan: str, spec: str, root: Path) -> list[str]:
     """Find unknown requirements/tests, nonexistent current owners, and false task acceptance."""
     errors: list[str] = []
@@ -29,8 +44,8 @@ def convergence_errors(plan: str, spec: str, root: Path) -> list[str]:
     if not re.fullmatch(r"`MVP01-BE-V\d{2}`", task_id):
         errors.append("Invalid bounded task identifier")
     status = task_field(task, "Status").casefold()
-    if not status.startswith("proposed"):
-        errors.append("Next task must not claim implementation or acceptance")
+    if not (status.startswith("proposed") or status == "implemented; acceptance pending"):
+        errors.append("Next task has invalid status or acceptance claim")
 
     requirements = re.findall(r"`(MVP01-BE-R\d{2})`", task_field(task, "Requirement IDs"))
     inventory_refs = re.findall(r"`(BE-T\d{3})`", task_field(task, "Test inventory IDs"))
@@ -61,22 +76,22 @@ def convergence_errors(plan: str, spec: str, root: Path) -> list[str]:
         if not line.startswith("| `BE-T"):
             continue
         columns = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        if len(columns) != 5 or not re.search(r"R\d{2}", columns[-1]):
+        if len(columns) != 5:
+            errors.append(f"Inventory entry has invalid columns: {columns[0]}")
+            continue
+        mapped = mapped_requirements(columns[-1])
+        if not mapped:
             errors.append(f"Inventory entry lacks a requirement mapping: {columns[0]}")
             continue
-        mapped = set()
-        for reference in re.findall(r"R\d{2}", columns[-1]):
-            full = f"MVP01-BE-{reference}"
-            mapped.add(full)
-            if full not in known_requirements:
-                errors.append(f"Inventory {columns[0].strip(chr(96))} has unknown requirement {full}")
+        for requirement in sorted(mapped - known_requirements):
+            errors.append(f"Inventory {columns[0].strip('`')} has unknown requirement {requirement}")
         inventory_requirements[columns[0].strip("`")] = mapped
     task_set = set(requirements)
-    if task_set and inventory_refs and not any(
-        task_set.intersection(inventory_requirements.get(test_id, set()))
-        for test_id in inventory_refs
-    ):
+    covered = set().union(*(inventory_requirements.get(test_id, set()) for test_id in inventory_refs))
+    if task_set and inventory_refs and not task_set.intersection(covered):
         errors.append("Selected tests do not cover current task requirements")
+    for requirement in sorted(task_set - covered):
+        errors.append(f"Selected tests do not cover task requirement: {requirement}")
     interfaces = task_field(task, "Existing interfaces")
     if not interfaces:
         errors.append("Current task does not identify existing interfaces")
@@ -107,8 +122,8 @@ class SddConvergenceTests(unittest.TestCase):
 
     def test_false_task_acceptance_is_rejected(self) -> None:
         plan, spec = self._current()
-        broken = plan.replace("**Status:** Proposed", "**Status:** Accepted", 1)
-        self.assertIn("Next task must not claim implementation or acceptance", convergence_errors(broken, spec, ROOT))
+        broken = plan.replace("**Status:** Implemented; acceptance PENDING", "**Status:** Accepted", 1)
+        self.assertIn("Next task has invalid status or acceptance claim", convergence_errors(broken, spec, ROOT))
 
     def test_nonexistent_implemented_interface_is_rejected(self) -> None:
         plan, spec = self._current()
@@ -135,7 +150,7 @@ class SddConvergenceTests(unittest.TestCase):
     def test_task_tests_must_cover_a_relevant_requirement(self) -> None:
         plan, spec = self._current()
         broken = plan.replace(
-            "- **Test inventory IDs:** `BE-T019`, `BE-T020`, `BE-T026`, `BE-T027`, `BE-T045`, `BE-T047`, `BE-T052`, `BE-T053`",
+            "- **Test inventory IDs:** `BE-T019`, `BE-T020`, `BE-T021`, `BE-T026`, `BE-T027`, `BE-T045`, `BE-T047`, `BE-T052`, `BE-T053`",
             "- **Test inventory IDs:** `BE-T001`, `BE-T002`",
             1,
         )
@@ -143,6 +158,26 @@ class SddConvergenceTests(unittest.TestCase):
             "Selected tests do not cover current task requirements",
             convergence_errors(broken, spec, ROOT),
         )
+
+    def test_each_task_requirement_needs_a_selected_test(self) -> None:
+        plan, spec = self._current()
+        broken = plan.replace(
+            "- **Test inventory IDs:** `BE-T019`, `BE-T020`, `BE-T021`, `BE-T026`, `BE-T027`, `BE-T045`, `BE-T047`, `BE-T052`, `BE-T053`",
+            "- **Test inventory IDs:** `BE-T019`",
+            1,
+        )
+        self.assertIn(
+            "Selected tests do not cover task requirement: MVP01-BE-R06",
+            convergence_errors(broken, spec, ROOT),
+        )
+
+    def test_requirement_ranges_expand_and_reversed_ranges_fail(self) -> None:
+        self.assertEqual(
+            {"MVP01-BE-R02", "MVP01-BE-R03", "MVP01-BE-R04", "MVP01-BE-R13"},
+            mapped_requirements("R02–R04/R13"),
+        )
+        self.assertEqual(set(), mapped_requirements("R04–R02"))
+        self.assertEqual(set(), mapped_requirements("R04/garbage"))
 
     def test_duplicate_inventory_id_is_rejected(self) -> None:
         plan, spec = self._current()

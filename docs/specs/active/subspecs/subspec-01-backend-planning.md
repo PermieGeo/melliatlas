@@ -3,9 +3,9 @@
 - **Stage:** `MVP-01` — Working sustainable-beekeeping MVP
 - **Workstream:** `mvp-01-backend`
 - **Status:** Active
-- **Requirements approval:** Approved for `MVP-01` backend scope; unresolved external decisions remain explicit
-- **Implementation authorization:** Active workstream authorized; task-specific external gates remain open
-- **Acceptance:** Pending; no complete backend acceptance criterion or overall `MVP-01` stage accepted
+- **Requirements approval:** APPROVED — `MVP-01` backend scope; unresolved external decisions remain explicit
+- **Implementation authorization:** AUTHORIZED — active workstream; task-specific external gates remain open
+- **Acceptance:** PENDING — no complete backend acceptance criterion or overall `MVP-01` stage accepted
 - **Normative parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md), especially `MVP-01.R01`–`R14`, `MVP-01.A01`–`A09`, and applicable `SYS-01`–`SYS-20`
 - **Linked advisory plan:** [Backend implementation plan](subspec-01-backend-planning_implementation_plan.md)
 **Next dependent sub-spec:** MVP-01 React/Web interface; not yet activated or written

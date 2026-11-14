@@ -29,55 +29,73 @@ The same territory may offer significant forage resources while also containing 
 
 ## Investigation request lifecycle
 
-A beekeeper selects a **country, region, supported district, planning season, and point X**, and then requests an investigation. The diagram below is a **conceptual interaction diagram**. It shows how the request, background processing, cached source data, stored analysis results, weather updates, and repeated result checks fit together. It does **not** define the exact final persistence schema or the full set of HTTP endpoints.
+A beekeeper selects a **country, region, supported district, planning season, and point X**, then requests an investigation. The diagram is a **conceptual interaction flow**: it combines the initial fixture-based `MVP-01` workflow with **explicitly marked later-stage** caching, weather refreshes and durable persistence. It is not an inventory of implemented API operations.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Beekeeper
-    participant Server as MelliAtlas server
+    participant API as MelliAtlas API
+    participant Jobs as Investigation service
     participant Sources as Source adapters
-    participant Weather as Weather and forecast
-    participant Cache as Cache / source database
+    participant Cache as Source cache / database
     participant Engine as Analysis engine
-    participant Results as Analysis results database
+    participant Store as Investigation results database
+    participant Weather as Weather / forecast (later stage)
 
-    Beekeeper->>Server: Request investigation for point X
-    Server->>Server: Validate territory, season, and point
-    Server->>Sources: Collect geographic, ecological, and public-source data
-    Sources-->>Server: Raw source data
-    Server->>Cache: Save source reads and metadata
-    Server->>Weather: Fetch current weather and forecast
-    Weather-->>Server: Weather update
-    Server->>Engine: Normalize, process, and analyze evidence
-    Engine->>Results: Save analysis result and decision trace
-    Note over Server,Results: Data updates and forecast changes can trigger a refreshed analysis.
+    Beekeeper->>API: Request investigation for point X and season
+    API->>Jobs: Validate and start an investigation
+    Jobs-->>API: Investigation ID and initial status
+    API-->>Beekeeper: Investigation ID
 
-    loop Beekeeper checks the investigation status
-        Beekeeper->>Server: Request investigation result
+    Jobs->>Sources: Collect permitted geographic and synthetic evidence
+    Sources-->>Jobs: Source reads with provenance
+    Jobs->>Cache: Cache source data and metadata (planned)
+    Jobs->>Engine: Analyze critical factors and nearby alternatives
+    Engine-->>Jobs: Point assessment and seasonal planning outcome
+    Jobs->>Store: Persist completed result and decision trace (planned PostGIS)
+
+    loop Beekeeper polls for the investigation result
+        Beekeeper->>API: Request result by investigation ID
+        API->>Jobs: Look up status or completed result
         alt Result not ready yet
-            Server-->>Beekeeper: Investigation accepted or still running
-        else Result available
-            Server->>Results: Load latest saved result
-            Results-->>Server: Availability verdict and nearby recommendations
-            Server-->>Beekeeper: Point availability and recommended nearby points
+            Jobs-->>API: Queued or running
+            API-->>Beekeeper: Result not ready yet
+        else Analysis completed
+            Jobs->>Store: Read immutable completed result
+            Store-->>Jobs: Assessment, alternatives, trace, uncertainty
+            Jobs-->>API: Stored investigation result
+            API-->>Beekeeper: Point assessment, nearby points and seasonal stops
+        else Investigation failed
+            Jobs-->>API: Failed status with diagnostic
+            API-->>Beekeeper: Explicit failure, not a recommendation
         end
+    end
+
+    opt Later stages: scheduled source and weather updates
+        Jobs->>Sources: Refresh authorized source evidence
+        Sources-->>Jobs: Updated data and provenance
+        Jobs->>Weather: Obtain new weather forecast
+        Weather-->>Jobs: Forecast update
+        Jobs->>Engine: Reassess point X and seasonal alternatives
+        Engine-->>Jobs: Updated assessment
+        Jobs->>Store: Save a new immutable investigation/version
+        Note over Jobs,Store: Completed historical results are never overwritten
     end
 ```
 
-The main interactions have the following meaning:
+The interactions have the following meaning:
 
 | Interaction | Expected behavior |
 | --- | --- |
-| **Beekeeper → Server: Request investigation for point X** | The request identifies the target location and planning context. The server validates the territory, season, and supported scenario before starting work. |
-| **Server → Sources / Weather** | The backend gathers evidence from approved sources, including geographic and ecological inputs, public-web evidence, and weather or forecast information when that input is available for the stage. |
-| **Server → Cache** | Source reads and their metadata are preserved in a cache or source-oriented store so that repeated processing can reuse retrieved evidence and keep provenance. |
-| **Server → Engine → Results** | The analysis engine normalizes evidence, runs screening and comparison logic, and stores the resulting assessment, decision trace, and recommended alternatives in persistent storage. |
-| **Refreshed analysis** | When source content changes or a newer weather forecast affects the interpretation, the backend may recompute the assessment and replace or version the stored result. |
-| **Beekeeper polls for the result** | The beekeeper may ask for the result repeatedly. The response is either that the result is not ready yet, or the latest available assessment is returned. |
-| **Returned assessment** | A completed response reports whether the requested point appears available in light of critical factors and, when appropriate, returns recommended nearby points. |
+| **Request investigation** | The beekeeper submits point X and planning context. The server validates the request and returns an investigation identifier; it does not wait for every analysis step to finish. |
+| **Collect and cache evidence** | Registered adapters provide permitted source observations with provenance. The source cache/store is separate from saved analysis results. `MVP-01` uses synthetic/fixture planning evidence, not live news or Saturn ingestion. |
+| **Analyze and persist** | The engine evaluates geographic, forage and ecological evidence; the investigation service owns the result lifecycle and coordinates persistence. A completed investigation and its decision trace remain immutable. PostGIS-backed durability is planned but not yet implemented. |
+| **Poll for the result** | Repeated requests can return a pending status, a completed assessment, or an explicit failure. A technically completed analysis may still report insufficient evidence or no feasible seasonal plan. |
+| **Assessment and recommendations** | Results distinguish exclusion, caution and unknown conditions near point X, propose nearby alternatives when supported by evidence, and support the product goal of a seasonal plan with at least two stops. They do not certify a site as safe or legally available. |
+| **Later-stage data updates** | Approved source or weather changes can lead to a new assessment and a new immutable investigation/version; they must not rewrite an earlier completed result. Scheduled forecast ingestion is outside `MVP-01`. |
 
-The diagram describes the **request-and-result interaction flow**, not the complete internal job model. Backend execution states, durable worker recovery, and provider-specific retry policies remain defined by the active backend specification and later implementation stages.
+This diagram describes **request-and-result interactions**, not the definitive job-state or persistence schemas. The active backend specification governs accepted MVP behavior; full durable execution, live source ingestion and forecast-based reassessment remain separate future deliverables.
 
 ## Evidence and analysis
 
@@ -93,7 +111,7 @@ Every significant conclusion should retain its source, relevant dates and geogra
 
 The product is developed in independently testable increments. **`MVP-01` must deliver an end-to-end browser workflow**, including a React/Leaflet map, a Python/FastAPI backend, a minimal deterministic agent, synthetic placement analysis with ecological screening, and reopening a completed result from PostgreSQL/PostGIS. Later stages add real data adapters, richer seasonality, stronger conservation and relocation analysis, optional LLM planning, research tools, and long-term ecological monitoring.
 
-**Current status:** the implemented backend provides a FastAPI application factory, a health endpoint, OpenAPI metadata, and initial tests. Typed territory contracts, an offline reference validator, and versioned territory reads are now implemented, but no complete approved RU/BY catalog or real geometry dataset is loaded. PostGIS persistence, source adapters, the planning engine, agent behavior, and the React user interface are not yet implemented. Both diagrams describe the intended product behavior.
+**Current status:** the implemented backend provides a FastAPI application factory, a health endpoint, OpenAPI metadata, and initial tests. Typed territory contracts, an offline reference validator, and versioned territory reads are now implemented, but no complete approved RU/BY catalog or real geometry dataset is loaded. A development-only synthetic RU scenario now supports in-process investigation creation, deterministic forage-window selection and repeat reads by UUID; it has no real provider access or durable storage. PostGIS persistence, real source adapters, ecological replanning, the full engine/agent, and the React user interface are not yet implemented. Both diagrams describe the intended product behavior.
 
 ## Architecture and project documentation
 

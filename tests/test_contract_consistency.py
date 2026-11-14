@@ -89,8 +89,10 @@ class ContractConsistencyTests(unittest.TestCase):
             node for node in tree.body
             if isinstance(node, ast.FunctionDef) and node.name == "create_app"
         )
-        self.assertEqual(["settings", "territories"], [arg.arg for arg in factory.args.kwonlyargs])
-        self.assertEqual(2, len(factory.args.kw_defaults))
+        keywords = [arg.arg for arg in factory.args.kwonlyargs]
+        self.assertEqual(["settings", "territories"], keywords[:2])
+        self.assertIn("investigations", keywords)
+        self.assertEqual(len(keywords), len(factory.args.kw_defaults))
         self.assertTrue(all(isinstance(default, ast.Constant) and default.value is None
                             for default in factory.args.kw_defaults))
         self.assertEqual([], factory.args.args)
