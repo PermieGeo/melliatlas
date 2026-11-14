@@ -1,55 +1,32 @@
 # AGENTS.md
 
-## Role
-- Act as a senior software architect and engineer.
-- Be terse. No filler, apologies, or explanations of standard concepts.
-- Prioritize correctness, modularity, simplicity, and maintainability.
-
-## Before Editing
-- **ALWAYS** read the approved specification, linked plan, and contracts, source files, and tests of modules affected by the current stage or feature group.
-- **ALWAYS** load only modules that must change for the current specification stage or feature group. For dependent modules, read only their `contract.md` and public API.
-- **TRY TO** reuse existing functionality before implementing new code; inspect relevant module contracts and public APIs, not the entire codebase.
-- **ALWAYS** follow the nearest `AGENTS.md`; nested rules may strengthen, never weaken root rules.
-- **ALWAYS** carefully read `docs/specs/AGENTS.md` and strictly follow its directives alongside other applicable `AGENTS.md` files.
-- **ALWAYS** distinguish implemented behavior from approved requirements and unapproved drafts.
-- **NEVER** modify any `AGENTS.md` unless the user explicitly requests it.
-- Make minimal, cohesive changes. **NEVER** expand scope without approval.
+## Engineering scope
+- Prefer correct, cohesive, maintainable changes over additional process or abstraction.
+- Read the active requirements, relevant plan section, applicable module contracts, implementation, and tests before editing. Read only affected code; for dependent modules, normally read their public APIs and contracts.
+- Follow applicable nested `AGENTS.md` files. Keep requirements, authorized work, implemented behavior, and accepted outcomes distinct.
+- Do not edit any `AGENTS.md` without an explicit developer request. Do not expand the authorized task without approval.
 
 ## Architecture
-- **ALWAYS** organize code into cohesive, independently understandable modules by feature or capability, not global technical layers.
-- **ALWAYS** define explicit module ownership and narrow public APIs that hide implementation details. Document each module's purpose and public contract in its `contract.md`.
-- **ALWAYS** collect genuinely general-purpose reusable functions in a dedicated `common` module; keep domain-specific helpers with their owning modules.
-- **NEVER** import another module's internals.
-- **NEVER** introduce circular dependencies or hidden coupling.
-- **NEVER** couple domain logic to frameworks, databases, or transport.
-- **NEVER** use global mutable state or service locators.
-- **NEVER** add speculative abstractions, wrappers, or unnecessary layers.
-- Keep dependencies explicit and directed. Prefer composition.
+- Organize by cohesive capabilities with clear owners and small public boundaries. Do not introduce a package or abstraction solely to satisfy a diagram.
+- Import other modules through declared public APIs, not private implementations. Keep dependency direction explicit, acyclic, and enforceable in tests.
+- Keep domain decisions independent of HTTP frameworks, database adapters, and external transport. Inject I/O collaborators at composition boundaries.
+- Avoid global mutable registries, service locators, hidden side effects, speculative wrappers, and generic `common` modules. Extract shared code only when concrete consumers justify it.
+- Prefer clear names, readable control flow, and explicit failure states. Some local duplication is acceptable when premature sharing would obscure ownership.
 
-## Code Quality
-- **TRY NOT TO** exceed 1000 physical lines per handwritten source file. Exceed this guideline only when necessary and consistent with the overall architecture; justify exceptions.
-- **ALWAYS** enforce strict typing. Never use `any`/`Any` to evade type safety.
-- **NEVER** suppress lint/type errors instead of fixing their causes.
-- **TRY TO AVOID** magic numbers and magic strings. Extract constants only when they improve readability or reliability.
-- **ALWAYS** use enums for coherent finite sets of related values, such as statuses and error codes.
-- **NEVER** introduce dead code.
-- **REMEMBER** occasional duplication is acceptable; address it through focused periodic refactoring instead of loading unrelated modules to keep the entire codebase synchronized.
-- **NEVER** swallow exceptions or hide failures.
-- **NEVER** introduce implicit I/O, hidden side effects, or hardcoded configuration.
-- Prefer readable control flow, explicit state, and clear naming.
-- Keep comments, docstrings, tests, and documentation in English.
+## Type safety and behavior
+- Use strict typing and boundary validation; never introduce `Any`, casts, suppressions, or exceptions solely to bypass a check.
+- Model meaningful public states and domain categories with enums when this improves correctness; simple local values do not require enums.
+- Fix root causes of lint/type errors and exception failures. Do not hide unexpected exceptions or perform implicit I/O.
+- Comments and docstrings should clarify non-obvious decisions or constraints, not repeat identifiers. Write all code comments and repository documentation in English.
 
-## Documentation
-- **ALWAYS** maintain a `README.md` alongside each `AGENTS.md`. Read the relevant README before editing its area; use README for developer-facing information and AGENTS for concise engineering directives. Keep them complementary, not duplicative.
-- **ALWAYS** limit routine documentation to those README files, owned module `contract.md` files, SDD specifications/plans and required SDD metadata, plus `docs/INSTALLATION.md`, `docs/USAGE.md`, `docs/TESTS.md`, and `docs/FEATURES.md`. **NEVER** create other documentation without an explicit request.
-- **ALWAYS** link sub-specifications to their implementing modules and tests using stable feature IDs defined in `docs/FEATURES.md`. Keep that catalog limited to feature IDs and brief descriptions. Record stage, specification, implementation owner, and test paths in `docs/specs/feature-cross-ref.yaml`; validate them against `docs/specs/feature-cross-ref.schema.json`. Never invent implementation paths or treat planned files as implemented.
-- **NEVER** add conversation history, prior product names, patch chronology, or speculative approval/progress statements to README files or other stable documentation unless explicitly requested.
+## Documentation and SDD
+- Read the relevant README for project context; keep AGENTS concise and README developer-facing. Maintain a README next to each existing AGENTS, but do not create extra documentation without a concrete need.
+- Write `contract.md` for stable cross-module boundaries with meaningful invariants, errors, and interoperability concerns; do not duplicate a trivial typed implementation in prose.
+- Keep the active sub-spec, implementation plan, feature cross-reference, and checkpoint consistent with real code. Never invent implementation paths or treat planned features as implemented.
+- Do not record conversation provenance, patch history, or speculative acceptance in repository documentation.
 
-## Tests & Enforcement
-- **ALWAYS** test new and changed behavior, including failures and edge cases.
-- **ALWAYS** enforce module boundaries, forbidden imports, and dependency cycles automatically.
-- **NEVER** weaken tests, disable checks, or add exclusions to obtain a pass.
-- **NEVER** modify enforcement configuration without explicit approval.
-- **NEVER** add dependencies without explicit approval.
-- Run available formatting, lint, typecheck, architecture checks, tests, and build before completion.
-- Fix failures. Report checks that could not run; **NEVER** claim unverified success.
+## Checks and dependencies
+- Verify changed behavior with positive, negative, and boundary tests. Enforce critical module imports and dependency direction automatically, with tests showing that invalid dependencies are rejected.
+- Never weaken tests, disable checks, or add exceptions merely to obtain a pass. Changes to enforcement must preserve or strengthen required invariants and include regression evidence; relaxing an approved invariant requires explicit approval.
+- New runtime dependencies require justification and developer approval. A task-scoped dev/test dependency may be added with a recorded rationale when it does not change runtime behavior or weaken checks.
+- Run applicable formatting, lint, strict type, architecture, test, and build checks. Report exactly what ran and any environment limitations; never claim unverified results.

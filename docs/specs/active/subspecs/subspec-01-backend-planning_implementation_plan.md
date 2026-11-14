@@ -1,6 +1,9 @@
 # MVP-01 Backend — Implementation Plan
 
-- **Status:** Active implementation plan; backend step 1 authorized, full MVP-01 acceptance pending
+- **Status:** Active; implementation partially complete
+- **Requirements approval:** Active backend sub-spec approved
+- **Implementation authorization:** Backend workstream authorized; external approvals are task-specific
+- **Acceptance:** Pending; step 1 and part of step 2 implemented, not equivalent to full acceptance
 - **Stage/workstream:** `MVP-01` / `mvp-01-backend`
 - **Normative sub-spec:** [MVP-01 Backend requirements](subspec-01-backend-planning.md)
 - **Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)
@@ -58,7 +61,7 @@ A module's `api.py` (or `__init__.py` facade when justified) is the importable b
 - API route paths and DTO JSON shapes are the backend-to-frontend contract; preserve them once accepted. Prefer backwards-compatible fields or explicit version upgrades.
 - Module public contracts are designed for `MVP-01`; future live adapters in `MVP-02` should implement existing `Source` protocols, not retroactively require the engine to know provider details.
 - All domain types should use finite enums, explicit IDs, timezone-aware timestamps where relevant and typed uncertainty/status fields. Never introduce broad `Any` or dynamically typed dictionaries as a shortcut.
-- No new dependency or enforcement configuration can be introduced without developer approval. All listed third-party libraries are **candidates**, not authorized installations.
+- New runtime dependencies and any weakening of approved enforcement constraints require developer approval. Justified dev/test tooling and stricter architecture checks may be introduced within the authorized task with regression evidence. Listed third-party runtime libraries remain **candidates**, not approved installations.
 
 ## 2. Proposed public API declarations
 
@@ -906,4 +909,5 @@ Check real catalog completeness and PostGIS geometry against **verified authoriz
 | Source unexpectedly calls a live website/Saturn | Offline fixture test forbids outbound calls and fails immediately |
 | Complex initialization or partial deployment | Verify `run-tests.sh`, a clean environment and read-only integration checks; keep scaffolding usable |
 
-**Implementation status:** Step 1 has executable FastAPI health/OpenAPI code and tests. Steps 2–12 and all full-backend acceptance checks remain open. The current checkpoint does not imply MVP-01 acceptance.
+**Implementation status:** Step 1 has executable FastAPI health/OpenAPI code and tests. Step 2 has partial territory contracts and HTTP reads; its full-reference and PostGIS gates, steps 3–12, and all full-backend acceptance checks remain open. The current checkpoint does not imply MVP-01 acceptance.
+
