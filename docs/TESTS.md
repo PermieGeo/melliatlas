@@ -63,3 +63,9 @@ with configured checks. It stops rather than overriding a different formatter se
 `FMT` performs safe Ruff fixes and formatting; `CHK` performs validation only.
 Install the backend development dependencies before running either command.
 
+
+## SDD consistency checks
+
+The documentation suite checks local links, active workstream status, feature ownership, and consistency between the next implementation task, normative requirements, and its acceptance-test inventory. It also includes negative fixtures for broken links and contradictory task mappings. Passing these checks does not establish product-level acceptance or replace code review.
+
+After each bounded task, review the change against the convergence checklist in the active implementation plan: scope, actual behavior, public contract compatibility, architecture, traceability and unresolved external approvals.
