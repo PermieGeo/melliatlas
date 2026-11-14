@@ -132,15 +132,38 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn('not evidence that the area is safe', readme)
         self.assertNotIn('beegeotrace', readme)
 
-    def test_readme_diagrams_are_fenced_and_investigation_is_explained(self) -> None:
+    def test_readme_diagrams_are_fenced_and_request_flow_is_explained(self) -> None:
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')
         diagrams = MERMAID_BLOCK.findall(readme)
-        self.assertTrue(diagrams, 'Expected at least one explanatory diagram')
-        self.assertTrue(any('stateDiagram-v2' in item for item in diagrams))
-        self.assertTrue(all('-->' in item for item in diagrams))
+        self.assertGreaterEqual(len(diagrams), 2, 'Expected overview and interaction diagrams')
         self.assertEqual(readme.count('```mermaid'), len(diagrams))
-        self.assertIn('conceptual state diagram', readme.casefold())
-        self.assertIn('synthetic or fixture-based', readme.casefold())
+
+        overview = next((item for item in diagrams if 'flowchart LR' in item), None)
+        self.assertIsNotNone(overview)
+        self.assertIn('Beekeeper', overview)
+        self.assertIn('Wild pollinators', overview)
+
+        interaction = next((item for item in diagrams if 'sequenceDiagram' in item), None)
+        self.assertIsNotNone(interaction)
+        for expected in (
+            'actor Beekeeper',
+            'participant Server',
+            'participant Cache',
+            'participant Results',
+            'loop Beekeeper checks the investigation status',
+            'alt Result not ready yet',
+            'else Result available',
+            'Request investigation for point X',
+            'Point availability and recommended nearby points',
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, interaction)
+
+        lowered = readme.casefold()
+        self.assertIn('conceptual interaction diagram', lowered)
+        self.assertIn('request-and-result interaction flow', lowered)
+        self.assertIn('synthetic or fixture-based', lowered)
+        self.assertIn('cache or source-oriented store', lowered)
 
     def test_umbrella_roadmap_and_requirements_are_complete(self) -> None:
         umbrella = (ROOT / 'docs/specs/umbrella_spec_melliatlas.md').read_text(encoding='utf-8')

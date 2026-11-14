@@ -27,44 +27,57 @@ flowchart LR
 
 The same territory may offer significant forage resources while also containing habitats where additional managed honey bees would be undesirable. MelliAtlas must evaluate these considerations together. A documented legal restriction, a possible ecological conflict, and a lack of information are **different findings** and must not be presented as interchangeable conclusions.
 
-## Investigation lifecycle
+## Investigation request lifecycle
 
-A beekeeper selects a **country, region, supported district, and planning season**, and then requests an investigation. The proposed workflow is shown below. This is a **conceptual state diagram**, not a list of currently implemented API statuses or evidence of live provider access.
+A beekeeper selects a **country, region, supported district, planning season, and point X**, and then requests an investigation. The diagram below is a **conceptual interaction diagram**. It shows how the request, background processing, cached source data, stored analysis results, weather updates, and repeated result checks fit together. It does **not** define the exact final persistence schema or the full set of HTTP endpoints.
 
 ```mermaid
-stateDiagram-v2
-    direction TB
-    [*] --> Selection
-    Selection --> Validation: Submit territory and season
-    Validation --> Rejected: Invalid or unsupported request
-    Validation --> Analysis: Valid request
-    Analysis --> Assessment: Collect and analyze evidence
-    Assessment --> Analysis: Additional evidence needed
-    Assessment --> Revision: Conflict or exclusion identified
-    Revision --> Analysis: Evaluate alternative sites
-    Assessment --> Result: Supported plan saved
-    Revision --> Unresolved: No supported alternative
-    Analysis --> Failed: Execution error
-    Result --> Viewed: Open map and seasonal plan
-    Viewed --> [*]
-    Rejected --> [*]
-    Unresolved --> [*]
-    Failed --> [*]
+sequenceDiagram
+    autonumber
+    actor Beekeeper
+    participant Server as MelliAtlas server
+    participant Sources as Source adapters
+    participant Weather as Weather and forecast
+    participant Cache as Cache / source database
+    participant Engine as Analysis engine
+    participant Results as Analysis results database
+
+    Beekeeper->>Server: Request investigation for point X
+    Server->>Server: Validate territory, season, and point
+    Server->>Sources: Collect geographic, ecological, and public-source data
+    Sources-->>Server: Raw source data
+    Server->>Cache: Save source reads and metadata
+    Server->>Weather: Fetch current weather and forecast
+    Weather-->>Server: Weather update
+    Server->>Engine: Normalize, process, and analyze evidence
+    Engine->>Results: Save analysis result and decision trace
+    Note over Server,Results: Data updates and forecast changes can trigger a refreshed analysis.
+
+    loop Beekeeper checks the investigation status
+        Beekeeper->>Server: Request investigation result
+        alt Result not ready yet
+            Server-->>Beekeeper: Investigation accepted or still running
+        else Result available
+            Server->>Results: Load latest saved result
+            Results-->>Server: Availability verdict and nearby recommendations
+            Server-->>Beekeeper: Point availability and recommended nearby points
+        end
+    end
 ```
 
-The transitions have the following meaning:
+The main interactions have the following meaning:
 
-| State or transition | Expected behavior |
+| Interaction | Expected behavior |
 | --- | --- |
-| **Selection → Validation** | The user supplies a territory and season. The server verifies supported administrative scope, dates, and the selected scenario. |
-| **Validation → Analysis** | An accepted request starts an investigation with a stable identifier; the user can inspect its progress. Invalid or unsupported requests return a structured explanation. |
-| **Analysis → Assessment** | The engine loads the applicable reference and synthetic evidence, invokes registered sources and analyzers, and evaluates forage opportunities and ecological constraints. |
-| **Assessment → Analysis** | When relevant evidence is missing or inconsistent, the bounded agent may request an additional permitted check. |
-| **Assessment → Revision → Analysis** | An excluded or unsuitable candidate causes the agent to consider alternatives and repeat the necessary analysis, rather than silently retaining the original site. |
-| **Assessment → Result → Viewed** | When evidence supports a plan, the result and decision trace are stored and presented as a map, ordered stops, a timeline, and explanations. Completed results can be reopened by investigation ID. |
-| **Rejected / Unresolved / Failed** | Invalid input, lack of a supportable plan, and execution errors produce distinct diagnostics. None is represented as a successful recommendation. |
+| **Beekeeper → Server: Request investigation for point X** | The request identifies the target location and planning context. The server validates the territory, season, and supported scenario before starting work. |
+| **Server → Sources / Weather** | The backend gathers evidence from approved sources, including geographic and ecological inputs, public-web evidence, and weather or forecast information when that input is available for the stage. |
+| **Server → Cache** | Source reads and their metadata are preserved in a cache or source-oriented store so that repeated processing can reuse retrieved evidence and keep provenance. |
+| **Server → Engine → Results** | The analysis engine normalizes evidence, runs screening and comparison logic, and stores the resulting assessment, decision trace, and recommended alternatives in persistent storage. |
+| **Refreshed analysis** | When source content changes or a newer weather forecast affects the interpretation, the backend may recompute the assessment and replace or version the stored result. |
+| **Beekeeper polls for the result** | The beekeeper may ask for the result repeatedly. The response is either that the result is not ready yet, or the latest available assessment is returned. |
+| **Returned assessment** | A completed response reports whether the requested point appears available in light of critical factors and, when appropriate, returns recommended nearby points. |
 
-The diagram describes the **investigation workflow**, not the final persistence schema. Backend job statuses are defined separately by the active backend specification; the initial MVP may execute jobs in process, while durable worker recovery is planned for a later stage.
+The diagram describes the **request-and-result interaction flow**, not the complete internal job model. Backend execution states, durable worker recovery, and provider-specific retry policies remain defined by the active backend specification and later implementation stages.
 
 ## Evidence and analysis
 
@@ -94,3 +107,4 @@ The planned application is a **Python modular monolith** with FastAPI, PostgreSQ
 | `docs/specs/` | Umbrella specification, active sub-specifications, plans, and checkpoints |
 
 The [umbrella specification](docs/specs/umbrella_spec_melliatlas.md) defines the roadmap and acceptance criteria. The [specification index](docs/specs/README.md) identifies the active workstream and the documents governing implementation. See [installation](docs/INSTALLATION.md) and [testing](docs/TESTS.md) for the currently supported commands.
+
