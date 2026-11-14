@@ -98,8 +98,11 @@ features:
   - feature_id: WEB.INVESTIGATIONS
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
-    owners: []
-    test_files: []
+    owners:
+      - backend/src/melliatlas/api/app.py#create_app
+      - backend/src/melliatlas/api/public.py#HealthResponse
+    test_files:
+      - backend/tests/contract/test_api_smoke.py
   - feature_id: WEB.MAP_TIMELINE
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]

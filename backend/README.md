@@ -1,9 +1,9 @@
 # Backend
 
-This directory is reserved for the Python backend. It is not runnable yet: there is no dependency manifest, application entry point, or configured test command.
+The Python backend is being implemented incrementally. Step 1 provides a runnable FastAPI application factory and a typed health/OpenAPI contract; territory catalogs, sources, analysis, persistence and investigations are not yet implemented.
 
 ## Source layout
 
-`src/melliatlas/` contains directories reserved for capabilities, and `tests/` is reserved for automated backend tests. New modules will document their public API and ownership in a local `contract.md` when implemented.
+`src/melliatlas/api/` owns the implemented HTTP app composition and its [contract](src/melliatlas/api/contract.md). Other directories remain reserved for subsequent capabilities. `tests/contract/` and `tests/architecture/` contain the initial executable checks.
 
-See the [repository overview](../README.md) and [specification index](../docs/specs/README.md) for the current scope. Record verified setup and test commands in `docs/INSTALLATION.md` and `docs/TESTS.md` when they become available.
+See the [repository overview](../README.md) and [specification index](../docs/specs/README.md) for the current scope. For verified installation and test commands, see [installation](../docs/INSTALLATION.md) and [tests](../docs/TESTS.md).

@@ -12,7 +12,7 @@ if [[ -f backend/pyproject.toml ]]; then
     python3 -B -m pytest -p no:cacheprovider backend/tests
     python3 -m ruff check --no-cache backend
     python3 -m ruff format --check backend
-    python3 -m pyright backend
+    python3 -m pyright --project backend
 else
     printf '%s\n' '==> Python backend: manifest not yet present'
 fi

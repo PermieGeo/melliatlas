@@ -1,12 +1,12 @@
 # MVP-01 Backend — Implementation Plan
 
-**Status:** Advisory draft; no implementation authorized  
-**Stage/workstream:** `MVP-01` / `mvp-01-backend`  
-**Normative sub-spec:** [MVP-01 Backend requirements](subspec-01-backend-planning.md)  
-**Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)  
+- **Status:** Active implementation plan; backend step 1 authorized, full MVP-01 acceptance pending
+- **Stage/workstream:** `MVP-01` / `mvp-01-backend`
+- **Normative sub-spec:** [MVP-01 Backend requirements](subspec-01-backend-planning.md)
+- **Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)
 **Execution order:** backend contract and tests first; dependent React sub-spec/plan next, after backend verification
 
-This document defines **proposed** source files and executable API designs. There is currently no `backend/pyproject.toml`, Python runtime package, API implementation, PostGIS migration or product test suite in the verified scaffold. Nothing in the code examples below is an existing implementation. The developer must approve this plan, its dependencies, geography reference, and any outstanding decisions before coding.
+This document defines **proposed** source files and executable API designs. The initial package, FastAPI health/OpenAPI composition, and basic contract and architecture tests are now implemented. Public API declarations below remain *proposals* unless explicitly listed as implemented in the current module `contract.md`; real geography, PostGIS, source adapters and the agent are still absent. Later steps require verified geography inputs and independent dependency decisions.
 
 ## 1. Architecture decision and scope control
 
@@ -606,7 +606,7 @@ class ApiDependencies:
 def create_app(dependencies: ApiDependencies) -> FastAPI: ...
 ```
 
-**Proposed `api/contract.md` v1:** owns versioned URL routes, OpenAPI, request/response DTOs, error mapping and composition. Additional typed response DTOs for territories, GeoJSON, source descriptors, status, seasonal plan and decision trace must be fully defined during the API TDD task, with no dynamic arbitrary serialization. Schema changes after Web work begins require deliberate contract review. Routes must not import private domain implementation files or perform spatial operations themselves. `create_app` accepts test-injected implementations; startup/shutdown safely manages adapters.
+**Proposed complete `api/contract.md` v1 (health and OpenAPI subset implemented):** owns versioned URL routes, OpenAPI, request/response DTOs, error mapping and composition. Additional typed response DTOs for territories, GeoJSON, source descriptors, status, seasonal plan and decision trace must be fully defined during the API TDD task, with no dynamic arbitrary serialization. Schema changes after Web work begins require deliberate contract review. Routes must not import private domain implementation files or perform spatial operations themselves. `create_app` accepts test-injected implementations; startup/shutdown safely manages adapters.
 
 ### 2.10. Contract drafting and real files
 
@@ -643,7 +643,7 @@ Use database enums or constrained text consistently, not free-form arbitrary sta
 
 ## 4. Proposed file changes for later implementation
 
-All files below are **proposed**, not verified current files. Existing placeholder directories exist but contain only `.gitkeep` entries. Implementation patches should add source files incrementally and remove placeholder `.gitkeep` only when the owning directory becomes populated, where appropriate.
+The initial Python manifest, package entry point, API composition and first tests now exist; other paths below remain proposed. Existing placeholder capability directories contain `.gitkeep` entries. Implementation patches should add source files incrementally and remove placeholder `.gitkeep` only when the owning directory becomes populated, where appropriate.
 
 | Path / pattern | Purpose |
 | --- | --- |
@@ -906,4 +906,4 @@ Check real catalog completeness and PostGIS geometry against **verified authoriz
 | Source unexpectedly calls a live website/Saturn | Offline fixture test forbids outbound calls and fails immediately |
 | Complex initialization or partial deployment | Verify `run-tests.sh`, a clean environment and read-only integration checks; keep scaffolding usable |
 
-**No code has been generated or executed by this document.** Plan approval is a separate developer decision.
+**Implementation status:** Step 1 has executable FastAPI health/OpenAPI code and tests. Steps 2–12 and all full-backend acceptance checks remain open. The current checkpoint does not imply MVP-01 acceptance.

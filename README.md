@@ -104,6 +104,6 @@ Subsequent stages expand the **same working product** with approved public-web/n
 
 The preferred architecture is a **Python modular monolith** backed by **PostgreSQL/PostGIS**, with an independent worker when durable execution is introduced. The browser is a single responsive application. LLM planning is optional: the initial agent works without an LLM.
 
-**Current status:** this repository is a scaffold with a draft product umbrella, not a running GIS service or a provider-integrated research system. The diagrams describe intended capabilities, not implemented or scientifically validated behavior.
+**Current status:** the first backend slice has a runnable FastAPI health/OpenAPI endpoint and initial tests. Territory directories, PostGIS, source adapters, Agent, frontend, and an end-to-end GIS workflow are not implemented yet. The diagrams describe intended capabilities, not implemented or scientifically validated behavior.
 
 Read the [umbrella specification](docs/specs/umbrella_spec_melliatlas.md) for the ordered stages and acceptance outcomes, or the [specification index](docs/specs/README.md) for the documentation lifecycle. Once a stage is selected, its sub-specification and implementation plan define the approved work. Run `bash ./run-tests.sh` to check documentation integrity; application-specific test commands will be added when product code is introduced.

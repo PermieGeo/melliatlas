@@ -6,11 +6,11 @@
 
 ## Active workstream
 
-`MVP-01` is selected for specification design, **not approved for implementation**. Its first active workstream is the backend contract; the separate React/Web sub-spec and plan will be prepared only after the backend contract is reviewed.
+`MVP-01` backend implementation has been authorized and is in progress. The first step supplies the FastAPI package, typed health/OpenAPI endpoint, and smoke/architecture checks; no full backend acceptance criterion or browser MVP is complete. The separate React/Web sub-spec and plan will be prepared after backend contract verification.
 
-- [MVP-01 Backend sub-specification](active/subspecs/subspec-01-backend-planning.md) — normative draft for RU/BY geography, fixture sources, typed analysis, the deterministic agent, PostGIS, and HTTP.
-- [MVP-01 Backend implementation plan](active/subspecs/subspec-01-backend-planning_implementation_plan.md) — advisory modules, typed API declarations, contract drafts, file changes, and test-first sequence.
-- [`STATE.json`](STATE.json) — selected `mvp-01-backend` workstream in `DESIGN`, not evidence of approval or completed checks.
+- [MVP-01 Backend sub-specification](active/subspecs/subspec-01-backend-planning.md) — active normative requirements for RU/BY geography, fixture sources, typed analysis, the deterministic agent, PostGIS, and HTTP.
+- [MVP-01 Backend implementation plan](active/subspecs/subspec-01-backend-planning_implementation_plan.md) — active implementation guidance with proposed modules, typed API declarations, contract drafts, file changes, and test-first sequence.
+- [`STATE.json`](STATE.json) — selected `mvp-01-backend` workstream in `READY_FOR_IMPLEMENTATION`; this is not a completed-stage or accepted-test claim.
 
 `archive/` has no completed stage documents. Do not read archived work during ordinary implementation.
 
