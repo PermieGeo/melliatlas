@@ -2,8 +2,8 @@
 
 **Version:** 0.5 (geographic coverage and early live sources draft)
 **Status:** Working roadmap; future workstreams remain proposals, not automatically authorized
-**Active authorization:** The `MVP-01` backend sub-spec is approved for implementation; its external approval gates remain open
-**Acceptance:** No `MVP-01` stage acceptance has been granted
+**Active authorization:** AUTHORIZED — `MVP-01` backend sub-spec only; its external approval gates remain open
+**Acceptance:** PENDING — no `MVP-01` stage acceptance has been granted
 **Product:** Sustainable migratory beekeeping, pollinator conservation, and ecological research
 **Delivery approach:** A functioning vertical-slice MVP in stage `MVP-01`; every later stage incrementally improves the working application.
 

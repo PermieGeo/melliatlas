@@ -197,11 +197,17 @@ def validate_reference(snapshot: ReferenceSnapshot, inventory: ExpectedInventory
             if item.id != item.country.value:
                 raise TerritoryReferenceError("Country must use its ISO code as canonical ID")
         elif item.kind is TerritoryKind.REGION:
-            if not _REGION_ID.fullmatch(item.id) or item.parent_id != item.country.value:
-                raise TerritoryReferenceError("Invalid region ID or parent")
+            if not _REGION_ID.fullmatch(item.id) or not item.id.startswith(
+                f"{item.country.value.lower()}:region:"
+            ):
+                raise TerritoryReferenceError("Region ID must match country prefix")
+            if item.parent_id != item.country.value:
+                raise TerritoryReferenceError("Invalid region parent")
         elif item.kind is TerritoryKind.DISTRICT:
-            if not _DISTRICT_ID.fullmatch(item.id):
-                raise TerritoryReferenceError("Invalid district ID")
+            if not _DISTRICT_ID.fullmatch(item.id) or not item.id.startswith(
+                f"{item.country.value.lower()}:district:"
+            ):
+                raise TerritoryReferenceError("District ID must match country prefix")
             parent = identifiers.get(item.parent_id or "")
             if (
                 parent is None

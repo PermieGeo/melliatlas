@@ -272,7 +272,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn('MVP01-BE-V01', plan)
         self.assertIn('BE-T001', plan)
         self.assertIn('BE-T060', plan)
-        self.assertIn('Pending', plan)
+        self.assertIn('**Acceptance:** PENDING', plan)
 
     def test_link_validator_detects_broken_targets(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

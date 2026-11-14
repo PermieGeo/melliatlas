@@ -1,9 +1,9 @@
 # MVP-01 Backend — Implementation Plan
 
 - **Status:** Active; implementation partially complete
-- **Requirements approval:** Active backend sub-spec approved
-- **Implementation authorization:** Backend workstream authorized; external approvals are task-specific
-- **Acceptance:** Pending; no full backend acceptance criterion has been signed off
+- **Requirements approval:** APPROVED — active backend sub-spec
+- **Implementation authorization:** AUTHORIZED — backend workstream; external approvals are task-specific
+- **Acceptance:** PENDING — no full backend acceptance criterion has been signed off
 - **Stage/workstream:** `MVP-01` / `mvp-01-backend`
 - **Normative sub-spec:** [MVP-01 Backend requirements](subspec-01-backend-planning.md)
 - **Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)
@@ -61,7 +61,7 @@ The approved HTTP operations and details remain in the [active backend sub-spec]
 - **Status:** Proposed; no implementation or acceptance claimed
 - **Goal:** First runnable *backend* investigation path using explicitly synthetic evidence: accepted API request → bounded analysis → typed domain outcome → read by stable investigation ID.
 - **Requirement IDs:** `MVP01-BE-R06`, `MVP01-BE-R10`, `MVP01-BE-R12`, `MVP01-BE-R13`, `MVP01-BE-R14`, `MVP01-BE-R15`
-- **Test inventory IDs:** `BE-T019`, `BE-T020`, `BE-T026`, `BE-T027`, `BE-T045`, `BE-T047`, `BE-T052`, `BE-T053`
+- **Test inventory IDs:** `BE-T019`, `BE-T020`, `BE-T021`, `BE-T026`, `BE-T027`, `BE-T045`, `BE-T047`, `BE-T052`, `BE-T053`
 - **Scope:** One controlled fixture scenario, explicit synthetic/source limitations, basic valid/invalid request paths, stable result ID and readable interim result. Use only the domain and orchestration interfaces genuinely necessary to deliver this path. Implement a minimal deterministic execution path first; elaborate it into typed DAG/Agent only when evidence-driven replanning is added.
 - **Not in scope:** Live providers, approved RU/BY geometry, durable PostGIS completion/reopen, full ecological replanning, browser UI or claiming `MVP01-BE-A08/A09` acceptance.
 - **Existing interfaces:** `backend/src/melliatlas/api/app.py`, `backend/src/melliatlas/api/contract.md`, `backend/src/melliatlas/territories/api.py`, `backend/src/melliatlas/territories/contract.md`.

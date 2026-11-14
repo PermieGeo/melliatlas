@@ -66,6 +66,6 @@ Install the backend development dependencies before running either command.
 
 ## SDD consistency checks
 
-The documentation suite checks local links, active workstream status, feature ownership, and consistency between the next implementation task, normative requirements, and its acceptance-test inventory. It also includes negative fixtures for broken links and contradictory task mappings. Passing these checks does not establish product-level acceptance or replace code review.
+The documentation suite uses PyYAML and JSON Schema Draft 2020-12 (both installed via `backend[dev]`) to validate feature references and the developer-controlled checkpoint. It checks exact `APPROVED` / `AUTHORIZED` / `PENDING` metadata, prevents `verified` without a feature acceptance record, and requires every requirement of the current task to be covered by selected test-inventory entries. An acceptance record needs explicit criterion IDs, evidence file paths and a developer approval reference; no record is generated automatically from passing tests. These checks cannot authenticate the human decision or establish product acceptance.
 
 After each bounded task, review the change against the convergence checklist in the active implementation plan: scope, actual behavior, public contract compatibility, architecture, traceability and unresolved external approvals.

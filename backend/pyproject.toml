@@ -12,6 +12,8 @@ dependencies = ["fastapi>=0.115,<1"]
 [project.optional-dependencies]
 dev = [
     "httpx>=0.27,<1",
+    "jsonschema>=4.23,<5",
+    "PyYAML>=6.0.2,<7",
     "pytest>=8.2,<10",
     "pyright>=1.1.400,<2",
     "ruff>=0.13,<1",
@@ -36,3 +38,4 @@ include = ["src", "tests"]
 extraPaths = ["src"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
+

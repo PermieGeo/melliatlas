@@ -7,6 +7,7 @@ import pytest
 
 from melliatlas.territories import InMemoryTerritoryCatalog
 from melliatlas.territories.api import (
+    CountryCode,
     ExpectedInventory,
     GeometryStatus,
     PolygonWgs84,
@@ -76,3 +77,83 @@ def test_missing_geometry_must_be_explicit(
     catalog = InMemoryTerritoryCatalog()
     asyncio.run(catalog.apply_reference(changed, inventory))
     assert asyncio.run(catalog.get_geometry("RU")) is None
+
+
+@pytest.mark.parametrize(
+    ("original_id", "foreign_id", "country"),
+    [
+        ("ru:region:other", "by:region:russian-territory", CountryCode.RU),
+        ("by:region:other", "ru:region:belarusian-territory", CountryCode.BY),
+    ],
+)
+def test_region_id_prefix_must_match_country_even_with_matching_inventory(
+    original_id: str,
+    foreign_id: str,
+    country: CountryCode,
+    reference_case: tuple[ReferenceSnapshot, ExpectedInventory],
+) -> None:
+    reference, inventory = reference_case
+    changed = replace(
+        reference,
+        territories=tuple(
+            replace(item, id=foreign_id) if item.id == original_id else item
+            for item in reference.territories
+        ),
+        geometries=tuple(
+            replace(item, territory_id=foreign_id) if item.territory_id == original_id else item
+            for item in reference.geometries
+        ),
+    )
+    changed = replace(
+        changed, manifest=replace(changed.manifest, checksum_sha256=snapshot_checksum(changed))
+    )
+    expected = replace(
+        inventory,
+        region_ids={
+            key: (frozenset((values - {original_id}) | {foreign_id}) if key is country else values)
+            for key, values in inventory.region_ids.items()
+        },
+    )
+    with pytest.raises(TerritoryReferenceError, match="country prefix"):
+        asyncio.run(InMemoryTerritoryCatalog().apply_reference(changed, expected))
+
+
+@pytest.mark.parametrize(
+    ("original_id", "foreign_id", "region_id"),
+    [
+        ("ru:district:smolensk-test", "by:district:smolensk-test", "ru:region:smolensk"),
+        ("by:district:vitebsk-test", "ru:district:vitebsk-test", "by:region:vitebsk"),
+    ],
+)
+def test_district_id_prefix_must_match_country_and_parent(
+    original_id: str,
+    foreign_id: str,
+    region_id: str,
+    reference_case: tuple[ReferenceSnapshot, ExpectedInventory],
+) -> None:
+    reference, inventory = reference_case
+    changed = replace(
+        reference,
+        territories=tuple(
+            replace(item, id=foreign_id) if item.id == original_id else item
+            for item in reference.territories
+        ),
+        geometries=tuple(
+            replace(item, territory_id=foreign_id) if item.territory_id == original_id else item
+            for item in reference.geometries
+        ),
+    )
+    changed = replace(
+        changed, manifest=replace(changed.manifest, checksum_sha256=snapshot_checksum(changed))
+    )
+    expected = replace(
+        inventory,
+        pilot_district_ids={
+            key: (
+                frozenset((values - {original_id}) | {foreign_id}) if key == region_id else values
+            )
+            for key, values in inventory.pilot_district_ids.items()
+        },
+    )
+    with pytest.raises(TerritoryReferenceError, match="country prefix"):
+        asyncio.run(InMemoryTerritoryCatalog().apply_reference(changed, expected))

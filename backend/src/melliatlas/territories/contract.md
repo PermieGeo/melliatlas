@@ -11,7 +11,7 @@ The `territories` module owns canonical RU/BY administrative identity, reference
 
 ## Catalog semantics
 
-- Countries RU and BY are identified by their country codes. Canonical region and district IDs use `ru:region:*`, `by:region:*`, `ru:district:*`, and `by:district:*`; provider IDs must not replace them.
+- Countries RU and BY are identified by their country codes. Canonical region and district IDs use `ru:region:*`, `by:region:*`, `ru:district:*`, and `by:district:*`; each ID prefix must match its `CountryCode` and the administrative parent must belong to that country. Provider IDs must not replace canonical identities.
 - Complete first-order catalogs for **both countries** (including the separately administered Minsk city) and complete pilot district catalogs for **Smolensk and Vitebsk regions** must be verified against independent, date-specific inventories. An imported snapshot with a small self-declared inventory is **not evidence of real-world completeness**.
 - `list_districts()` raises `CatalogDepthUnsupported` outside the two pilot regions and `TerritoryNotFound` for an unknown ID. An unloaded catalog raises `ReferenceUnavailableError`, rather than returning an empty list that looks complete.
 - Repeated import of identical data is idempotent; a different payload is rejected instead of silently replacing an active snapshot. Caller-owned mutable GeoJSON arrays are copied at import and read boundaries.
@@ -22,3 +22,4 @@ The `territories` module owns canonical RU/BY administrative identity, reference
 The normalized JSON file loader belongs to the API/administration boundary (`melliatlas.api.reference_loader`); it reads local files and never contacts a public provider. The independent inventory is a separate input. The CLI `backend/scripts/import_reference.py` validates files and prints a report; it does **not** populate PostGIS, expose private coordinates, or approve a dataset.
 
 **Current status:** API contracts, in-memory validated import, and HTTP reads are implemented. No real complete RU/BY inventory, licensed boundary download, approved reference version, or PostGIS adapter has been installed. `MVP01-BE-A02/A03` remain open.
+

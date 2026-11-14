@@ -7,7 +7,8 @@
     "schemaVersion",
     "mode",
     "selectedWorkstreamId",
-    "workstreams"
+    "workstreams",
+    "featureAcceptances"
   ],
   "properties": {
     "schemaVersion": {
@@ -56,6 +57,47 @@
               "PAUSED",
               "ON_HOLD"
             ]
+          }
+        }
+      }
+    },
+    "featureAcceptances": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "featureId",
+          "acceptanceIds",
+          "evidenceFiles",
+          "approvalReference"
+        ],
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9]*(?:\\.[A-Z][A-Z0-9_]*)+$"
+          },
+          "acceptanceIds": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^(?:MVP01-BE-A[0-9]{2}|MVP-[0-9]{2}\\.A[0-9]{2})$"
+            }
+          },
+          "evidenceFiles": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_./-]+$"
+            }
+          },
+          "approvalReference": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_./-]+$"
           }
         }
       }

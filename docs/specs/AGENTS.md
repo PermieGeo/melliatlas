@@ -20,8 +20,9 @@ Extends `../../AGENTS.md`. Keep normative requirements separate from advisory im
 - Keep requirement-linked positive, negative, boundary, architecture and integration checks in a test inventory; execute only the relevant subset for each current task, then run required project checks.
 
 ## State and consistency
-- Maintain `docs/specs/STATE.json` as a developer-controlled workstream checkpoint; validate its schema, selected workstream, paths and phase against the active sub-spec, plan and index.
+- Treat `docs/specs/STATE.json` as the developer-controlled workstream and feature-acceptance checkpoint. Validate it and `docs/specs/feature-cross-ref.yaml` against their schemas and cross-document consistency checks, including the active sub-spec, plan, and index.
 - Do not advance a workstream, phase or acceptance status without a developer decision. `READY_FOR_IMPLEMENTATION` means work is authorized, not that it has passed acceptance.
+- Set `implementation_status: verified` only with a matching `STATE.json.featureAcceptances` record identifying acceptance criteria, verifiable evidence paths, and an explicit developer approval reference. Code and passing tests alone do not establish feature acceptance; never invent approval.
 - Keep feature IDs and links in `docs/FEATURES.md` and `docs/specs/feature-cross-ref.yaml` accurate for actually implemented behavior.
 - After each coherent task, review changes for scope creep, contract drift, unnecessary dependencies, missing tests and false implementation claims.
 - Do not read `docs/specs/archive/` during ordinary implementation; consult it for an explicitly requested historical review only.
