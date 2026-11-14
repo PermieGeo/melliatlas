@@ -57,26 +57,26 @@ The approved HTTP operations and details remain in the [active backend sub-spec]
 
 ## 4. Next bounded delivery task
 
-- **Task ID:** `MVP01-BE-V01`
-- **Status:** Implemented; acceptance PENDING
-- **Goal:** First runnable *backend* investigation path using explicitly synthetic evidence: accepted API request → bounded analysis → typed domain outcome → read by stable investigation ID.
-- **Requirement IDs:** `MVP01-BE-R06`, `MVP01-BE-R10`, `MVP01-BE-R12`, `MVP01-BE-R13`, `MVP01-BE-R14`, `MVP01-BE-R15`
-- **Test inventory IDs:** `BE-T019`, `BE-T020`, `BE-T021`, `BE-T026`, `BE-T027`, `BE-T045`, `BE-T047`, `BE-T052`, `BE-T053`
-- **Scope:** One controlled fixture scenario, explicit synthetic/source limitations, basic valid/invalid request paths, stable result ID and readable interim result. Use only the domain and orchestration interfaces genuinely necessary to deliver this path. Implement a minimal deterministic execution path first; elaborate it into typed DAG/Agent only when evidence-driven replanning is added.
-- **Not in scope:** Live providers, approved RU/BY geometry, durable PostGIS completion/reopen, full ecological replanning, browser UI or claiming `MVP01-BE-A08/A09` acceptance.
-- **Existing interfaces:** `backend/src/melliatlas/api/app.py`, `backend/src/melliatlas/api/contract.md`, `backend/src/melliatlas/territories/api.py`, `backend/src/melliatlas/territories/contract.md`.
-- **Proposed additions:** `backend/src/melliatlas/planning/api.py`, `backend/src/melliatlas/sources/api.py`, `backend/src/melliatlas/jobs/api.py`, `backend/src/melliatlas/api/routes_investigations.py`, focused implementation files and corresponding contract/unit/HTTP tests **only as needed**. Add only meaningful cross-module `contract.md` files. No changes to existing public HTTP routes.
-- **Approval gates:** Approve the fixture scenario and whether an explicitly *non-durable development-only* result store may be used before the PostGIS task. A provisional store is not MVP-01 persistence acceptance. New production dependencies require separate approval.
-- **Test-first sequence (TDD):** Verify existing boundary contracts → add failing positive/negative API tests and independent synthetic scenario oracles → implement minimal typed model and deterministic path → run relevant pytest, architecture, Ruff, Pyright and full `run-tests.sh` → review API diff, dependency direction, traceability and data limitations.
-- **Exit evidence:** Runnable POST/GET contract tests for successful and evidence-limited outcomes, rejected invalid inputs with no side effects, deterministic repeatability, no network, explicit synthetic labels and no false persistence/coverage claims. Mark the task implemented only after actual tests run; do **not** advance stage acceptance.
+- **Task ID:** `MVP01-BE-V02`
+- **Status:** Proposed; PostGIS adapter and migration implemented, real database validation PENDING
+- **Goal:** Persist immutable completed synthetic investigation snapshots and fictional selected-site points transactionally in PostgreSQL/PostGIS; reopen by stable UUID from a fresh DB connection.
+- **Requirement IDs:** `MVP01-BE-R04`, `MVP01-BE-R11`, `MVP01-BE-R12`
+- **Test inventory IDs:** `BE-T040`, `BE-T041`, `BE-T042`, `BE-T043`, `BE-T044`
+- **Scope:** A jobs-owned completed-snapshot port, a concrete injected PostGIS adapter, a reviewable SQL migration, one-time completed writes and read-only fresh-connection reopening. V01 synthetic behavior, privacy of HTTP response fields, and failed-write rollback must be preserved.
+- **Not in scope:** Approved RU/BY reference dataset ingestion, weather, durable queued/running worker state, background task recovery, live providers, Web UI or declaring `MVP01-BE-A09` accepted.
+- **Existing interfaces:** `backend/src/melliatlas/jobs/api.py`, `backend/src/melliatlas/api/app.py`, `backend/src/melliatlas/planning/api.py`, `backend/src/melliatlas/territories/api.py`.
+- **Proposed additions:** `backend/src/melliatlas/persistence/api.py`, `backend/src/melliatlas/persistence/contract.md`, `backend/migrations/0001_completed_investigations.sql`, focused unit/HTTP tests and opt-in real PostGIS verification.
+- **Approval gates:** Developer approval of the PostgreSQL driver and dedicated PostGIS test environment, migration privileges, approved geometry validation approach and operational database access. No new runtime dependency has been added to the manifest without approval.
+- **Test-first sequence (TDD):** Verify snapshot codec and failure behavior → exercise adapter SQL against recording connections → run fake-backed HTTP reopen tests → apply migration and execute an independent real PostGIS test with committed/failed transactions and spatial SRID constraints → run standard project checks → review schema, privacy and tradeoffs.
+- **Exit evidence:** Real PostGIS test proves completed result, evidence, trace and selected-site geometry survive a new connection; duplicate UUIDs cannot overwrite results, a failed database transaction is rolled back, and SRID/geometry constraints are verified. Until those integration checks pass, V02 is **partially implemented, not verified**.
 
-The V01 implementation uses only an explicitly fictional RU/Smolensk-labeled fixture, a single-process memory store, and an in-process FastAPI background task. Its HTTP contract, deterministic planning output, error paths, and interim QUEUED representation are covered by `backend/tests/contract/test_investigations_http.py` and `backend/tests/unit/test_synthetic_investigation.py`. The previously selected inventory IDs remain **future full-acceptance targets**, not evidence that every source/analyzer/agent behavior in the normative sub-spec is complete. No live geography, durable storage, real weather, or verified ecological screening is claimed. The complete MVP backend acceptance remains PENDING.
+The V01 investigation slice remains implemented but unaccepted. Its fixed fictional RU/Smolensk scenario, in-process task, typed HTTP contract and temporary default store are covered by `backend/tests/contract/test_investigations_http.py` and `backend/tests/unit/test_synthetic_investigation.py`. V02 adds an opt-in completed-only persistence bridge without changing the default `melliatlas.main:app` configuration. Its typed codec, adapter transaction intentions, and fake-backed HTTP reopen tests are executable, but **none** establishes real PostGIS acceptance. `backend/scripts/verify_postgis_investigations.py` is an explicit real-database check to run only after the open approvals and environment prerequisites have been satisfied.
 
 ## 5. Follow-on vertical slices and external gates
 
 | Slice | Product result | Verification and open decisions |
 | --- | --- | --- |
-| `V02` — persistence and reopen | Persist complete investigations and selected geography in PostGIS; reopen from a new connection | Real database, migration/rollback tests (`BE-T040`–`BE-T044`); approve DB driver/test environment |
+| `V02` — persistence and reopen (partial) | Optional completed snapshots and fictional site points have an adapter/migration; real PostGIS evidence is pending | Run real migration, rollback and fresh-session tests (`BE-T040`–`BE-T044`); approve DB driver/test environment |
 | `V03` — complete geography | Approved dated RU/BY regions, two pilot district catalogs and valid provenance/topology | Independent inventories, licensing, geometry accuracy and PostGIS validation (`BE-T001`–`BE-T012`, `BE-T058`); existing fail-closed routes remain |
 | `V04` — evidence-driven replanning | Explicit restriction/precaution, source modes, typed dependencies, bounded agent and alternate sites | No outbound calls, kind/payload validation, actual geometry intersection, bounded replan and trace (`BE-T013`–`BE-T039`, `BE-T054`–`BE-T059`) |
 | `V05` — backend/Web contract handoff | Full typed source/investigation API, frozen fixtures and documented client states | OpenAPI and route checks (`BE-T048`–`BE-T053`, `BE-T060`), separate React sub-spec then first browser E2E |
@@ -193,4 +193,4 @@ The repository tests check machine-verifiable consistency and detect several del
 | Architectural drift despite passing tests | Negative import-policy tests plus change-focused convergence review |
 | API changes disrupting downstream Web work | Preserve accepted routes and add contract/regression tests before altering public schemas |
 
-**Implementation status:** FastAPI bootstrap, partial territory contracts/API, and the V01 synthetic in-process investigation path are implemented. Complete RU/BY datasets, PostGIS persistence, full evidence-driven Agent/Engine and Web are not. No full backend or product acceptance has been claimed.
+**Implementation status:** FastAPI bootstrap, partial territory contracts/API, the V01 synthetic in-process investigation path, and an opt-in V02 PostGIS completed-snapshot adapter/migration are implemented. Real PostGIS integration, complete RU/BY datasets, full evidence-driven Agent/Engine and Web are not. No full backend or product acceptance has been claimed.
