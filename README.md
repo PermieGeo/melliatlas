@@ -1,109 +1,96 @@
 # MelliAtlas
 
-**Follow the bloom. Respect the wild.**
+MelliAtlas is a geospatial decision-support application for **seasonal apiary placement and migratory beekeeping**. It helps beekeepers compare forage opportunities across territories and plan when to move an apiary during the flowering season. The application gives equal consideration to the conservation of wild pollinators and sensitive habitats.
 
-Imagine a beekeeper planning the next move in the middle of the flowering season. A meadow looks promising, but will it still provide forage next week? Is another area better timed for the next honey flow? And could moving managed honey bees there place additional pressure on wild pollinators or conflict with a protected habitat?
+The intended result is an **explainable seasonal placement plan**: candidate stops, proposed dates, reasons for selection or rejection, alternative locations, and the limits of the available evidence. MelliAtlas does not guarantee honey yield or certify that a location is ecologically safe.
 
-**MelliAtlas helps people ask those questions together.** It is a geospatial decision-support application for migratory beekeeping, pollinator conservation, and, as the product grows, ecological research. Its purpose is to suggest *explainable seasonal apiary plans*—not to maximize honey harvest at any cost.
+## Purpose and users
 
-## One landscape, two responsibilities
+MelliAtlas is designed around three related uses:
+
+- **Beekeeping:** compare seasonal forage windows, identify gaps between flowering periods, and plan successive apiary stops with practical and ecological constraints.
+- **Conservation:** identify protected or sensitive areas, distinguish binding restrictions from potential ecological concerns, and compare less disruptive placement options.
+- **Research:** examine geographic and seasonal evidence about managed and wild pollinators. Later stages will support field observations, research datasets, and multi-year monitoring.
+
+The first working product serves a beekeeper planning a seasonal relocation. Conservation checks are part of that workflow from the beginning; research tools are introduced incrementally.
+
+## Conceptual model
 
 ```mermaid
-%%{init: {"look": "handDrawn", "theme": "neutral"}}%%
 flowchart LR
-    B["Beekeeper<br/>Apiary, season, practical needs"]
-    F["Flowering landscape<br/>Nectar and pollen opportunities"]
-    W["Wild pollinators<br/>Habitats and ecological sensitivity"]
-    E["MelliAtlas<br/>Compare evidence and alternatives"]
-    P["Seasonal placement plan<br/>Stops, dates, explanations"]
-    R["Researchers and conservationists<br/>Inspect evidence and impacts"]
-
-    B --> E
-    F --> E
-    W --> E
-    E --> P
-    E --> R
+    B["Beekeeper<br/>Location and season"] --> M["MelliAtlas<br/>Evidence-based analysis"]
+    F["Forage availability<br/>and flowering periods"] --> M
+    E["Wild pollinators<br/>and ecological constraints"] --> M
+    M --> P["Seasonal apiary plan<br/>Stops, dates and explanations"]
+    M --> R["Conservation and research<br/>Evidence and uncertainty"]
 ```
 
-A productive site is not automatically a suitable site. MelliAtlas must distinguish **verified legal restrictions**, **possible ecological concerns**, and **unknown conditions**. A site may be rejected under an applicable documented rule, flagged for further investigation, or left undecided when evidence is insufficient. No arbitrary universal exclusion radius or unsupported claim of ecological safety is acceptable.
+The same territory may offer significant forage resources while also containing habitats where additional managed honey bees would be undesirable. MelliAtlas must evaluate these considerations together. A documented legal restriction, a possible ecological conflict, and a lack of information are **different findings** and must not be presented as interchangeable conclusions.
 
-### Three ways to use the same evidence
+## Investigation lifecycle
 
-- **For beekeepers:** explore forage opportunities, compare possible stops, identify seasonal gaps, and consider when a move might make sense for the colonies.
-- **For conservation teams:** inspect sensitive areas, assess potential conflicts with wild pollinators, and compare placement alternatives without confusing modeled impacts with established harm.
-- **For ecologists and biologists:** eventually compare territories and seasons, test hypotheses, contribute observations, and track ecosystem changes over years.
-
-The **first user journey serves the beekeeper**. Conservation constraints are part of that journey from day one; richer research and field-monitoring workflows arrive in later stages.
-
-## From scattered evidence to a seasonal plan
-
-A user selects a territory and season, starts an investigation, and receives candidate stops on a map and a proposed relocation timeline. The application should explain **why** a site was selected, rejected, or reconsidered, which evidence was used, and what remains uncertain.
-
-The following is a **conceptual future processing DAG**, not a claim that these sources, adapters, or analyzers already exist. In `MVP-01`, planning evidence and remote-publication/Saturn responses are explicitly **synthetic or fixture-based**; the RU/BY map and territorial catalogs are sourced reference geography with documented version and rights. Actual public-web/news and Saturn integrations begin in `MVP-02`, subject to independent access and evidence verification.
+A beekeeper selects a **country, region, supported district, and planning season**, and then requests an investigation. The proposed workflow is shown below. This is a **conceptual state diagram**, not a list of currently implemented API statuses or evidence of live provider access.
 
 ```mermaid
-flowchart TD
-    subgraph Sources["Potential sources — not yet integrated"]
-        LAND["Maps, boundaries and land cover"]
-        PUBLIC["Public websites and news (RU and BY)"]
-        SATURN["Saturn map/treatment evidence (RU only)"]
-        FLOW["Flowering calendars and phenology"]
-        WX["Weather observations and forecasts"]
-        CONS["Protected areas and applicable restrictions"]
-        WILD["Wild pollinator observations"]
-        APIARY["Private apiary data and travel constraints"]
-    end
-
-    subgraph Processing["Adapters and analyzers — planned capabilities"]
-        NORM["Normalize geography, time and provenance"]
-        FORAGE["Analyze forage windows and seasonal gaps"]
-        ECO["Screen restrictions and ecological sensitivity"]
-        FEAS["Check distance and placement feasibility"]
-        COMBINE["Compare candidate stops and time windows"]
-        VERIFY["Check evidence consistency and uncertainty"]
-    end
-
-    LAND --> NORM
-    PUBLIC --> NORM
-    SATURN --> NORM
-    FLOW --> NORM
-    WX --> NORM
-    CONS --> NORM
-    WILD --> NORM
-    APIARY --> NORM
-    NORM --> FORAGE
-    NORM --> ECO
-    NORM --> FEAS
-    FORAGE --> COMBINE
-    ECO --> COMBINE
-    FEAS --> COMBINE
-    COMBINE --> VERIFY
-    VERIFY --> AGENT["Bounded agent evaluates the outcome"]
-    AGENT --> RESULT["Proposed stops, timeline, alternatives and evidence"]
-    RESULT --> MAP["Web map and readable report"]
+stateDiagram-v2
+    direction TB
+    [*] --> Selection
+    Selection --> Validation: Submit territory and season
+    Validation --> Rejected: Invalid or unsupported request
+    Validation --> Analysis: Valid request
+    Analysis --> Assessment: Collect and analyze evidence
+    Assessment --> Analysis: Additional evidence needed
+    Assessment --> Revision: Conflict or exclusion identified
+    Revision --> Analysis: Evaluate alternative sites
+    Assessment --> Result: Supported plan saved
+    Revision --> Unresolved: No supported alternative
+    Analysis --> Failed: Execution error
+    Result --> Viewed: Open map and seasonal plan
+    Viewed --> [*]
+    Rejected --> [*]
+    Unresolved --> [*]
+    Failed --> [*]
 ```
 
-The graph depicts **one execution pass**. If the agent finds missing or conflicting evidence, it can request permitted additional operations and submit a *new* dependency graph. This preserves an acyclic execution plan while allowing adaptive investigation. Sources and analyzers are intended to expose typed, testable contracts rather than hidden application-specific shortcuts.
+The transitions have the following meaning:
 
-## Start small, keep improving
-
-The first stage, **`MVP-01`**, must already deliver a working browser-to-PostGIS application: a React/Leaflet map, a Python/FastAPI backend, complete first-order regional navigation for Russia and Belarus, district catalogs for Smolensk and Vitebsk Oblasts, minimal typed analysis operations, and a bounded deterministic agent. A synthetic example will propose at least two successive apiary stops, detect a fictional exclusion rule, reconsider an attractive location, and explain an alternative. A completed result can be reopened.
-
-Subsequent stages expand the **same working product** with approved public-web/news collection in Russia and Belarus, controlled Saturn integration in Russia, better flowering evidence, more adaptive planning, durable jobs and caching, multi-district comparisons, further verified real data, weather-aware phenology, stronger conservation analysis, colony and agricultural considerations, constrained relocation planning, optional LLM support, scientific comparison, and eventually field observations and multi-year monitoring.
-
-**Limits matter:** the software does not issue permits, guarantee honey yield, certify the absence of ecological harm, or establish scientific causation from a map correlation. Synthetic data must never appear to be live observations. Sensitive apiary coordinates and protected species locations require appropriate access controls.
-
-## How the repository fits together
-
-| Directory | Planned responsibility |
+| State or transition | Expected behavior |
 | --- | --- |
-| `backend/` | Python/FastAPI API, analysis engine, agent, source/analyzer contracts, and persistence |
-| `web/` | React/TypeScript/Vite/Leaflet experience for maps, timelines, evidence, and research views |
-| `config/countries/` | Country-specific settings when supported territories are introduced |
-| `docs/specs/` | Product requirements, stage lifecycle, active plans, and checkpoint contracts |
+| **Selection → Validation** | The user supplies a territory and season. The server verifies supported administrative scope, dates, and the selected scenario. |
+| **Validation → Analysis** | An accepted request starts an investigation with a stable identifier; the user can inspect its progress. Invalid or unsupported requests return a structured explanation. |
+| **Analysis → Assessment** | The engine loads the applicable reference and synthetic evidence, invokes registered sources and analyzers, and evaluates forage opportunities and ecological constraints. |
+| **Assessment → Analysis** | When relevant evidence is missing or inconsistent, the bounded agent may request an additional permitted check. |
+| **Assessment → Revision → Analysis** | An excluded or unsuitable candidate causes the agent to consider alternatives and repeat the necessary analysis, rather than silently retaining the original site. |
+| **Assessment → Result → Viewed** | When evidence supports a plan, the result and decision trace are stored and presented as a map, ordered stops, a timeline, and explanations. Completed results can be reopened by investigation ID. |
+| **Rejected / Unresolved / Failed** | Invalid input, lack of a supportable plan, and execution errors produce distinct diagnostics. None is represented as a successful recommendation. |
 
-The preferred architecture is a **Python modular monolith** backed by **PostgreSQL/PostGIS**, with an independent worker when durable execution is introduced. The browser is a single responsive application. LLM planning is optional: the initial agent works without an LLM.
+The diagram describes the **investigation workflow**, not the final persistence schema. Backend job statuses are defined separately by the active backend specification; the initial MVP may execute jobs in process, while durable worker recovery is planned for a later stage.
 
-**Current status:** the first backend slice has a runnable FastAPI health/OpenAPI endpoint and initial tests. Territory directories, PostGIS, source adapters, Agent, frontend, and an end-to-end GIS workflow are not implemented yet. The diagrams describe intended capabilities, not implemented or scientifically validated behavior.
+## Evidence and analysis
 
-Read the [umbrella specification](docs/specs/umbrella_spec_melliatlas.md) for the ordered stages and acceptance outcomes, or the [specification index](docs/specs/README.md) for the documentation lifecycle. Once a stage is selected, its sub-specification and implementation plan define the approved work. Run `bash ./run-tests.sh` to check documentation integrity; application-specific test commands will be added when product code is introduced.
+MelliAtlas is intended to combine geographic, temporal, agricultural, and ecological information. Potential sources include administrative boundaries and maps; vegetation and flowering calendars; public websites and news in Russia and Belarus; Russia-only FGIS Saturn evidence; weather information; protected-area restrictions; field observations of wild pollinators; and privately supplied apiary or travel constraints.
+
+Potential processing components include geographic normalization, source provenance checks, forage-window analysis, spatial screening, comparison of candidate stops, uncertainty assessment, and seasonal plan construction. Sources provide data; analyzers process it; the engine executes typed dependent operations; and the agent determines whether further checks or revised candidates are necessary. These components are planned capabilities, not claims that the integrations already exist.
+
+In **`MVP-01`**, Russia and Belarus require reference maps and regional catalogs, with district catalogs for Smolensk and Vitebsk Oblasts. Planning evidence, public-website/news samples, and Saturn examples remain **synthetic or fixture-based**. Real public-web/news ingestion for both countries and verified Saturn integration for Russia are scheduled for **`MVP-02`**, subject to source-access, licensing, and data-meaning checks.
+
+Every significant conclusion should retain its source, relevant dates and geographic scope, the transformation or rule applied, and uncertainty. Synthetic material must be labeled as synthetic. The absence of evidence about pesticide treatments, wild pollinators, or nearby apiaries is not evidence that the area is safe.
+
+## Development roadmap and current status
+
+The product is developed in independently testable increments. **`MVP-01` must deliver an end-to-end browser workflow**, including a React/Leaflet map, a Python/FastAPI backend, a minimal deterministic agent, synthetic placement analysis with ecological screening, and reopening a completed result from PostgreSQL/PostGIS. Later stages add real data adapters, richer seasonality, stronger conservation and relocation analysis, optional LLM planning, research tools, and long-term ecological monitoring.
+
+**Current status:** the implemented backend provides a FastAPI application factory, a health endpoint, OpenAPI metadata, and initial tests. Territory catalogs, PostGIS persistence, source adapters, the planning engine, agent behavior, and the React user interface are not yet implemented. Both diagrams describe the intended product behavior.
+
+## Architecture and project documentation
+
+The planned application is a **Python modular monolith** with FastAPI, PostgreSQL/PostGIS, and a single responsive React/TypeScript web client. An independent Python worker is introduced when durable background execution becomes necessary. LLM-based planning is optional; the initial agent must work without an LLM.
+
+| Directory | Responsibility |
+| --- | --- |
+| `backend/` | API, domain contracts, sources, analyzers, execution, and persistence |
+| `web/` | Map, seasonal plan, evidence presentation, and future research views |
+| `config/countries/` | Country-specific configuration |
+| `docs/specs/` | Umbrella specification, active sub-specifications, plans, and checkpoints |
+
+The [umbrella specification](docs/specs/umbrella_spec_melliatlas.md) defines the roadmap and acceptance criteria. The [specification index](docs/specs/README.md) identifies the active workstream and the documents governing implementation. See [installation](docs/INSTALLATION.md) and [testing](docs/TESTS.md) for the currently supported commands.
