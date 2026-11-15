@@ -1,15 +1,20 @@
 """Pure spatial analysis of fictional ecology and treatment evidence."""
 
-from dataclasses import dataclass
 from datetime import timedelta
-from enum import StrEnum
 from math import cos, isfinite, radians
 
 from shapely.errors import GEOSException
 from shapely.geometry import Point, shape
 from shapely.ops import transform
 
-from melliatlas.planning.api import CandidateSite, EcologyOverlap, EcologyZone
+from melliatlas.planning.api import (
+    CandidateSite,
+    EcologyOverlap,
+    EcologyZone,
+    ReportedTreatmentProduct,
+    TreatmentProximity,
+    TreatmentScreening,
+)
 from melliatlas.sources.api import TreatmentNotice
 
 
@@ -55,25 +60,6 @@ def find_ecology_overlaps(
                 )
             )
     return tuple(sorted(matches, key=lambda item: (item.evidence_id, item.rule_id, item.kind)))
-
-
-class TreatmentProximity(StrEnum):
-    FIELD_INTERSECTION = "FIELD_INTERSECTION"
-    NEAR_REPORTED_FIELD = "NEAR_REPORTED_FIELD"
-    OUTSIDE_SCREEN_RADIUS = "OUTSIDE_SCREEN_RADIUS"
-    UNKNOWN_GEOMETRY = "UNKNOWN_GEOMETRY"
-    OUTSIDE_STATED_PERIOD = "OUTSIDE_STATED_PERIOD"
-    UNKNOWN_PERIOD = "UNKNOWN_PERIOD"
-
-
-@dataclass(frozen=True)
-class TreatmentScreening:
-    site_id: str
-    source_record_id: str
-    source_id: str
-    proximity: TreatmentProximity
-    approximate_distance_km: float | None
-    warnings: tuple[str, ...]
 
 
 def screen_treatment_notices(
@@ -150,6 +136,27 @@ def screen_treatment_notices(
                 proximity=proximity,
                 approximate_distance_km=distance,
                 warnings=tuple(warnings),
+                captured_at=notice.captured_at,
+                scheduled_start=notice.scheduled_start,
+                scheduled_end=notice.scheduled_end,
+                source_uri=notice.source_uri,
+                products=tuple(
+                    ReportedTreatmentProduct(
+                        name=product.name,
+                        crop=product.crop,
+                        bee_hazard_class=product.reported_bee_hazard_class,
+                    )
+                    for product in notice.products
+                ),
             )
         )
     return tuple(sorted(results, key=lambda item: (item.source_id, item.source_record_id)))
+
+
+# Stable public exports for existing analyzer consumers.
+__all__ = [
+    "find_ecology_overlaps",
+    "screen_treatment_notices",
+    "TreatmentProximity",
+    "TreatmentScreening",
+]

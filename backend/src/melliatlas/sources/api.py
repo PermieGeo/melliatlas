@@ -17,10 +17,16 @@ from melliatlas.sources.providers.saturn.pagination import (
     SaturnTreatmentPage,
     next_saturn_treatment_page,
 )
+from melliatlas.sources.synthetic_treatments import (
+    TREATMENT_FIXTURE_RECORD_ID,
+    TREATMENT_FIXTURE_SOURCE_ID,
+    treatment_fixture_notices,
+)
 from melliatlas.territories.api import CountryCode
 
 SYNTHETIC_SCENARIO_ID = "synthetic-ru-2026-v01"
 SYNTHETIC_ECOLOGY_SCENARIO_ID = "synthetic-ru-2026-v04-ecology"
+SYNTHETIC_TREATMENT_SCENARIO_ID = "synthetic-ru-2026-v04-treatment"
 _SYNTHETIC_TERRITORY_ID = "ru:region:smolensk"
 
 
@@ -32,7 +38,11 @@ class SyntheticFixtureProvider:
     ) -> SyntheticScenario | None:
         if country != CountryCode.RU or territory_id != _SYNTHETIC_TERRITORY_ID:
             return None
-        if scenario_id not in (SYNTHETIC_SCENARIO_ID, SYNTHETIC_ECOLOGY_SCENARIO_ID):
+        if scenario_id not in (
+            SYNTHETIC_SCENARIO_ID,
+            SYNTHETIC_ECOLOGY_SCENARIO_ID,
+            SYNTHETIC_TREATMENT_SCENARIO_ID,
+        ):
             return None
 
         windows = (
@@ -83,6 +93,55 @@ class SyntheticFixtureProvider:
 
         if scenario_id == SYNTHETIC_SCENARIO_ID:
             return original
+
+        if scenario_id == SYNTHETIC_TREATMENT_SCENARIO_ID:
+            notices = treatment_fixture_notices()
+            notice = notices[0]
+            if notice.scheduled_start is None or notice.scheduled_end is None:
+                raise ValueError("Synthetic treatment fixture is missing planned dates")
+            alternative = replace(
+                original.candidates[0],
+                id="fixture-site-alpha-treatment-alternative",
+                longitude=32.16,
+                evidence_id="fixture-evidence-alpha-treatment-alternative",
+            )
+            return replace(
+                original,
+                id=SYNTHETIC_TREATMENT_SCENARIO_ID,
+                reference_version="SYNTHETIC-V04-TREATMENT-NOT-REAL-APPLICATIONS",
+                candidates=(original.candidates[0], alternative, *original.candidates[1:]),
+                evidence=original.evidence
+                + (
+                    EvidenceSummary(
+                        id=alternative.evidence_id,
+                        source_id="fixture:fictional-forage-windows",
+                        source_mode="FIXTURE",
+                        synthetic=True,
+                        effective_window=alternative.forage_window,
+                        uncertainty=(
+                            "Illustrative alternative without verified field or forage data"
+                        ),
+                    ),
+                    EvidenceSummary(
+                        id=notice.record_id,
+                        source_id=notice.source_id,
+                        source_mode="FIXTURE",
+                        synthetic=True,
+                        effective_window=TimeWindow(
+                            notice.scheduled_start.date(), notice.scheduled_end.date()
+                        ),
+                        uncertainty=(
+                            "Historical-shaped fictional treatment notice; no live spraying evidence"
+                        ),
+                    ),
+                ),
+                treatment_screening_required=True,
+                limitations=original.limitations
+                + (
+                    "Treatment notice is a synthetic exercise, not a real agricultural warning",
+                    "Absence of nearby notices does not establish coverage or site safety",
+                ),
+            )
 
         alternative = replace(
             original.candidates[0],
@@ -168,15 +227,24 @@ class SyntheticFixtureProvider:
             ),
         )
 
+    def load_treatment_notices(self, scenario_id: str) -> tuple[TreatmentNotice, ...] | None:
+        """Return fictional treatment claims only for the explicit treatment scenario."""
+        if scenario_id != SYNTHETIC_TREATMENT_SCENARIO_ID:
+            return None
+        return treatment_fixture_notices()
+
 
 # These are intentional public re-exports and must survive Ruff auto-fix.
 __all__ = [
     "SYNTHETIC_SCENARIO_ID",
     "SYNTHETIC_ECOLOGY_SCENARIO_ID",
+    "SYNTHETIC_TREATMENT_SCENARIO_ID",
     "SyntheticFixtureProvider",
     "TreatmentProduct",
     "TreatmentNotice",
     "SaturnTreatmentPage",
     "parse_saturn_treatment_page",
     "next_saturn_treatment_page",
+    "TREATMENT_FIXTURE_RECORD_ID",
+    "TREATMENT_FIXTURE_SOURCE_ID",
 ]

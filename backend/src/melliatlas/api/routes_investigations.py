@@ -20,7 +20,7 @@ from melliatlas.jobs.api import (
     InvestigationStatus,
     InvestigationStorageError,
 )
-from melliatlas.planning.api import EcologyStatus, TimeWindow
+from melliatlas.planning.api import EcologyStatus, TimeWindow, TreatmentProximity
 from melliatlas.territories.api import CountryCode
 
 
@@ -104,6 +104,32 @@ class ReplanSummaryDto(BaseModel):
     warnings: tuple[str, ...]
 
 
+class ReportedTreatmentProductDto(BaseModel):
+    name: str | None
+    crop: str | None
+    bee_hazard_class: Literal[1, 2, 3] | None
+
+
+class TreatmentScreeningDto(BaseModel):
+    site_id: str
+    source_record_id: str
+    source_id: str
+    proximity: TreatmentProximity
+    approximate_distance_km: float | None
+    warnings: tuple[str, ...]
+    captured_at: datetime | None
+    scheduled_start: datetime | None
+    scheduled_end: datetime | None
+    source_uri: str | None
+    products: tuple[ReportedTreatmentProductDto, ...]
+
+
+class TreatmentReviewDto(BaseModel):
+    screenings: tuple[TreatmentScreeningDto, ...]
+    avoided_site_ids: tuple[str, ...]
+    warnings: tuple[str, ...]
+
+
 class InvestigationResponse(BaseModel):
     id: UUID
     status: InvestigationStatus
@@ -113,6 +139,7 @@ class InvestigationResponse(BaseModel):
     outcome: InvestigationOutcomeKind | None
     plan: SeasonPlanDto | None
     replanning: ReplanSummaryDto | None
+    treatment_review: TreatmentReviewDto | None
     evidence: tuple[EvidenceSummaryDto, ...]
     decision_trace: tuple[str, ...]
     diagnostics: tuple[str, ...]
@@ -172,6 +199,36 @@ def _present(snapshot: InvestigationSnapshot) -> InvestigationResponse:
             checks_used=result.checks_used,
             warnings=result.warnings,
         )
+    treatment_review: TreatmentReviewDto | None = None
+    if snapshot.treatment_review is not None:
+        review = snapshot.treatment_review
+        treatment_review = TreatmentReviewDto(
+            screenings=tuple(
+                TreatmentScreeningDto(
+                    site_id=item.site_id,
+                    source_record_id=item.source_record_id,
+                    source_id=item.source_id,
+                    proximity=item.proximity,
+                    approximate_distance_km=item.approximate_distance_km,
+                    warnings=item.warnings,
+                    captured_at=item.captured_at,
+                    scheduled_start=item.scheduled_start,
+                    scheduled_end=item.scheduled_end,
+                    source_uri=item.source_uri,
+                    products=tuple(
+                        ReportedTreatmentProductDto(
+                            name=product.name,
+                            crop=product.crop,
+                            bee_hazard_class=product.bee_hazard_class,
+                        )
+                        for product in item.products
+                    ),
+                )
+                for item in review.screenings
+            ),
+            avoided_site_ids=review.avoided_site_ids,
+            warnings=review.warnings,
+        )
     return InvestigationResponse(
         id=snapshot.id,
         status=snapshot.status,
@@ -187,6 +244,7 @@ def _present(snapshot: InvestigationSnapshot) -> InvestigationResponse:
         outcome=snapshot.outcome,
         plan=plan,
         replanning=replanning,
+        treatment_review=treatment_review,
         evidence=tuple(
             EvidenceSummaryDto(
                 id=item.id,

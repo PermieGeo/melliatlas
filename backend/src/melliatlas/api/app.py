@@ -10,17 +10,21 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from melliatlas.agent.api import DeterministicPlanner
-from melliatlas.analyzers.api import find_ecology_overlaps
+from melliatlas.agent.api import DeterministicPlanner, TreatmentPlanner
+from melliatlas.analyzers.api import find_ecology_overlaps, screen_treatment_notices
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse, HealthResponse
 from melliatlas.api.reference_loader import read_reference_documents
 from melliatlas.api.routes_investigations import create_investigation_router
 from melliatlas.api.routes_territories import create_territory_router
-from melliatlas.jobs.api import InMemoryInvestigationService, InvestigationService
+from melliatlas.jobs.api import (
+    InMemoryInvestigationService,
+    InvestigationService,
+)
 from melliatlas.planning.api import (
     CandidateSite,
     SiteAssessment,
     SyntheticScenario,
+    TreatmentScreening,
     assess_ecology,
 )
 from melliatlas.sources.api import SyntheticFixtureProvider
@@ -33,6 +37,19 @@ def _fictional_planner(scenario: SyntheticScenario) -> DeterministicPlanner:
         return assess_ecology(site.id, find_ecology_overlaps(site, scenario.ecology_zones))
 
     return DeterministicPlanner(inspect)
+
+
+def _fictional_treatment_planner(
+    provider: SyntheticFixtureProvider, scenario: SyntheticScenario
+) -> TreatmentPlanner:
+    notices = provider.load_treatment_notices(scenario.id)
+    if not notices:
+        raise ValueError("Required fictional treatment claims are unavailable")
+
+    def inspect(site: CandidateSite) -> tuple[TreatmentScreening, ...]:
+        return screen_treatment_notices(site, notices)
+
+    return TreatmentPlanner(inspect)
 
 
 @dataclass(frozen=True)
@@ -90,11 +107,16 @@ def create_app(
 
     active_catalog = territories if territories is not None else loaded_catalog
     app.include_router(create_territory_router(active_catalog))
+    fixture_provider = SyntheticFixtureProvider()
     job_service = (
         investigations
         if investigations is not None
         else InMemoryInvestigationService(
-            SyntheticFixtureProvider(), replan_factory=_fictional_planner
+            fixture_provider,
+            replan_factory=_fictional_planner,
+            treatment_planner_factory=lambda scenario: _fictional_treatment_planner(
+                fixture_provider, scenario
+            ),
         )
     )
     app.include_router(create_investigation_router(job_service))
