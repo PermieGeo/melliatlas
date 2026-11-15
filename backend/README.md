@@ -32,6 +32,24 @@ be read or its response failed validation, not that no treatments exist.
 Source records are not automatically stored or combined with synthetic plans.
 The historical read endpoint and public-use terms still require verification.
 
+For a **single operator-initiated compatibility check**, after independently reviewing
+upstream access and reuse terms, run the following from the repository root with
+an editable backend installation:
+
+```sh
+python backend/scripts/probe_saturn.py --region-code 55
+```
+
+Replace `55` with a verified **Saturn upstream subject code** for the target
+Russian region; it is not a MelliAtlas territory ID. This command makes at most
+one HTTPS page request and prints one JSON summary with the upstream HTTP status
+(if available), allowlisted envelope fields, row-shape counts and decoder status.
+It does not print or store source records, product names, field IDs, coordinates
+or raw response bodies. A nonzero exit status means access, schema, or partial
+record verification remains unresolved; a successful parse is **not** evidence
+of provider availability elsewhere, complete coverage or permission to ingest.
+Do not run it as a scheduled job or increase its call frequency without review.
+
 ## Live point weather preview (opt-in)
 
 The `WeatherForecastReader` port is implemented by the bounded Open-Meteo
