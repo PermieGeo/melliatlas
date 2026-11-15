@@ -27,6 +27,7 @@ from melliatlas.territories.api import CountryCode
 SYNTHETIC_SCENARIO_ID = "synthetic-ru-2026-v01"
 SYNTHETIC_ECOLOGY_SCENARIO_ID = "synthetic-ru-2026-v04-ecology"
 SYNTHETIC_TREATMENT_SCENARIO_ID = "synthetic-ru-2026-v04-treatment"
+SYNTHETIC_COMBINED_SCENARIO_ID = "synthetic-ru-2026-v04-ecology-treatment"
 _SYNTHETIC_TERRITORY_ID = "ru:region:smolensk"
 
 
@@ -42,6 +43,7 @@ class SyntheticFixtureProvider:
             SYNTHETIC_SCENARIO_ID,
             SYNTHETIC_ECOLOGY_SCENARIO_ID,
             SYNTHETIC_TREATMENT_SCENARIO_ID,
+            SYNTHETIC_COMBINED_SCENARIO_ID,
         ):
             return None
 
@@ -93,6 +95,34 @@ class SyntheticFixtureProvider:
 
         if scenario_id == SYNTHETIC_SCENARIO_ID:
             return original
+
+        if scenario_id == SYNTHETIC_COMBINED_SCENARIO_ID:
+            ecology = self.load(
+                country=country,
+                territory_id=territory_id,
+                scenario_id=SYNTHETIC_ECOLOGY_SCENARIO_ID,
+            )
+            treatments = self.load(
+                country=country,
+                territory_id=territory_id,
+                scenario_id=SYNTHETIC_TREATMENT_SCENARIO_ID,
+            )
+            if ecology is None or treatments is None:
+                raise ValueError("Combined fictional reference scenarios are unavailable")
+            ecology_ids = {item.id for item in ecology.candidates}
+            evidence_ids = {item.id for item in ecology.evidence}
+            return replace(
+                ecology,
+                id=SYNTHETIC_COMBINED_SCENARIO_ID,
+                reference_version="SYNTHETIC-V04-JOINT-NOT-REAL-APPLICATIONS",
+                candidates=ecology.candidates
+                + tuple(item for item in treatments.candidates if item.id not in ecology_ids),
+                evidence=ecology.evidence
+                + tuple(item for item in treatments.evidence if item.id not in evidence_ids),
+                treatment_screening_required=True,
+                limitations=ecology.limitations
+                + tuple(item for item in treatments.limitations if item not in ecology.limitations),
+            )
 
         if scenario_id == SYNTHETIC_TREATMENT_SCENARIO_ID:
             notices = treatment_fixture_notices()
@@ -229,7 +259,10 @@ class SyntheticFixtureProvider:
 
     def load_treatment_notices(self, scenario_id: str) -> tuple[TreatmentNotice, ...] | None:
         """Return fictional treatment claims only for the explicit treatment scenario."""
-        if scenario_id != SYNTHETIC_TREATMENT_SCENARIO_ID:
+        if scenario_id not in (
+            SYNTHETIC_TREATMENT_SCENARIO_ID,
+            SYNTHETIC_COMBINED_SCENARIO_ID,
+        ):
             return None
         return treatment_fixture_notices()
 
@@ -239,6 +272,7 @@ __all__ = [
     "SYNTHETIC_SCENARIO_ID",
     "SYNTHETIC_ECOLOGY_SCENARIO_ID",
     "SYNTHETIC_TREATMENT_SCENARIO_ID",
+    "SYNTHETIC_COMBINED_SCENARIO_ID",
     "SyntheticFixtureProvider",
     "TreatmentProduct",
     "TreatmentNotice",

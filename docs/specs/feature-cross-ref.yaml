@@ -46,6 +46,7 @@ features:
     owners:
       - backend/src/melliatlas/sources/api.py#SyntheticFixtureProvider
     test_files:
+      - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_synthetic_investigation.py
       - backend/tests/contract/test_ecology_investigations_http.py
       - backend/tests/contract/test_treatment_investigations_http.py
@@ -77,6 +78,7 @@ features:
       - backend/src/melliatlas/analyzers/api.py#screen_treatment_notices
       - backend/src/melliatlas/jobs/api.py#InMemoryInvestigationService
     test_files:
+      - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_saturn_treatment_screening.py
       - backend/tests/contract/test_treatment_investigations_http.py
   - feature_id: DATA.PROVENANCE
@@ -96,6 +98,7 @@ features:
     owners:
       - backend/src/melliatlas/persistence/api.py#PostgisCompletedInvestigationStore
     test_files:
+      - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_postgis_store_unit.py
       - backend/tests/unit/test_completed_snapshot_codec.py
       - backend/tests/contract/test_treatment_investigations_http.py
@@ -106,6 +109,7 @@ features:
     owners:
       - backend/src/melliatlas/jobs/api.py#InMemoryInvestigationService
     test_files:
+      - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/contract/test_investigations_http.py
       - backend/tests/contract/test_ecology_investigations_http.py
       - backend/tests/contract/test_treatment_investigations_http.py
@@ -128,7 +132,9 @@ features:
     owners:
       - backend/src/melliatlas/agent/api.py#DeterministicPlanner
       - backend/src/melliatlas/agent/api.py#TreatmentPlanner
+      - backend/src/melliatlas/agent/api.py#CombinedPlanner
     test_files:
+      - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_deterministic_replanning.py
       - backend/tests/contract/test_treatment_investigations_http.py
       - backend/tests/contract/test_ecology_investigations_http.py
@@ -140,6 +146,7 @@ features:
       - backend/src/melliatlas/agent/api.py#ReplanDecision
       - backend/src/melliatlas/agent/api.py#TreatmentPlanningResult
     test_files:
+      - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_deterministic_replanning.py
       - backend/tests/unit/test_completed_snapshot_codec.py
       - backend/tests/contract/test_ecology_investigations_http.py
@@ -160,6 +167,7 @@ features:
       - backend/src/melliatlas/agent/api.py#DeterministicPlanner
       - backend/src/melliatlas/agent/api.py#TreatmentPlanner
     test_files:
+      - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_deterministic_replanning.py
       - backend/tests/contract/test_treatment_investigations_http.py
       - backend/tests/contract/test_ecology_investigations_http.py

@@ -12,6 +12,7 @@ from typing import Literal, Protocol, TypeGuard
 from uuid import UUID, uuid4
 
 from melliatlas.agent.api import (
+    CombinedPlanner,
     DeterministicPlanner,
     ReplanDecision,
     ReplanDecisionKind,
@@ -452,7 +453,32 @@ def deserialize_completed_snapshot(payload: str) -> InvestigationSnapshot:
             raise ValueError("Stored replanning outcome disagrees with investigation outcome")
     if snapshot.treatment_review is not None:
         if snapshot.replanning is not None:
-            raise ValueError("Stored investigation cannot combine independent demo planning paths")
+            evaluated = {item.site_id for item in snapshot.replanning.assessments}
+            reviewed = {item.site_id for item in snapshot.treatment_review.screenings}
+            if (snapshot.plan is not None and evaluated != reviewed) or (
+                snapshot.plan is None and not evaluated.issubset(reviewed)
+            ):
+                raise ValueError("Stored combined screening coverage disagrees")
+            qualified = {
+                item.site_id
+                for item in snapshot.replanning.assessments
+                if item.status is EcologyStatus.CAUTION
+            }
+            if snapshot.plan is not None and any(
+                stop.site_id not in qualified for stop in snapshot.plan.stops
+            ):
+                raise ValueError("Stored combined plan uses a site without ecological caution")
+            traced = tuple(
+                (event.site_ids, event.evidence_ids)
+                for event in snapshot.replanning.trace
+                if event.kind is ReplanDecisionKind.TREATMENT_CHECK
+            )
+            expected = tuple(
+                ((item.site_id,), (item.source_record_id,))
+                for item in snapshot.treatment_review.screenings
+            )
+            if traced != expected:
+                raise ValueError("Stored combined trace disagrees with treatment findings")
         source_records = {(item.source_id, item.id) for item in snapshot.evidence}
         if any(
             (item.source_id, item.source_record_id) not in source_records
@@ -545,8 +571,32 @@ class InMemoryInvestigationService:
             replanning: ReplanResult | None = None
             treatment_review: TreatmentReview | None = None
             if scenario.ecology_zones and scenario.treatment_screening_required:
-                raise RuntimeError("Combined ecological and treatment assessment is not configured")
-            if scenario.ecology_zones:
+                if self._replan_factory is None or self._treatment_planner_factory is None:
+                    raise RuntimeError("Both fictional evaluators must be configured")
+                combined = CombinedPlanner(
+                    self._replan_factory(scenario),
+                    self._treatment_planner_factory(scenario),
+                ).plan(scenario.candidates, current.request.season)
+                replanning = combined.replanning
+                treatment_review = combined.treatment_review
+                plan = replanning.plan
+                outcome = {
+                    ReplanOutcome.PLAN_FOUND: InvestigationOutcomeKind.PLAN_FOUND,
+                    ReplanOutcome.NO_FEASIBLE_ALTERNATIVE: (
+                        InvestigationOutcomeKind.NO_FEASIBLE_ALTERNATIVE
+                    ),
+                    ReplanOutcome.CHECK_LIMIT_REACHED: (
+                        InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE
+                    ),
+                }[replanning.outcome]
+                trace = tuple(f"{event.kind.value}: {event.note}" for event in replanning.trace)
+                diagnostics = (
+                    ()
+                    if plan is not None
+                    else ("Combined fictional checks cannot support a two-stop proposal",)
+                )
+                limitations = current.limitations + replanning.warnings
+            elif scenario.ecology_zones:
                 if self._replan_factory is None:
                     raise RuntimeError("Fictional ecology evaluator has not been configured")
                 replanning = self._replan_factory(scenario).plan(
@@ -555,8 +605,12 @@ class InMemoryInvestigationService:
                 plan = replanning.plan
                 outcome = {
                     ReplanOutcome.PLAN_FOUND: InvestigationOutcomeKind.PLAN_FOUND,
-                    ReplanOutcome.NO_FEASIBLE_ALTERNATIVE: InvestigationOutcomeKind.NO_FEASIBLE_ALTERNATIVE,
-                    ReplanOutcome.CHECK_LIMIT_REACHED: InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE,
+                    ReplanOutcome.NO_FEASIBLE_ALTERNATIVE: (
+                        InvestigationOutcomeKind.NO_FEASIBLE_ALTERNATIVE
+                    ),
+                    ReplanOutcome.CHECK_LIMIT_REACHED: (
+                        InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE
+                    ),
                 }[replanning.outcome]
                 trace = tuple(f"{event.kind.value}: {event.note}" for event in replanning.trace)
                 diagnostics = (
