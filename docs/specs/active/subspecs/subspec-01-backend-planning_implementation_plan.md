@@ -8,7 +8,7 @@
 - **Normative sub-spec:** [MVP-01 Backend requirements](subspec-01-backend-planning.md)
 - **Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)
 
-The [active backend sub-spec](subspec-01-backend-planning.md) owns normative behavior and acceptance; this plan records **current implementation choices, public-boundary design, task sequencing, and test oracles**. The [specification guidance](../../AGENTS.md) governs contract-first design and approval. Section 4.1 records the V04-01 pure fictional ecology boundary; implemented code and contract tests, not this plan, remain authoritative.
+The [active backend sub-spec](subspec-01-backend-planning.md) owns normative behavior and acceptance; this plan records **current implementation choices, public-boundary design, task sequencing, and test oracles**. The [specification guidance](../../AGENTS.md) governs contract-first design and approval. Section 4.1 designs the V04-03 integration boundary; implemented code and contract tests, not this plan, remain authoritative.
 
 ## 1. Current implementation evidence
 
@@ -52,68 +52,69 @@ The remaining **technical choices** should be reviewed at the task that first ne
 
 - **Task ID:** `MVP01-BE-V04`
 - **Status:** Implemented; acceptance pending
-- **Goal:** Provide a typed, offline and deterministic first ecology screening boundary: find explicit fictional zone overlaps for candidate points, then classify their significance in planning without granting real-world eligibility or changing the current V01 workflow.
-- **Requirement IDs:** `MVP01-BE-R09`, `MVP01-BE-R15`
-- **Test inventory IDs:** `BE-T023`, `BE-T024`, `BE-T025`
-- **Scope:** Pure WGS84 point-in-polygon calculations with GEOS, typed demonstration-only overlap evidence and policy results, stable evidence/rule identity, deterministic ordering, negative and boundary cases. No new dependency.
-- **Not in scope:** Agent replanning, exclusion filtering in the V01 plan, source registry/transport, provider ingestion, verified real habitat boundaries, real legal interpretation or declaring any site safe.
-- **Existing interfaces:** `backend/src/melliatlas/planning/api.py`, `backend/src/melliatlas/territories/api.py`, `backend/src/melliatlas/sources/api.py`.
-- **Implemented files:** `backend/src/melliatlas/analyzers/api.py`, `backend/src/melliatlas/analyzers/contract.md`, `backend/src/melliatlas/planning/api.py`, `backend/src/melliatlas/planning/contract.md`, `backend/tests/unit/test_ecology_screening.py`.
-- **Approval gates:** The authoritative demo zone choice, real-world datasets, license/source provenance and any legal interpretation remain developer-controlled under sub-spec section 7. No fictional geometry is approved as an actual protected area; real V03 geography and real V02 PostGIS acceptance remain open.
-- **Exit evidence:** Pure tests establish `DEMO_RESTRICTION` → `EXCLUDED`, `DEMO_PRECAUTION` → `CAUTION`, missing/non-overlapping evidence → `UNKNOWN`, geometric boundary matches, candidate-ID-independent decisions, precedence, deterministic ordering and invalid-input rejection. No end-to-end replanning or full `MVP01-BE-A06/A07` acceptance is claimed.
+- **Current increment:** `V04-03` — opt-in fictional ecology investigations through the existing jobs, HTTP and completed-snapshot contracts. V04-01 pure geometry and V04-02 bounded agent are implemented predecessors.
+- **Goal:** Run a distinct synthetic ecology scenario with a reviewable exclusion-driven alternative, expose typed observations and decisions to clients, and preserve completed results through the existing snapshot serialization boundary.
+- **Requirement IDs:** `MVP01-BE-R06`, `MVP01-BE-R08`, `MVP01-BE-R09`, `MVP01-BE-R10`, `MVP01-BE-R12`, `MVP01-BE-R13`, `MVP01-BE-R14`, `MVP01-BE-R15`, `MVP01-BE-R16`
+- **Test inventory IDs:** `BE-T017`, `BE-T020`, `BE-T023`, `BE-T035`, `BE-T037`, `BE-T039`, `BE-T045`, `BE-T051`, `BE-T052`, `BE-T053`, `BE-T054`
+- **Scope:** A new explicit fictional scenario ID, a composition-injected ecology planner for `jobs`, additive typed replanning output on the investigation read contract, codec roundtrip and old-payload compatibility. The existing V01 scenario is untouched.
+- **Not in scope:** Real restrictions or verified coverage; source registry, general DAG, new HTTP route, durable queued/running jobs, new PostGIS acceptance, Web implementation or acceptance of the full V04 stage.
+- **Existing interfaces:** `backend/src/melliatlas/sources/api.py`, `backend/src/melliatlas/planning/api.py`, `backend/src/melliatlas/agent/api.py`, `backend/src/melliatlas/analyzers/api.py`, `backend/src/melliatlas/jobs/api.py`, `backend/src/melliatlas/api/app.py`, `backend/src/melliatlas/api/routes_investigations.py`.
+- **Implemented files:** Existing public interfaces above, `backend/tests/contract/test_ecology_investigations_http.py`, `backend/tests/unit/test_completed_snapshot_codec.py`; linked owning module contracts and feature cross-reference are updated.
+- **Approval gates:** All ecological polygons and conclusions in this increment are fictional; the resulting plan cannot imply real legality or ecological suitability. External data, new runtime libraries and real database access remain unapproved.
+- **Exit evidence:** One scenario begins with a later-excluded stop, selects a different alternative based on geometry and provenance rather than ID, returns at least two bounded checks and ordered stops, and exposes warnings/typed decisions. No-plan, invalid inputs, inspector failure, existing V01, old stored JSON, and fake-store reopen require separate regressions. Real DB and complete RU/BY evidence remain pending.
 
 ### 4.1 Public contracts and integration design
 
-This completed first V04 increment introduces only the typed geometry-to-policy seam needed now. The normative obligations are owned by [sub-spec section 2.3](subspec-01-backend-planning.md#23-planning-domain). Reviewed code, module contracts and executable tests are authoritative; the signatures below describe the implemented boundary and are not a second source of truth.
+V04-01 and V04-02 declarations in [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py), [`analyzers/api.py`](../../../../backend/src/melliatlas/analyzers/api.py), and [`agent/api.py`](../../../../backend/src/melliatlas/agent/api.py) are authoritative. This section records the reviewed and implemented **V04-03 boundaries**, with code and contract tests now authoritative; the [normative requirements](subspec-01-backend-planning.md#4-requirement-to-umbrella-mapping) remain in the sub-spec.
 
 #### Public types and signatures
 
-| Owner | Implemented typed declaration | Authoritative source |
+| Owner | Implemented typed boundary | Authoritative declaration |
 | --- | --- | --- |
-| `planning` | `EcologyEvidenceKind(StrEnum)` with `DEMO_RESTRICTION`, `DEMO_PRECAUTION`; `EcologyZone(evidence_id: str, rule_id: str, kind: EcologyEvidenceKind, geometry: GeometryWgs84)` | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py) |
-| `planning` | `EcologyOverlap(evidence_id: str, rule_id: str, kind: EcologyEvidenceKind)`; `EcologyStatus(StrEnum)`; `SiteAssessment(site_id: str, status: EcologyStatus, evidence_ids: tuple[str, ...], rule_ids: tuple[str, ...], reasons: tuple[str, ...], unknowns: tuple[str, ...], synthetic: Literal[True])` | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py) |
-| `analyzers` | `find_ecology_overlaps(site: CandidateSite, zones: tuple[EcologyZone, ...]) -> tuple[EcologyOverlap, ...]` | [`analyzers/api.py`](../../../../backend/src/melliatlas/analyzers/api.py) |
-| `planning` | `assess_ecology(site_id: str, overlaps: tuple[EcologyOverlap, ...]) -> SiteAssessment` | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py) |
+| `planning` / `sources` | Additive `SyntheticScenario.ecology_zones` and `SYNTHETIC_ECOLOGY_SCENARIO_ID` | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py), [`sources/api.py`](../../../../backend/src/melliatlas/sources/api.py), [`sources/contract.md`](../../../../backend/src/melliatlas/sources/contract.md) |
+| `jobs` / `agent` | Optional `EcologyPlannerFactory`, bounded decisions, and `InvestigationSnapshot.replanning` | [`jobs/api.py`](../../../../backend/src/melliatlas/jobs/api.py), [`agent/api.py`](../../../../backend/src/melliatlas/agent/api.py), [`jobs/contract.md`](../../../../backend/src/melliatlas/jobs/contract.md) |
+| `api` | `ReplanSummaryDto`, `SiteAssessmentDto`, `ReplanDecisionDto` and default injected inspector | [`api/routes_investigations.py`](../../../../backend/src/melliatlas/api/routes_investigations.py), [`api/app.py`](../../../../backend/src/melliatlas/api/app.py), [`api/contract.md`](../../../../backend/src/melliatlas/api/contract.md) |
 
 #### Module interactions
 
-1. A caller passes an existing `planning.CandidateSite` and explicit demo-only `EcologyZone` inputs to the pure `analyzers.find_ecology_overlaps`. The analyzer validates coordinates/topology and uses `Shapely/GEOS` point coverage, returning sorted typed observations, not policy decisions.
-2. `planning.assess_ecology` consumes those observations and deterministically classifies the demo evidence. It cannot promote an absence of overlaps to `ELIGIBLE` because no complete independent ecological coverage has been verified. Its output records evidence IDs, rule IDs, reasons and unknowns.
-3. Existing `jobs.InMemoryInvestigationService`, `planning.build_season_plan`, source fixture data, HTTP DTOs and PostGIS snapshots are **unchanged**. Later V04 increments must review the agent/job integration contracts before connecting actual replanning.
+1. `sources` returns the requested fictional scenario and its explicit ecology zones; only the distinct V04 scenario requests inspection. No implicit source I/O is introduced.
+2. `api.create_app` supplies a factory using `analyzers.find_ecology_overlaps` and `planning.assess_ecology`, which the `agent.DeterministicPlanner` consumes through `SiteInspector`. `jobs` imports `agent.api` and `planning.api` only.
+3. `jobs.process` delegates the V04 scenario through the injected planner, stores `ReplanResult` next to the existing plan and outcome, and keeps `COMPLETED/NO_FEASIBLE_ALTERNATIVE` or `COMPLETED/INSUFFICIENT_EVIDENCE` distinct from technical `FAILED`.
+4. HTTP presents the typed decisions, observations, evidence/rule IDs, warnings and check counts without exposing the private request starting point. The completed-snapshot codec restores the same typed domain values after a new service instance reopens a stored result.
 
 #### Failure contracts
 
-- Invalid/non-finite site WGS84 coordinates, invalid zone topology or out-of-range geometry coordinates → `ValueError` at the pure analyzer boundary; this is not an HTTP error contract.
-- Missing evidence/rule identifiers → explicit `ValueError`, never silent exclusion.
-- No matching zone or no ecological observations → `UNKNOWN` with an explicit coverage limitation. `CAUTION` is never a binding exclusion. An explicit `DEMO_RESTRICTION` match takes precedence over caution **only within the fictional demonstration**.
-- Real legal restrictions, real species impact, and external completeness are not inferred from synthetic polygons or absent evidence.
+- Unsupported scenario/country/date inputs reject before job creation. A V04 scenario without its injected evaluator must fail closed, not silently reuse the V01 planner.
+- Inspector errors and malformed ecology outputs produce sanitized `FAILED` status and never a successful plan; bounded check exhaustion yields a completed insufficient-evidence outcome with no plan.
+- Historical completed JSON without `replanning` decodes as `None`; malformed nested replanning records are rejected as storage errors. Replanning and top-level plans must agree on reconstruction.
 
 #### Compatibility
 
-- No modifications to the V01 `CandidateSite`, `SeasonPlan`, `InvestigationService`, `create_app`, HTTP routes, PostGIS schema or persisted codec.
-- Dependency direction: `analyzers -> planning, territories` (via public types), `planning -> territories`. The analyzer does not import planning private modules or perform I/O.
-- Existing Shapely is reused; no new runtime package, registration framework or implicit source access.
+- The V01 scenario's computation, statuses, trace and persistence remain unchanged; only an optional `replanning` field is added to the HTTP schema, with `null` for V01.
+- Existing injectable `create_app` arguments and `InMemoryInvestigationService(provider, completed_store)` positional arguments remain valid. No migration or new runtime dependency is introduced; real PostGIS verification remains independent.
+- Preserve the `agent -> planning`, `jobs -> agent/planning`, and `api -> analyzers/agent/sources/jobs` permitted dependency directions.
 
 #### Contract-first tests
 
-- [`backend/tests/unit/test_ecology_screening.py`](../../../../backend/tests/unit/test_ecology_screening.py) proves explicit polygon overlap, boundary inclusion, caution/non-binding status, unknown coverage, precedence, ID rename independence, invalid geometry and missing evidence metadata (`BE-T023`–`BE-T025` partial).
-- The architecture suite continues to check allowed module dependencies. These are not evidence of agent replan behavior (`BE-T035`–`BE-T039`), approved datasets, real legal exclusions or full ecological acceptance.
+- The implemented HTTP contract tests demonstrate explicit V04 scenario selection, geometry-caused revision, structured trace/assessment evidence, warnings, no private coordinates, immutable GET, and V01 backward compatibility (`BE-T017`, `BE-T035`, `BE-T051`–`BE-T053`).
+- The extended snapshot codec tests cover V04 roundtrip, old JSON without the new optional key, malformed typed nested values and stored plan divergence. Add negative tests for missing inspector and a bounded/no-plan outcome (`BE-T037`, `BE-T039`, `BE-T045`).
+- V04-01/V04-02 unit tests and architecture tests (`BE-T054`) guard the existing layers; real PostGIS and geographic acceptance remain separate.
 
 ### 4.2 Implementation sequence (TDD)
 
-1. Identify the two public ownership boundaries in the current sub-spec and dependency matrix; first add precise positive/negative/boundary tests using only explicit fictional polygons.
-2. Implement a small pure GEOS point-overlap analyzer and domain-owned classification without data-provider access or automatic claims of site eligibility.
-3. Run selected ecological tests, existing V01 regression tests, architecture and SDD checks; use local `FMT,CHK` for Ruff and strict Pyright. Report any unavailable tools.
-4. Keep V04 behavior unconnected to V01 jobs until a further task selects the approved fictional scenario, validates the agent/investigation integration contract and includes deterministic end-to-end replan tests.
+1. Review the new `SyntheticScenario` and `InvestigationSnapshot` additive fields, the factory injection and typed HTTP response against the existing public code and contracts.
+2. Write failing contract/codec tests for the V04 scenario, observable evidence-based revision, no-plan paths, legacy JSON compatibility and failure isolation.
+3. Implement only the reviewed source fixture, API composition, jobs orchestration, HTTP DTO and storage decoder; retain all existing V01 behavior.
+4. Run relevant unit, contract, architecture and SDD checks, then local `FMT,CHK`; do not promote acceptance without approved real evidence or PostGIS tests.
 
 ## 5. Upcoming vertical slices
 
-The V04-01 pure ecology screening task is in section 4; the V03 runtime loader is already implemented but real geographic coverage remains incomplete. V02 real PostGIS verification remains an **independent pending acceptance gate**; completion of startup wiring does not discharge `BE-T040`–`BE-T044`. These later slices identify **implementation work**, not new requirements or approved designs. Their normative scope and external gates remain in [sub-spec sections 4–7](subspec-01-backend-planning.md#4-requirement-to-umbrella-mapping). Select and review public interfaces only when each slice becomes current.
+The V04-03 investigation integration task is in section 4; the V03 runtime loader is already implemented but real geographic coverage remains incomplete. V02 real PostGIS verification remains an **independent pending acceptance gate**; completion of startup wiring does not discharge `BE-T040`–`BE-T044`. These later slices identify **implementation work**, not new requirements or approved designs. Their normative scope and external gates remain in [sub-spec sections 4–7](subspec-01-backend-planning.md#4-requirement-to-umbrella-mapping). Select and review public interfaces only when each slice becomes current.
 
 | Slice | Implementation decision to make when selected | Planned test IDs |
 | --- | --- | --- |
 | `V03` — approved real geography (remaining) | Finish independent RU/BY inventories, verify full real coverage, and decide whether persistent multi-version reference storage is needed. The opt-in local runtime loader is implemented but not accepted as complete geography. | `BE-T001`–`BE-T012`, `BE-T058` |
-| `V04` — evidence-driven replanning (remaining) | Connect the newly implemented pure overlap/policy boundary to an approved fictional scenario and a bounded decision loop; review agent/job interfaces first. | `BE-T013`–`BE-T039`, `BE-T054`–`BE-T059` |
+| `V04` — evidence-driven replanning (remaining) | Extend the reviewable fictional investigation scenario with a typed source/agent execution graph and negative evidence-boundary cases after V04-03 integration. | `BE-T013`–`BE-T039`, `BE-T054`–`BE-T059` |
 | `V05` — backend/Web contract handoff | Verify source/investigation response schemas and fixture examples before the separately scoped Web slice consumes them. | `BE-T048`–`BE-T053`, `BE-T060` |
 
 ## 6. Acceptance test inventory

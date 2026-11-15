@@ -10,14 +10,29 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from melliatlas.agent.api import DeterministicPlanner
+from melliatlas.analyzers.api import find_ecology_overlaps
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse, HealthResponse
 from melliatlas.api.reference_loader import read_reference_documents
 from melliatlas.api.routes_investigations import create_investigation_router
 from melliatlas.api.routes_territories import create_territory_router
 from melliatlas.jobs.api import InMemoryInvestigationService, InvestigationService
+from melliatlas.planning.api import (
+    CandidateSite,
+    SiteAssessment,
+    SyntheticScenario,
+    assess_ecology,
+)
 from melliatlas.sources.api import SyntheticFixtureProvider
 from melliatlas.territories import InMemoryTerritoryCatalog
 from melliatlas.territories.api import TerritoryCatalog
+
+
+def _fictional_planner(scenario: SyntheticScenario) -> DeterministicPlanner:
+    def inspect(site: CandidateSite) -> SiteAssessment:
+        return assess_ecology(site.id, find_ecology_overlaps(site, scenario.ecology_zones))
+
+    return DeterministicPlanner(inspect)
 
 
 @dataclass(frozen=True)
@@ -78,7 +93,9 @@ def create_app(
     job_service = (
         investigations
         if investigations is not None
-        else InMemoryInvestigationService(SyntheticFixtureProvider())
+        else InMemoryInvestigationService(
+            SyntheticFixtureProvider(), replan_factory=_fictional_planner
+        )
     )
     app.include_router(create_investigation_router(job_service))
     return app

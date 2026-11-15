@@ -47,6 +47,7 @@ features:
       - backend/src/melliatlas/sources/api.py#SyntheticFixtureProvider
     test_files:
       - backend/tests/unit/test_synthetic_investigation.py
+      - backend/tests/contract/test_ecology_investigations_http.py
   - feature_id: SOURCES.PUBLIC_WEB_RU
     implementation_status: planned
     stages: [MVP-01]
@@ -83,6 +84,7 @@ features:
       - backend/src/melliatlas/persistence/api.py#PostgisCompletedInvestigationStore
     test_files:
       - backend/tests/unit/test_postgis_store_unit.py
+      - backend/tests/unit/test_completed_snapshot_codec.py
   - feature_id: JOBS.EXECUTION
     implementation_status: partial
     stages: [MVP-01]
@@ -91,6 +93,7 @@ features:
       - backend/src/melliatlas/jobs/api.py#InMemoryInvestigationService
     test_files:
       - backend/tests/contract/test_investigations_http.py
+      - backend/tests/contract/test_ecology_investigations_http.py
   - feature_id: ENGINE.TYPED_CAPABILITIES
     implementation_status: planned
     stages: [MVP-01]
@@ -104,17 +107,24 @@ features:
     owners: []
     test_files: []
   - feature_id: AGENT.DETERMINISTIC_REPLAN
-    implementation_status: planned
+    implementation_status: partial
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
-    owners: []
-    test_files: []
+    owners:
+      - backend/src/melliatlas/agent/api.py#DeterministicPlanner
+    test_files:
+      - backend/tests/unit/test_deterministic_replanning.py
+      - backend/tests/contract/test_ecology_investigations_http.py
   - feature_id: AGENT.EVIDENCE_TRACE
-    implementation_status: planned
+    implementation_status: partial
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
-    owners: []
-    test_files: []
+    owners:
+      - backend/src/melliatlas/agent/api.py#ReplanDecision
+    test_files:
+      - backend/tests/unit/test_deterministic_replanning.py
+      - backend/tests/unit/test_completed_snapshot_codec.py
+      - backend/tests/contract/test_ecology_investigations_http.py
   - feature_id: ECOLOGY.RESTRICTIONS
     implementation_status: partial
     stages: [MVP-01]
@@ -125,11 +135,14 @@ features:
     test_files:
       - backend/tests/unit/test_ecology_screening.py
   - feature_id: ECOLOGY.ALTERNATIVES
-    implementation_status: planned
+    implementation_status: partial
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
-    owners: []
-    test_files: []
+    owners:
+      - backend/src/melliatlas/agent/api.py#DeterministicPlanner
+    test_files:
+      - backend/tests/unit/test_deterministic_replanning.py
+      - backend/tests/contract/test_ecology_investigations_http.py
   - feature_id: PLANNING.SEASONAL_STOPS
     implementation_status: partial
     stages: [MVP-01]

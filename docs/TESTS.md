@@ -19,7 +19,7 @@ python -m ruff format --check backend
 python -m pyright --project backend
 ```
 
-Current tests cover FastAPI health/OpenAPI, versioned territory endpoints, the synthetic V01 investigation POST/GET path with successful and insufficient-evidence results, rejected malformed and unsupported requests, independent fixture determinism, process-local store isolation and network-free execution, offline territory-reference validation, independent inventory comparisons, WGS84 coordinate checks and Shapely/GEOS polygon topology, idempotent in-memory loading, and architecture import boundaries. These tests use synthetic administrative snapshots; **they do not establish complete real RU/BY coverage or PostGIS topology correctness**. No approved full reference, real provider adapter, PostGIS import, full engine/agent, or browser acceptance test exists yet. V01 tests establish only the provisional, non-durable synthetic backend slice.
+Current tests cover FastAPI health/OpenAPI, versioned territory endpoints, the synthetic V01 investigation POST/GET path with successful and insufficient-evidence results, rejected malformed and unsupported requests, independent fixture determinism, process-local store isolation and network-free execution, offline territory-reference validation, independent inventory comparisons, WGS84 coordinate checks and Shapely/GEOS polygon topology, idempotent in-memory loading, and architecture import boundaries. These tests use synthetic administrative snapshots; **they do not establish complete real RU/BY coverage or PostGIS topology correctness**. No approved full reference, real provider adapter, PostGIS import, complete source/engine pipeline, or browser acceptance test exists yet. V01 tests establish only the provisional, non-durable synthetic backend slice.
 
 To validate externally obtained normalized reference files after verifying permission, provenance, and independent inventories, run from an installed backend environment:
 
@@ -91,3 +91,15 @@ This verifier is intentionally **not** part of routine `run-tests.sh`: it requir
 ## Pure fictional ecology screening (V04-01 partial)
 
 `backend/tests/unit/test_ecology_screening.py` checks the typed analyzer/planning boundary: explicit fictional polygon overlap (including the boundary), synthetic exclusion versus non-binding precaution, conservative unknown with absent coverage, stable evidence/rule IDs, candidate-rename independence, deterministic precedence, and invalid input. No live data or network access is involved. These tests do **not** establish a real legal exclusion, complete habitat coverage, agent replanning, successful investigation integration, or acceptance of `MVP01-BE-A06/A07`.
+
+## Bounded fictional replanning (V04-02 partial)
+
+`backend/tests/unit/test_deterministic_replanning.py` verifies the pure agent's causal decision chain against the implemented V04-01 fictional geometry/policy boundary: an initial site is excluded by observed evidence, a qualified alternative replaces it, non-binding precautions retain evidence and warnings, unknown coverage cannot be promoted to eligible, and no viable alternative produces no plan. Input permutations, candidate ID renaming, duplicate IDs, invalid WGS84 coordinates, an invalid inspector identity, unsubstantiated positive verdicts, callback errors and explicit check-budget exhaustion are tested.
+
+The agent imports `planning` public interfaces only; the test harness injects the pure `analyzers` check. The separate V04-03 fictional investigation integrates this typed trace into an optional HTTP field and snapshot codec. Routine checks remain offline; real ecology evidence, durable execution, and explicit developer acceptance are still required for full `MVP01-BE-A06/A07/A08`.
+
+## Fictional ecology investigations (V04-03 partial)
+
+`backend/tests/contract/test_ecology_investigations_http.py` runs the distinct `synthetic-ru-2026-v04-ecology` scenario through real in-process FastAPI `POST`/`GET`: an initial fictional candidate is excluded by actual polygon overlap, an alternative is selected, the typed response retains checked assessments, evidence/rule IDs, bounded decisions, warnings, and the private starting point is not exposed. Additional tests preserve the original V01 response, reject wrong-country requests before creation, fail closed without the injected planner, distinguish check-limit completion from execution failure, and sanitize unexpected inspector errors.
+
+`backend/tests/unit/test_completed_snapshot_codec.py` verifies both new structured replanning JSON roundtrips and historical V01 payloads without the new field. It rejects malformed nested kinds/counts and divergent stored plans; a serializing fake store verifies new-service reopening. These tests **do not** assert PostGIS migration, actual storage durability, legal safety, or complete RU/BY ecological data. Real PostGIS and source approvals remain separate acceptance gates.

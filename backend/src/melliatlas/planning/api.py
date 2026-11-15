@@ -1,4 +1,6 @@
-"""Typed deterministic planning primitives for the synthetic V01 scenario."""
+"""Typed deterministic planning primitives for synthetic investigation scenarios."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -48,6 +50,7 @@ class SyntheticScenario:
     candidates: tuple[CandidateSite, ...]
     evidence: tuple[EvidenceSummary, ...]
     limitations: tuple[str, ...]
+    ecology_zones: tuple[EcologyZone, ...] = ()
 
 
 @dataclass(frozen=True)

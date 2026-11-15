@@ -104,3 +104,141 @@ def test_codec_rejects_bad_snapshot_object_and_nonfinite_coordinate() -> None:
     original["request"]["starting_point"] = [float("nan"), 54.0]
     with pytest.raises(ValueError, match="finite number"):
         deserialize_completed_snapshot(json.dumps(original))
+
+
+def _completed_ecology() -> InvestigationSnapshot:
+    from melliatlas.agent.api import DeterministicPlanner
+    from melliatlas.analyzers.api import find_ecology_overlaps
+    from melliatlas.planning.api import (
+        CandidateSite,
+        SiteAssessment,
+        SyntheticScenario,
+        assess_ecology,
+    )
+    from melliatlas.sources.api import SYNTHETIC_ECOLOGY_SCENARIO_ID
+
+    def factory(scenario: SyntheticScenario) -> DeterministicPlanner:
+        def inspect(site: CandidateSite) -> SiteAssessment:
+            return assess_ecology(site.id, find_ecology_overlaps(site, scenario.ecology_zones))
+
+        return DeterministicPlanner(inspect)
+
+    service = InMemoryInvestigationService(SyntheticFixtureProvider(), replan_factory=factory)
+    queued = service.submit(
+        InvestigationRequest(
+            CountryCode.RU,
+            "ru:region:smolensk",
+            SYNTHETIC_ECOLOGY_SCENARIO_ID,
+            TimeWindow(date(2026, 5, 1), date(2026, 8, 15)),
+            (32.0, 54.0),
+        )
+    )
+    service.process(queued.id)
+    snapshot = service.get(queued.id)
+    assert snapshot is not None
+    assert snapshot.status is InvestigationStatus.COMPLETED
+    assert snapshot.replanning is not None
+    return snapshot
+
+
+def test_ecology_snapshot_codec_roundtrip_restores_typed_decisions_and_plan() -> None:
+    from melliatlas.agent.api import ReplanDecisionKind, ReplanOutcome
+    from melliatlas.planning.api import EcologyStatus
+
+    original = _completed_ecology()
+    restored = deserialize_completed_snapshot(serialize_completed_snapshot(original))
+    assert restored == original
+    assert restored.replanning is not None
+    assert restored.replanning.outcome is ReplanOutcome.PLAN_FOUND
+    assert restored.replanning.assessments[0].status is EcologyStatus.EXCLUDED
+    assert restored.replanning.trace[-2].kind is ReplanDecisionKind.REVISION
+    assert restored.plan == restored.replanning.plan
+
+
+def test_legacy_snapshot_without_replanning_stays_readable_and_unchanged() -> None:
+    original = _completed()
+    payload = serialize_completed_snapshot(original)
+    assert '"replanning"' not in payload
+    assert deserialize_completed_snapshot(payload) == original
+
+
+@pytest.mark.parametrize(
+    ("section", "field", "bad_value"),
+    [
+        ("replanning", "checks_used", "four"),
+        ("replanning", "outcome", "REAL_ECOLOGY_SAFE"),
+        ("assessment", "status", "ELIGIBLE_REAL"),
+        ("assessment", "synthetic", False),
+        ("decision", "kind", "NONE"),
+        ("decision", "evidence_ids", "not-a-list"),
+    ],
+)
+def test_codec_rejects_malformed_replanning_fields(
+    section: str, field: str, bad_value: object
+) -> None:
+    payload = json.loads(serialize_completed_snapshot(_completed_ecology()))
+    if section == "assessment":
+        payload["replanning"]["assessments"][0][field] = bad_value
+    elif section == "decision":
+        payload["replanning"]["trace"][0][field] = bad_value
+    else:
+        payload["replanning"][field] = bad_value
+    with pytest.raises((ValueError, TypeError)):
+        deserialize_completed_snapshot(json.dumps(payload))
+
+
+def test_codec_rejects_replanning_plan_divergence() -> None:
+    payload = json.loads(serialize_completed_snapshot(_completed_ecology()))
+    payload["replanning"]["plan"]["stops"][0]["site_id"] = "forged"
+    with pytest.raises(ValueError, match="disagrees"):
+        deserialize_completed_snapshot(json.dumps(payload))
+
+
+def test_ecology_completed_snapshot_roundtrips_through_completed_store_port() -> None:
+    from uuid import UUID
+
+    from melliatlas.agent.api import DeterministicPlanner
+    from melliatlas.analyzers.api import find_ecology_overlaps
+    from melliatlas.planning.api import (
+        CandidateSite,
+        SiteAssessment,
+        SyntheticScenario,
+        assess_ecology,
+    )
+    from melliatlas.sources.api import SYNTHETIC_ECOLOGY_SCENARIO_ID
+
+    class SerializedStore:
+        def __init__(self) -> None:
+            self.saved: dict[UUID, str] = {}
+
+        def save(self, snapshot: InvestigationSnapshot) -> None:
+            self.saved[snapshot.id] = serialize_completed_snapshot(snapshot)
+
+        def load(self, identifier: UUID) -> InvestigationSnapshot | None:
+            value = self.saved.get(identifier)
+            return deserialize_completed_snapshot(value) if value is not None else None
+
+    def factory(scenario: SyntheticScenario) -> DeterministicPlanner:
+        def inspect(site: CandidateSite) -> SiteAssessment:
+            return assess_ecology(site.id, find_ecology_overlaps(site, scenario.ecology_zones))
+
+        return DeterministicPlanner(inspect)
+
+    store = SerializedStore()
+    first = InMemoryInvestigationService(SyntheticFixtureProvider(), store, replan_factory=factory)
+    queued = first.submit(
+        InvestigationRequest(
+            CountryCode.RU,
+            "ru:region:smolensk",
+            SYNTHETIC_ECOLOGY_SCENARIO_ID,
+            TimeWindow(date(2026, 5, 1), date(2026, 8, 15)),
+            None,
+        )
+    )
+    first.process(queued.id)
+    original = first.get(queued.id)
+    assert original is not None
+    assert original.status is InvestigationStatus.COMPLETED
+    reopened = InMemoryInvestigationService(SyntheticFixtureProvider(), store)
+    assert reopened.record_count == 0
+    assert reopened.get(queued.id) == original
