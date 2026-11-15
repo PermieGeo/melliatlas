@@ -1,0 +1,5 @@
+# Fictional Ecology Spatial Analysis Contract — V04-01 (partial)
+
+`melliatlas.analyzers.api.find_ecology_overlaps(site, zones)` is a pure, typed point-in-polygon check over explicitly supplied fictional demo zones. Its output is a sorted tuple of `EcologyOverlap` observations; it does not assign legal force, eligibility, source completeness, or real-world safety. GEOS checks geometry validity, and `covers` counts boundary points as intersections. Invalid coordinates, invalid geometry, and missing evidence/rule identifiers fail explicitly.
+
+`planning.api.assess_ecology(site_id, overlaps)` owns the demo policy: an explicit `DEMO_RESTRICTION` overlap yields `EXCLUDED`, a precaution-only overlap yields `CAUTION`, and absent intersections yield `UNKNOWN` rather than an assertion of eligibility. Decisions retain stable evidence and rule identifiers and an explicit incomplete-coverage disclaimer. The public contracts are limited to this offline pure calculation; no provider reads, authorization claims, candidate filtering, agent replanning, or investigation HTTP integration are implemented in V04-01.

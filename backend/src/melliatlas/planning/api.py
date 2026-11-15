@@ -2,9 +2,10 @@
 
 from dataclasses import dataclass
 from datetime import date, timedelta
+from enum import StrEnum
 from typing import Literal
 
-from melliatlas.territories.api import CountryCode
+from melliatlas.territories.api import CountryCode, GeometryWgs84
 
 
 @dataclass(frozen=True)
@@ -95,4 +96,66 @@ def build_season_plan(
         stops=tuple(stops),
         relocations=len(stops) - 1,
         rationale="Illustrative chronological forage windows only; no verified exclusion screening",
+    )
+
+
+class EcologyEvidenceKind(StrEnum):
+    DEMO_RESTRICTION = "DEMO_RESTRICTION"
+    DEMO_PRECAUTION = "DEMO_PRECAUTION"
+
+
+class EcologyStatus(StrEnum):
+    ELIGIBLE = "ELIGIBLE"
+    EXCLUDED = "EXCLUDED"
+    CAUTION = "CAUTION"
+    UNKNOWN = "UNKNOWN"
+
+
+@dataclass(frozen=True)
+class EcologyZone:
+    evidence_id: str
+    rule_id: str
+    kind: EcologyEvidenceKind
+    geometry: GeometryWgs84
+
+
+@dataclass(frozen=True)
+class EcologyOverlap:
+    evidence_id: str
+    rule_id: str
+    kind: EcologyEvidenceKind
+
+
+@dataclass(frozen=True)
+class SiteAssessment:
+    site_id: str
+    status: EcologyStatus
+    evidence_ids: tuple[str, ...]
+    rule_ids: tuple[str, ...]
+    reasons: tuple[str, ...]
+    unknowns: tuple[str, ...]
+    synthetic: Literal[True] = True
+
+
+def assess_ecology(site_id: str, overlaps: tuple[EcologyOverlap, ...]) -> SiteAssessment:
+    """Apply demo-only eligibility policy; absent intersections never prove site safety."""
+    if not site_id:
+        raise ValueError("Site ID must not be empty")
+    ordered = tuple(sorted(overlaps, key=lambda item: (item.evidence_id, item.rule_id, item.kind)))
+    if any(item.kind is EcologyEvidenceKind.DEMO_RESTRICTION for item in ordered):
+        status = EcologyStatus.EXCLUDED
+        reasons = ("An explicit fictional exclusion geometry intersects this site",)
+    elif any(item.kind is EcologyEvidenceKind.DEMO_PRECAUTION for item in ordered):
+        status = EcologyStatus.CAUTION
+        reasons = ("A fictional precautionary geometry intersects this site",)
+    else:
+        status = EcologyStatus.UNKNOWN
+        reasons = ("No explicit fictional ecology zone intersects this site",)
+    return SiteAssessment(
+        site_id=site_id,
+        status=status,
+        evidence_ids=tuple(dict.fromkeys(item.evidence_id for item in ordered)),
+        rule_ids=tuple(dict.fromkeys(item.rule_id for item in ordered)),
+        reasons=reasons,
+        unknowns=("Complete ecological coverage and legal restrictions are not verified",),
     )

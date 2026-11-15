@@ -4,7 +4,7 @@
 
 ## Implemented
 
-- `create_app(settings=..., territories=...)` constructs an independent FastAPI application without network calls or implicit database connections. The territory catalog is injected through its public `TerritoryCatalog` protocol; omitting it leaves protected reference reads unavailable.
+- `create_app(settings=..., territories=...)` constructs an independent FastAPI application without network calls or implicit database connections. The territory catalog is injected through its public `TerritoryCatalog` protocol; omitting it leaves protected reference reads unavailable unless both local reference paths are explicitly configured in `AppSettings`. A configured ASGI lifespan validates the snapshot and independent inventory before serving; invalid, missing, incomplete or checksum-mismatched inputs fail startup. Mixed explicit `territories` injection and file configuration, or one-sided file configuration, are rejected at composition time.
 - `GET /health` returns HTTP 200 and `{"status":"ok"}`. It measures process responsiveness, not readiness of references or databases.
 - `GET /openapi.json` exposes success and error response schemas, stable error codes, and applicable `404`, `409`, `422` and `503` statuses; `/docs` provides the framework API viewer.
 - `GET /api/v1/territories/countries` lists supported country codes RU/BY, **not** claims of loaded boundary data.
