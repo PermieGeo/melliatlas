@@ -16,7 +16,12 @@ from melliatlas.planning.api import (
     TreatmentScreening,
     assess_ecology,
 )
-from melliatlas.sources.api import ScenarioListing, ScenarioProvider, TreatmentNoticeReader
+from melliatlas.sources.api import (
+    ScenarioListing,
+    ScenarioProvider,
+    TreatmentNoticeReader,
+    WeatherForecastReader,
+)
 from melliatlas.territories.api import CountryCode
 
 if TYPE_CHECKING:
@@ -95,3 +100,13 @@ def compose_saturn_reader(enabled: bool) -> TreatmentNoticeReader | None:
     from melliatlas.sources.providers.saturn.api import SaturnPublicTreatmentReader
 
     return SaturnPublicTreatmentReader(post_public_page)
+
+
+def compose_weather_reader(enabled: bool) -> WeatherForecastReader | None:
+    """Opt into Open-Meteo reads without creating a global source registry."""
+    if not enabled:
+        return None
+    from melliatlas.api.weather_http import get_public_forecast
+    from melliatlas.sources.providers.open_meteo.api import OpenMeteoForecastReader
+
+    return OpenMeteoForecastReader(get_public_forecast)

@@ -20,10 +20,12 @@ def test_real_source_respects_module_boundaries() -> None:
     assert find_violations(SOURCE_ROOT) == []
 
 
-def test_only_pinned_saturn_transport_may_import_network_client(tmp_path: Path) -> None:
+def test_only_pinned_live_transports_may_import_network_client(tmp_path: Path) -> None:
     transport = tmp_path / "melliatlas/api/saturn_http.py"
     transport.parent.mkdir(parents=True)
     transport.write_text("from urllib.request import Request\n", encoding="utf-8")
+    weather_transport = tmp_path / "melliatlas/api/weather_http.py"
+    weather_transport.write_text("from urllib.request import Request\n", encoding="utf-8")
     assert find_violations(tmp_path) == []
     (transport.parent / "not_transport.py").write_text(
         "from urllib.request import Request\n", encoding="utf-8"

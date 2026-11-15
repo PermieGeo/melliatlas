@@ -61,13 +61,42 @@ export interface ScenarioListing {
   is_default: boolean;
 }
 
-/** A server-advertised, explicitly enabled external treatment source. */
-export interface ExternalSource {
-  id: "saturn";
-  country: CountryCode;
-  kind: "TREATMENT_NOTICE";
-  mode: "LIVE";
-  status: "EXPERIMENTAL";
+/** Explicit source capabilities. Country is the requested catalog scope, not source evidence. */
+export type ExternalSource =
+  | {
+      id: "saturn";
+      country: CountryCode;
+      kind: "TREATMENT_NOTICE";
+      mode: "LIVE";
+      status: "EXPERIMENTAL";
+    }
+  | {
+      id: "open-meteo";
+      country: CountryCode;
+      kind: "WEATHER_FORECAST";
+      mode: "LIVE";
+      status: "EXPERIMENTAL";
+    };
+
+/** An attributed short-range model forecast; never a pesticide exposure or safety assessment. */
+export interface WeatherForecast {
+  source_id: "open-meteo:forecast";
+  source_uri: string;
+  source_mode: "LIVE";
+  synthetic: false;
+  captured_at: string;
+  requested_latitude: number;
+  requested_longitude: number;
+  grid_latitude: number;
+  grid_longitude: number;
+  hours: {
+    time: string;
+    wind_speed_kmh: number | null;
+    wind_direction_degrees: number | null;
+    wind_gusts_kmh: number | null;
+    precipitation_mm: number | null;
+  }[];
+  uncertainties: string[];
 }
 
 /** Unverified public claim; not a confirmed application or safety assessment. */

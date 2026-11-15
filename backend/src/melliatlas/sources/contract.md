@@ -44,3 +44,19 @@ one page, is user-initiated and preserves unknown location/time evidence. A
 publisher's public-facing webpage does not guarantee an approved automated
 interface or permission to reuse its data. Full-source coverage and drift
 analysis remain unimplemented.
+
+## Opt-in hourly weather forecast (experimental)
+
+`WeatherForecastReader.forecast(latitude, longitude)` is a provider-neutral,
+read-only port for an explicitly selected WGS84 point. The return value retains
+the provider, retrieval timestamp, original coordinates, provider grid point,
+24 consecutive UTC forecast hours, nullable physical variables and uncertainty.
+Missing hourly values stay `None`, never zero. `SourceReadError` means unknown
+weather availability, not calm wind or no pesticide exposure.
+
+The Open-Meteo implementation decodes only one 24-hour forecast with 10-m wind
+speed/direction, gusts and precipitation. Its network transport belongs to the
+FastAPI composition boundary and is disabled unless explicitly configured.
+No advection, spray drift, safety rating, automatic refresh or cached forecasts
+are provided. This source does not require a synthetic scenario and is usable
+independently of the country-specific Saturn notice reader.

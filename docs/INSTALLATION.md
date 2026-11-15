@@ -88,3 +88,23 @@ verified current machine-readable read contract. Public website access does
 not establish permission to bulk reuse data. Confirm the current API and reuse
 conditions before any public deployment. The real source has not been reachable
 from this development environment for live acceptance testing.
+
+## Experimental Open-Meteo forecast (explicit opt-in)
+
+For a local non-commercial development preview, activate your Python environment
+and start the backend with `MELLIATLAS_WEATHER_LIVE_ENABLED=true`. No synthetic
+provider is needed. The Web UI shows the Open-Meteo panel for countries where
+the backend advertises it, and requests 24 hours of forecast only after you
+select a map point and click the read button. Example:
+
+```bash
+export MELLIATLAS_SOURCE_PROVIDER=disabled
+export MELLIATLAS_WEATHER_LIVE_ENABLED=true
+python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Saturn remains separately controlled by `MELLIATLAS_SATURN_LIVE_ENABLED=true`
+and is RU-only. Both sources are disabled by default. Forecast coordinates
+are transmitted to Open-Meteo after the button click, even when the map tile
+layer is disabled. Do not enable the free endpoint for commercial deployment
+without reviewing the provider's separate commercial terms and attribution.

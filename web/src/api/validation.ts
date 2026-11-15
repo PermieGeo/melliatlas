@@ -8,6 +8,7 @@ import type {
   Decision,
   Evidence,
   ExternalSource,
+  WeatherForecast,
   SaturnNoticePage,
   SaturnNotice,
   Investigation,
@@ -411,18 +412,96 @@ export function decodeInvestigation(value: unknown): Investigation {
   };
 }
 
-/** Strictly decode the server's country-scoped, opt-in source capabilities. */
+/** Strictly decode the server-advertised source capability and matching kind. */
 export function decodeSources(value: unknown): ExternalSource[] {
   return list(value, "sources", (entry, path) => {
     const v = record(entry, path);
-    return {
-      id: oneOf(v.id, `${path}.id`, ["saturn"]),
+    const id = oneOf(v.id, `${path}.id`, ["saturn", "open-meteo"]);
+    const kind = oneOf(v.kind, `${path}.kind`, [
+      "TREATMENT_NOTICE",
+      "WEATHER_FORECAST",
+    ]);
+    const common = {
       country: country(v.country, `${path}.country`),
-      kind: oneOf(v.kind, `${path}.kind`, ["TREATMENT_NOTICE"]),
       mode: oneOf(v.mode, `${path}.mode`, ["LIVE"]),
       status: oneOf(v.status, `${path}.status`, ["EXPERIMENTAL"]),
     };
+    if (id === "saturn" && kind === "TREATMENT_NOTICE") {
+      return { id, kind, ...common };
+    }
+    if (id === "open-meteo" && kind === "WEATHER_FORECAST") {
+      return { id, kind, ...common };
+    }
+    throw new WireError(`${path}.sourceKind`);
   });
+}
+
+/** Do not convert missing weather values to zero or accept swapped units/time. */
+export function decodeWeatherForecast(value: unknown): WeatherForecast {
+  const v = record(value, "weather");
+  const source_id = oneOf(v.source_id, "weather.source_id", [
+    "open-meteo:forecast",
+  ]);
+  if (v.synthetic !== false) throw new WireError("weather.synthetic");
+  const latitude = numeric(v.requested_latitude, "weather.requested_latitude");
+  const longitude = numeric(
+    v.requested_longitude,
+    "weather.requested_longitude",
+  );
+  const grid_latitude = numeric(v.grid_latitude, "weather.grid_latitude");
+  const grid_longitude = numeric(v.grid_longitude, "weather.grid_longitude");
+  if (
+    Math.abs(latitude) > 90 ||
+    Math.abs(grid_latitude) > 90 ||
+    Math.abs(longitude) > 180 ||
+    Math.abs(grid_longitude) > 180
+  ) {
+    throw new WireError("weather.coordinates");
+  }
+  const hours = list(v.hours, "weather.hours", (entry, path) => {
+    const hour = record(entry, path);
+    const optional = (name: string, min: number, max: number) => {
+      const number = maybe(hour[name], numeric, `${path}.${name}`);
+      if (number !== null && (number < min || number > max))
+        throw new WireError(`${path}.${name}`);
+      return number;
+    };
+    const time = nonEmpty(hour.time, `${path}.time`);
+    if (!/(Z|\+00:00)$/.test(time) || !Number.isFinite(Date.parse(time))) {
+      throw new WireError(`${path}.time`);
+    }
+    return {
+      time,
+      wind_speed_kmh: optional("wind_speed_kmh", 0, 500),
+      wind_direction_degrees: optional("wind_direction_degrees", 0, 360),
+      wind_gusts_kmh: optional("wind_gusts_kmh", 0, 600),
+      precipitation_mm: optional("precipitation_mm", 0, 1000),
+    };
+  });
+  if (hours.length !== 24) throw new WireError("weather.hours");
+  let previousTime: number | null = null;
+  for (const hour of hours) {
+    const currentTime = Date.parse(hour.time);
+    if (previousTime !== null && currentTime - previousTime !== 3_600_000) {
+      throw new WireError("weather.hours");
+    }
+    previousTime = currentTime;
+  }
+  const uncertainties = strings(v.uncertainties, "weather.uncertainties");
+  if (uncertainties.length === 0) throw new WireError("weather.uncertainties");
+  return {
+    source_id,
+    source_uri: nonEmpty(v.source_uri, "weather.source_uri"),
+    source_mode: oneOf(v.source_mode, "weather.source_mode", ["LIVE"]),
+    synthetic: false,
+    captured_at: nonEmpty(v.captured_at, "weather.captured_at"),
+    requested_latitude: latitude,
+    requested_longitude: longitude,
+    grid_latitude,
+    grid_longitude,
+    hours,
+    uncertainties,
+  };
 }
 
 function saturnProduct(

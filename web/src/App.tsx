@@ -13,6 +13,7 @@ import { EvidencePanel } from "./components/EvidencePanel";
 import { MapPanel } from "./components/MapPanel";
 import { Timeline } from "./components/Timeline";
 import { SaturnPanel } from "./components/SaturnPanel";
+import { WeatherPanel } from "./components/WeatherPanel";
 import { useInvestigation } from "./hooks/useInvestigation";
 import { useTerritoryReference } from "./hooks/useTerritoryReference";
 import { t } from "./i18n";
@@ -330,6 +331,7 @@ export default function App() {
             country={country}
             onNotices={setSaturnNotices}
           />
+          <WeatherPanel locale={locale} country={country} point={point} />
           <Timeline
             locale={locale}
             stops={stops}

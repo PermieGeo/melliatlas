@@ -88,3 +88,15 @@ this source. The HTTPS request profile is based on an older observed portal
 payload and was **not** verified against the current live service. Errors and
 unknown coverage remain explicit, and source reuse rights require independent
 validation before deployment. See [installation](docs/INSTALLATION.md).
+
+### Opt-in live sources (experimental)
+
+MelliAtlas can separately read one page of RU-only public Saturn treatment
+claims or one Open-Meteo 24-hour forecast for a user-selected map point when
+the matching live source is explicitly enabled on the backend. Neither read
+uses synthetic evidence; neither initiates background collection or confirms
+spraying, drift or apiary safety. Weather can be requested independently of
+country because the forecast is point-based; Saturn is never advertised outside
+RU. Live compatibility, source coverage and data-reuse/commercial terms are
+open verification gates. The regular investigation planner remains an explicit
+fictional demonstration until real-source analysis is separately authorized.

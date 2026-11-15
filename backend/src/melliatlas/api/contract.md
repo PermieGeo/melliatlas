@@ -91,3 +91,24 @@ standard `422/INVALID_REQUEST`. No synthetic fallback, retries, crawler,
 redirects, hidden polling or browser-side cross-origin requests are permitted.
 Official public API compatibility and reuse permission have not been verified;
 this feature requires explicit local opt-in and independent acceptance.
+
+## Experimental weather forecast HTTP API
+
+`AppSettings.weather_live_enabled` defaults to `False`. A separately injected
+`WeatherForecastReader` is only used when enabled. Source capability discovery
+adds `open-meteo` / `WEATHER_FORECAST` for currently supported countries without
+changing the independent RU-only restriction for `saturn`.
+
+`POST /api/v1/sources/weather/forecast` accepts only WGS84 `latitude` and
+`longitude` in the JSON body, not query parameters. It returns exactly 24 UTC
+hourly model forecasts with provider ID, retrieval time, provider grid position,
+units documented as km/h, degrees and mm, and explicit uncertainty. Bad input
+returns `422/INVALID_REQUEST`; disabled reading returns
+`503/SOURCE_NOT_AVAILABLE`; missing, corrupt or unreachable upstream data
+returns sanitized `502/SOURCE_READ_FAILED`. No public route performs an automatic
+request or makes a treatment safety decision.
+
+The coordinates are passed to Open-Meteo only after an explicit user action.
+The free endpoint is non-commercial with CC BY 4.0 attribution; commercial use
+requires separate terms. Upstream live responses and rights must be rechecked
+before acceptance or public release.

@@ -31,3 +31,13 @@ is rejected before transport. A 502 response means the live portal could not
 be read or its response failed validation, not that no treatments exist.
 Source records are not automatically stored or combined with synthetic plans.
 The historical read endpoint and public-use terms still require verification.
+
+## Live point weather preview (opt-in)
+
+The `WeatherForecastReader` port is implemented by the bounded Open-Meteo
+adapter, with network I/O isolated in `api/weather_http.py`. It requires
+`AppSettings.weather_live_enabled=True` or the main-process environment flag
+`MELLIATLAS_WEATHER_LIVE_ENABLED=true`. The default is disabled and does not
+activate synthetic scenarios. Requests are explicit, 24-hour, UTC and local
+point-specific; they do not measure wind at the apiary or estimate pesticide
+transport. Open-Meteo free API use is non-commercial and requires attribution.

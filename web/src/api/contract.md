@@ -31,3 +31,15 @@ fictional investigation result state; the map renders their field polygons as
 a visually distinct unverified source layer. Empty/failed pages cannot establish
 complete coverage or site safety. The exact provider region codes remain
 unverified and are entered manually, not inferred from administrative IDs.
+
+## On-demand live weather forecast
+
+`listExternalSources` validates the discriminated `TREATMENT_NOTICE/saturn` and
+`WEATHER_FORECAST/open-meteo` capability pairs. `readWeatherForecast(point,
+signal)` posts the selected coordinates in the JSON body to the same-origin API.
+The strict decoder requires 24 sequential UTC hours, nullable bounded values,
+source attribution, grid coordinates and non-empty uncertainties. An aborted or
+stale request is not a completed forecast. `WeatherPanel` has a manual button,
+does not log or persist coordinates, and includes Open-Meteo attribution.
+Neither a weather forecast nor a live treatment notice modifies synthetic
+investigation results or certifies pesticide drift, exposure or placement safety.

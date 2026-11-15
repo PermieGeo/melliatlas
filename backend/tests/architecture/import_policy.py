@@ -32,7 +32,7 @@ DATABASE_IMPORTS = frozenset(
     {"sqlalchemy", "psycopg", "psycopg2", "psycopg_pool", "asyncpg", "sqlite3", "geoalchemy2"}
 )
 FRAMEWORK_IMPORTS = frozenset({"fastapi", "starlette", "pydantic"})
-NETWORK_TRANSPORT_MODULES = frozenset({"melliatlas.api.saturn_http"})
+NETWORK_TRANSPORT_MODULES = frozenset({"melliatlas.api.saturn_http", "melliatlas.api.weather_http"})
 
 NETWORK_IMPORTS = frozenset(
     {"httpx", "requests", "aiohttp", "urllib3", "urllib.request", "http.client", "socket"}
@@ -41,7 +41,11 @@ NETWORK_IMPORTS = frozenset(
 # The application composition root is the sole cross-capability entry point
 # allowed to construct a concrete provider. Domain and route modules still use APIs.
 COMPOSITION_ROOT_PROVIDER_IMPORTS = frozenset(
-    {"melliatlas.sources.providers.synthetic.api", "melliatlas.sources.providers.saturn.api"}
+    {
+        "melliatlas.sources.providers.synthetic.api",
+        "melliatlas.sources.providers.saturn.api",
+        "melliatlas.sources.providers.open_meteo.api",
+    }
 )
 
 

@@ -75,6 +75,18 @@ features:
       - backend/tests/unit/test_saturn_treatment_screening.py
       - backend/tests/contract/test_saturn_live_http.py
       - web/tests/saturn.test.tsx
+  - feature_id: SOURCES.WEATHER_FORECAST
+    implementation_status: partial
+    stages: [MVP-01]
+    spec_paths: [docs/specs/active/subspecs/subspec-01-web-mvp.md]
+    owners:
+      - backend/src/melliatlas/sources/api.py#WeatherForecastReader
+      - backend/src/melliatlas/sources/providers/open_meteo/api.py#OpenMeteoForecastReader
+      - backend/src/melliatlas/api/routes_sources.py#create_source_router
+      - web/src/components/WeatherPanel.tsx
+    test_files:
+      - backend/tests/contract/test_open_meteo_live_http.py
+      - web/tests/weather.test.tsx
   - feature_id: AGRICULTURE.NOTICES
     implementation_status: partial
     stages: [MVP-01]

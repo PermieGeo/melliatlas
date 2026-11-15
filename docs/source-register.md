@@ -40,3 +40,24 @@ No candidate above is approved for crawling, storing source attachments or publi
 
 `backend/src/melliatlas/sources/providers/saturn/api.py` exposes bounded **offline fixture** normalization of the historical treatment-page shape. `backend/src/melliatlas/analyzers/api.py` screens candidate site/time windows against that normalized evidence with conservative uncertainty. There is **no live connector, scheduled poller, PostGIS treatment store, weather drift model, or public hazard warning** in this increment. The earlier snapshot's actual provider response samples and technical test cases remain historical reference material; do not copy any real/private captured payload into project fixtures.
 
+## Weather forecast provider: Open-Meteo (experimental integration)
+
+- **Documentation:** https://open-meteo.com/en/docs
+- **Usage terms:** https://open-meteo.com/en/terms
+- **Current integration contract:** fixed-origin `/v1/forecast`, hourly
+  `wind_speed_10m`, `wind_direction_10m`, `wind_gusts_10m`, `precipitation`,
+  `forecast_hours=24`, `timezone=GMT`, standard km/h and mm units.
+- **Provenance:** model-generated hourly forecast, retrieved UTC timestamp,
+  user-requested coordinate and returned grid-cell coordinate. No observation
+  of actual spraying or computed pesticide drift.
+- **Use conditions:** Free API is non-commercial with CC BY 4.0 attribution
+  and published limits. Commercial production requires reviewed paid terms.
+- **Acceptance:** unit/HTTP contract tests use mocked upstream responses.
+  No successful live provider response or forecast quality audit has been
+  recorded; access and response shape must be verified in the target runtime.
+
+The experimental Saturn reader described above was added as a separate,
+manual-only RU source. Earlier statements in this register about there being
+no live connector describe the historical offline stage, not the latest
+optional code. Its current upstream compatibility and reuse rights remain
+unverified.

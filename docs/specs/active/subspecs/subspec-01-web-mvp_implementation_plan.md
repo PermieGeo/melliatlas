@@ -130,3 +130,28 @@ External authorization, full geographic inventory, live provider compatibility,
 normalization accuracy against observed current response samples, production
 rate control and public release remain separately gated. W01 acceptance is
 still pending.
+
+### W01 additional developer-authorized task — live point weather forecast
+
+**Scope:** add a real, optional, provider-neutral hourly forecast read to the
+existing live-source panel without changing W01 acceptance or synthetic study
+results. This is an independent source observation, not a new planning engine.
+
+**Boundary:** `sources.api.WeatherForecastReader` and typed `WeatherForecast`
+use `sources.providers.open_meteo.api.OpenMeteoForecastReader` through
+`api.composition.compose_weather_reader`. `api.weather_http` is the sole
+fixed-origin transport; it requests 24 UTC hours, has strict time/size bounds,
+and never follows redirects. `AppSettings.weather_live_enabled=False` and
+`MELLIATLAS_WEATHER_LIVE_ENABLED=true` govern opt-in availability. Open-Meteo
+is not RU-specific; Saturn remains unavailable outside RU. Frontend sources are
+advertised by a typed country-scoped catalog; a selected point and explicit
+click trigger a single weather POST. No hidden polling, fake fallback,
+forecast-to-notice join or drift inference is permitted.
+
+**Checks:** `backend/tests/contract/test_open_meteo_live_http.py` checks
+nulls, units, UTC, source attribution, invalid inputs, country listing,
+configuration and upstream failures. `web/tests/weather.test.tsx` verifies
+source discovery, manual requests, schema rejection, attribution and state
+clearing. Full local typecheck, lint, Vitest, browser and real provider
+compatibility remain acceptance gates. Current live-source reading does not
+establish legal/commercial reuse eligibility or forecast accuracy.

@@ -74,3 +74,14 @@ polygons appear independently of the offline synthetic investigation. Empty or
 failed requests prove neither absence of spraying nor complete source coverage;
 there is no current-date filtering or automatic crawling. Provider compatibility
 and reuse terms require independent validation before public deployment.
+
+## Live on-demand weather preview
+
+With `MELLIATLAS_WEATHER_LIVE_ENABLED=true` on the backend, select any map point
+and click **Read 24-hour forecast**. Weather displays forecast 10-m wind,
+reported direction, gusts and precipitation separately from Saturn notices and
+fictional investigation results. This forwards the selected point to
+Open-Meteo via the server; no automatic polling, browser persistence or drift
+safety judgment occurs. A disabled/unreachable source is not assumed to have
+zero wind. Displayed data are attributed to Open-Meteo (CC BY 4.0); the free
+endpoint is licensed for non-commercial use only.

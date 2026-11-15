@@ -2,6 +2,7 @@ import {
   decodeCountries,
   decodeSources,
   decodeSaturnPage,
+  decodeWeatherForecast,
   decodeInvestigation,
   decodeScenarios,
   decodeTerritories,
@@ -12,6 +13,8 @@ import type {
   Country,
   ExternalSource,
   SaturnNoticePage,
+  WeatherForecast,
+  Position,
   CountryCode,
   Investigation,
   InvestigationCreate,
@@ -224,6 +227,26 @@ export function readSaturnPage(
         country,
         region_code: regionCode,
         page_number: pageNumber,
+      }),
+    },
+  );
+}
+
+/** Read one short-range forecast only when a user explicitly selects a point. */
+export function readWeatherForecast(
+  point: Position,
+  signal: AbortSignal,
+): Promise<ApiResult<WeatherForecast>> {
+  return request(
+    "/api/v1/sources/weather/forecast",
+    signal,
+    decodeWeatherForecast,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        latitude: point.latitude,
+        longitude: point.longitude,
       }),
     },
   );

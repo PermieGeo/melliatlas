@@ -52,6 +52,39 @@ class TreatmentNoticeReader(Protocol):
     ) -> TreatmentNoticePage: ...
 
 
+@dataclass(frozen=True)
+class ForecastHour:
+    """UTC forecast values for one hour; missing measurements stay nullable."""
+
+    time: datetime
+    wind_speed_kmh: float | None
+    wind_direction_degrees: float | None
+    wind_gusts_kmh: float | None
+    precipitation_mm: float | None
+
+
+@dataclass(frozen=True)
+class WeatherForecast:
+    """Attributed model forecast, never an observation or pesticide-drift estimate."""
+
+    source_id: str
+    source_uri: str
+    captured_at: datetime
+    requested_latitude: float
+    requested_longitude: float
+    grid_latitude: float
+    grid_longitude: float
+    hours: tuple[ForecastHour, ...]
+    uncertainties: tuple[str, ...]
+
+
+@runtime_checkable
+class WeatherForecastReader(Protocol):
+    """Read a bounded forecast for an explicitly requested WGS84 point."""
+
+    def forecast(self, *, latitude: float, longitude: float) -> WeatherForecast: ...
+
+
 @runtime_checkable
 class ScenarioProvider(Protocol):
     """Load explicit scenarios and expose only actually executable definitions.
@@ -75,4 +108,7 @@ __all__ = [
     "TreatmentNoticePage",
     "TreatmentNoticeReader",
     "SourceReadError",
+    "ForecastHour",
+    "WeatherForecast",
+    "WeatherForecastReader",
 ]
