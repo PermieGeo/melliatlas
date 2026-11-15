@@ -28,7 +28,7 @@ The product is for migratory beekeepers **and** must account for conservation of
 1. Python package, FastAPI application and versioned JSON API, with typed input/output validation.
 2. Dated, inspectable, **complete first-order region catalogs** for Russia and Belarus, including Minsk city, and **complete administrative district catalogs** for Smolensk Oblast and Vitebsk Oblast from a declared reference snapshot. Validated GeoJSON/WGS84 boundaries for the supported country/region/district navigation. Other first-order regions do not promise district coverage.
 3. Provider-neutral territory identifiers and a reproducible reference-data import with coverage and provenance diagnostics; verification against independently defined source inventories rather than invented hardcoded counts.
-4. Three registered source categories: cartography in RU/BY, public web/news in RU/BY, Saturn in RU only. Public-web and Saturn **must be fixture-only or unavailable**; no live HTTP requests to those providers at this stage.
+4. Three registered source categories: cartography in RU/BY, public web/news in RU/BY, Saturn in RU only. Public-web and Saturn **must be fixture-only or unavailable**; no live HTTP requests to those providers at this stage. A recorded, explicitly fictional Saturn treatment-page shape may be normalized and evaluated offline before live-access approval.
 5. Small synthetic study data covering at least three candidate sites, illustrative forage intervals, one explicit *fictional binding-for-demo* exclusion, and one *fictional precautionary* area.
 6. Typed Source/Analyzer contracts, a registry, dependency-ordered execution, bounded agent observation/replanning, an ordered proposal containing at least two stops and one relocation, diagnostics and reproducible explanation.
 7. PostgreSQL/PostGIS-backed completed investigation results and selected geospatial data, with a read endpoint usable after browser refresh or backend restart.
@@ -37,7 +37,7 @@ The product is for migratory beekeepers **and** must account for conservation of
 ### 1.3. Explicit non-goals
 
 - React implementation, UI styles, browser E2E, or a second administration frontend (deferred to the separate MVP-01 Web sub-spec).
-- Live websites, unrestricted crawling, live Saturn API access, meteorology, real treatment data, or real apiary placement advice (`MVP-02` or later).
+- Live websites, unrestricted crawling, live Saturn API access, meteorology, real treatment data, or real apiary placement advice (`MVP-02` or later). The offline Saturn fixture parser and candidate screening in this stage do not remove those restrictions.
 - Accurate honey yield, validated biodiversity impact scores, traffic routing, protected-area legal inference from labels/buffers, and public sharing of private coordinates.
 - User accounts, per-user authorization, public deployment, multi-tenancy, durable distributed queues, crash recovery of *unfinished* jobs, or LLM planning.
 - A general workflow-plugin platform, dynamic code execution, arbitrary generated expressions, and externally supplied DAG definitions.
@@ -136,6 +136,7 @@ The endpoint names below are the approved **normative external contract for the 
 | `MVP01-BE-R15` | Unknown, missing, mismatched and malformed inputs yield explicit failures or uncertainty. | `R09`, `SYS-02`, `SYS-07` | `ENGINE.TYPED_CAPABILITIES` |
 | `MVP01-BE-R16` | No provider internals cross modules; resources are injected and closed. | `SYS-16`, `SYS-17` | `ENGINE.TYPED_CAPABILITIES` |
 | `MVP01-BE-R17` | Architecture, contracts, database and boundary tests run from project checks. | `A04`, `A06`–`A09` | All backend capabilities above |
+| `MVP01-BE-R18` | An offline, Russia-only Saturn treatment fixture preserves per-field identity, revised/planned intervals, product hazard claims, valid source-linked geometry and unknowns. Deterministic site/period screening reports overlap, proximity or indeterminate coverage without safety verdicts or provider I/O. | `MVP-01.R13`, `SYS-02`, `MVP-02.R04` | `SOURCES.SATURN_RU`, `AGRICULTURE.NOTICES` |
 
 **Interpretation:** backend requirements do not claim completion of umbrella `MVP-01.R08` or browser acceptance `MVP-01.A01/A07`. Those remain dependent on the future MVP-01 Web sub-spec.
 
@@ -155,6 +156,7 @@ The endpoint names below are the approved **normative external contract for the 
 | `MVP01-BE-A10` | Country/territory/geometry/date/scenario errors, engine faults and step limits produce stable, sanitized diagnostics. |
 | `MVP01-BE-A11` | Automated tests enforce allowed module dependencies, public API imports, acyclic graph and provider/transport isolation. |
 | `MVP01-BE-A12` | Backend's external schemas, fixture outputs and limitations are documented for the dependent frontend sub-spec; the stage itself remains incomplete until Web acceptance. |
+| `MVP01-BE-A13` | A fictional offline Saturn treatment page normalizes distinct fields from a shared plan, handles revisions and invalid geometry conservatively, rejects map-index substitutes and contradictory pagination, and screens site/time windows with explicit missing-weather and non-clearance warnings. This is a backend contract gate, not proof of live Saturn access or a complete application journey. |
 
 ## 6. Test and quality constraints
 
@@ -176,4 +178,3 @@ The following remain **task-specific approval gates** even though the backend wo
 5. Confirm local PostGIS startup/testing mechanism and how licensed boundary datasets are acquired and pinned without packaging runtime/private data into patches.
 
 **Authorization checkpoint:** Developer-approved backend requirements and implementation authorization are in effect for the active `MVP-01` backend workstream. This authorization does not approve missing reference sources, licenses, runtime dependencies, or database arrangements listed above. Steps 1 and part of 2 have implementation; no full backend acceptance criterion is verified. The `MVP-01` stage remains unaccepted until the separate Web workstream and browser checks are complete.
-

@@ -192,7 +192,7 @@ class SddConvergenceTests(unittest.TestCase):
         plan, spec = self._current()
         broken = self._set_task_field(plan, "Test inventory IDs", "`BE-T035`")
         self.assertIn(
-            "Selected tests do not cover task requirement: MVP01-BE-R10",
+            "Selected tests do not cover task requirement: MVP01-BE-R18",
             convergence_errors(broken, spec, ROOT),
         )
 
@@ -212,3 +212,4 @@ class SddConvergenceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
