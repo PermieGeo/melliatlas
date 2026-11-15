@@ -10,11 +10,18 @@
 - **Implementation authorization:** AUTHORIZED — backend implementation; external approval gates remain task-specific.
 - **Acceptance:** PENDING — backend and umbrella `MVP-01` remain unaccepted.
 
-Implementation is in progress. External source, license, infrastructure, and runtime-dependency decisions remain task-specific gates. The first step supplies FastAPI health/OpenAPI and architecture checks. Territory contract APIs, fail-closed offline reference validation, and HTTP reads are implemented as part of step 2; independently approved complete RU/BY catalogs and PostGIS import are pending; no full backend acceptance criterion or browser MVP is complete. The separate React/Web sub-spec and plan will be prepared after backend contract verification. The V04-04 offline Saturn treatment parser and conservative screening are implemented. V04-05 connects fictional treatment notices to a provisional investigation plan and typed HTTP findings; V04-06 adds a joint synthetic scenario requiring both ecological and treatment findings before the final selection. Live provider approval, weather effects and the full typed execution graph remain pending.
+Implementation is in progress. External source, license, infrastructure, and runtime-dependency decisions remain task-specific gates. The first step supplies FastAPI health/OpenAPI and architecture checks. Territory contract APIs, fail-closed offline reference validation, and HTTP reads are implemented as part of step 2; independently approved complete RU/BY catalogs and PostGIS import are pending; no full backend acceptance criterion or browser MVP is complete. A separate React/Web sub-spec and plan have been drafted for review; they do not have implementation authorization or change the selected backend workstream. The V04-04 offline Saturn treatment parser and conservative screening are implemented. V04-05 connects fictional treatment notices to a provisional investigation plan and typed HTTP findings; V04-06 adds a joint synthetic scenario requiring both ecological and treatment findings before the final selection. Live provider approval, weather effects and the full typed execution graph remain pending.
 
 - [MVP-01 Backend sub-specification](active/subspecs/subspec-01-backend-planning.md) — active normative requirements for RU/BY geography, fixture sources, typed analysis, the deterministic agent, PostGIS, and HTTP.
 - [MVP-01 Backend implementation plan](active/subspecs/subspec-01-backend-planning_implementation_plan.md) — active implementation guidance with current code inventory, a bounded next task, vertical-slice backlog, architecture policy, and requirement-linked acceptance tests.
 - [`STATE.json`](STATE.json) — selected `mvp-01-backend` workstream in `READY_FOR_IMPLEMENTATION`; this is not a completed-stage or accepted-test claim.
+
+## Proposed Web workstream (not selected or approved)
+
+- [MVP-01 Web sub-spec proposal](proposals/subspec-01-web-mvp.md) — a single client centered on reported pesticide treatments, seasonal alternative stops and attributable uncertainty, not a copy of the historical UI.
+- [MVP-01 Web implementation proposal](proposals/subspec-01-web-mvp_implementation_plan.md) — verified existing HTTP contracts, missing dependencies and a bounded first runnable browser slice.
+
+These documents are preparation only. `STATE.json` still selects the backend workstream; approval, dependency review and a deliberate checkpoint update precede Web implementation. No Web feature is implemented or accepted by this documentation.
 
 `archive/` currently has no completed stage documents.
 
