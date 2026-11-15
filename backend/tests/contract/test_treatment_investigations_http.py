@@ -40,7 +40,7 @@ from melliatlas.sources.api import (
     SyntheticFixtureProvider,
     treatment_fixture_notices,
 )
-from melliatlas.territories.api import CountryCode
+from melliatlas.territories.api import CountryCode, PolygonWgs84
 
 
 def _request(*, season_end: date = date(2026, 8, 15)) -> InvestigationRequest:
@@ -327,14 +327,15 @@ def test_combined_ecology_treatment_fixture_fails_closed_until_supported() -> No
 
         @staticmethod
         def _zone() -> EcologyZone:
+            geometry: PolygonWgs84 = {
+                "type": "Polygon",
+                "coordinates": [[(31.9, 53.9), (32.1, 53.9), (32.1, 54.1), (31.9, 53.9)]],
+            }
             return EcologyZone(
                 evidence_id="fixture-restriction",
                 rule_id="fictional-rule",
                 kind=EcologyEvidenceKind.DEMO_RESTRICTION,
-                geometry={
-                    "type": "Polygon",
-                    "coordinates": [[[31.9, 53.9], [32.1, 53.9], [32.1, 54.1], [31.9, 53.9]]],
-                },
+                geometry=geometry,
             )
 
     service = InMemoryInvestigationService(
