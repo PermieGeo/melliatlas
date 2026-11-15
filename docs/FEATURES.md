@@ -12,6 +12,7 @@
 | `SOURCES.PUBLIC_WEB_RU` | Approved Russian public websites, newspapers, and Internet publication evidence. |
 | `SOURCES.PUBLIC_WEB_BY` | Approved Belarusian public websites, newspapers, and Internet publication evidence. |
 | `SOURCES.SATURN_RU` | Controlled Russian FGIS Saturn source with independently verified access and evidence types. |
+| `SOURCES.WEATHER_FORECAST` | Explicitly requested, attributed live hourly forecasts without implied spraying or drift safety. |
 | `SOURCES.GEOSPATIAL` | Additional approved land-cover, crop, forage, and geospatial datasets. |
 | `DATA.PROVENANCE` | Source attribution, evidence version, coverage, and uncertainty tracking. |
 | `DATA.PERSISTENCE` | Durable completed investigations, geometries, and seasonal plans. |

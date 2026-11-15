@@ -120,3 +120,14 @@ npm run test:e2e
 ```
 
 The canonical root `run-tests.sh` runs formatter check, ESLint, strict TypeScript, Vitest and build when `web/package.json` is present. Playwright browser tests are deliberately a separate explicit command because they require an installed browser and a local Vite server. No live source or backend database is needed for browser-mocked W01 checks. Without `npm install` these commands will fail, rather than silently skip checks.
+
+## Optional live weather-source verification
+
+`backend/tests/contract/test_open_meteo_live_http.py` is entirely offline and
+verifies the forecast DTO, request boundary, 24 UTC hours, nullable variables,
+unit checking, country-independent weather listing, explicit enablement and
+sanitized upstream failures. `web/tests/weather.test.tsx` tests capability
+discovery, manual coordinates, attribution and invalid response handling. Use
+the canonical `run-tests.sh` to run the full verification set after installing
+backend and Web development dependencies. A real Open-Meteo response and
+commercial reuse are **not** established by mocked contract tests.

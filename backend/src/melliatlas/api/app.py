@@ -10,15 +10,22 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from melliatlas.api.composition import SourceProviderMode, compose_sources
+from melliatlas.api.composition import (
+    SourceProviderMode,
+    compose_saturn_reader,
+    compose_sources,
+    compose_weather_reader,
+)
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse, HealthResponse
 from melliatlas.api.reference_loader import read_reference_documents
 from melliatlas.api.routes_investigations import create_investigation_router
+from melliatlas.api.routes_sources import create_source_router
 from melliatlas.api.routes_territories import create_territory_router
 from melliatlas.jobs.api import (
     InMemoryInvestigationService,
     InvestigationService,
 )
+from melliatlas.sources.api import TreatmentNoticeReader, WeatherForecastReader
 from melliatlas.territories import InMemoryTerritoryCatalog
 from melliatlas.territories.api import TerritoryCatalog
 
@@ -30,6 +37,8 @@ class AppSettings:
     reference_snapshot_path: Path | None = None
     reference_inventory_path: Path | None = None
     source_provider: SourceProviderMode = SourceProviderMode.DISABLED
+    saturn_live_enabled: bool = False
+    weather_live_enabled: bool = False
 
 
 def create_app(
@@ -37,6 +46,8 @@ def create_app(
     settings: AppSettings | None = None,
     territories: TerritoryCatalog | None = None,
     investigations: InvestigationService | None = None,
+    saturn_reader: TreatmentNoticeReader | None = None,
+    weather_reader: WeatherForecastReader | None = None,
 ) -> FastAPI:
     config = settings if settings is not None else AppSettings()
     snapshot_path = config.reference_snapshot_path
@@ -79,6 +90,17 @@ def create_app(
 
     active_catalog = territories if territories is not None else loaded_catalog
     app.include_router(create_territory_router(active_catalog))
+    live_reader = (
+        (saturn_reader if saturn_reader is not None else compose_saturn_reader(True))
+        if config.saturn_live_enabled
+        else None
+    )
+    forecast_reader = (
+        (weather_reader if weather_reader is not None else compose_weather_reader(True))
+        if config.weather_live_enabled
+        else None
+    )
+    app.include_router(create_source_router(live_reader, forecast_reader))
     source_runtime = compose_sources(config.source_provider)
     job_service = (
         investigations

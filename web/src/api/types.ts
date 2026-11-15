@@ -61,6 +61,82 @@ export interface ScenarioListing {
   is_default: boolean;
 }
 
+/** Explicit source capabilities. Country is the requested catalog scope, not source evidence. */
+export type ExternalSource =
+  | {
+      id: "saturn";
+      country: CountryCode;
+      kind: "TREATMENT_NOTICE";
+      mode: "LIVE";
+      status: "EXPERIMENTAL";
+    }
+  | {
+      id: "open-meteo";
+      country: CountryCode;
+      kind: "WEATHER_FORECAST";
+      mode: "LIVE";
+      status: "EXPERIMENTAL";
+    };
+
+/** An attributed short-range model forecast; never a pesticide exposure or safety assessment. */
+export interface WeatherForecast {
+  source_id: "open-meteo:forecast";
+  source_uri: string;
+  source_mode: "LIVE";
+  synthetic: false;
+  captured_at: string;
+  requested_latitude: number;
+  requested_longitude: number;
+  grid_latitude: number;
+  grid_longitude: number;
+  hours: {
+    time: string;
+    wind_speed_kmh: number | null;
+    wind_direction_degrees: number | null;
+    wind_gusts_kmh: number | null;
+    precipitation_mm: number | null;
+  }[];
+  uncertainties: string[];
+}
+
+/** Unverified public claim; not a confirmed application or safety assessment. */
+export interface SaturnNotice {
+  record_id: string;
+  plan_id: string | null;
+  country: CountryCode;
+  source_id: string;
+  source_uri: string | null;
+  source_mode: "LIVE";
+  synthetic: false;
+  captured_at: string;
+  published_at: string | null;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  revised: boolean | null;
+  cadastral_number: string | null;
+  geometry: ReferenceShape | null;
+  products: {
+    name: string | null;
+    crop: string | null;
+    reported_bee_hazard_class: 1 | 2 | 3 | null;
+  }[];
+  uncertainties: string[];
+}
+
+/** One manually fetched page, never a claim of complete provider coverage. */
+export interface SaturnNoticePage {
+  source_id: string;
+  country: CountryCode;
+  region_code: number;
+  captured_at: string;
+  page_number: number;
+  next_page: number | null;
+  total_elements: number | null;
+  unidentified_records: number;
+  notices: SaturnNotice[];
+  coverage_complete: false;
+}
+
 /** User-supplied WGS84 longitude and latitude, sent only in an investigation body. */
 export interface Position {
   longitude: number;

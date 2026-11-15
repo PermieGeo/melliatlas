@@ -4,6 +4,7 @@ import type {
   Country,
   CountryCode,
   Position,
+  SaturnNotice,
   ScenarioListing,
   Territory,
 } from "./api/types";
@@ -11,6 +12,8 @@ import { InvestigationControls } from "./components/InvestigationControls";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { MapPanel } from "./components/MapPanel";
 import { Timeline } from "./components/Timeline";
+import { SaturnPanel } from "./components/SaturnPanel";
+import { WeatherPanel } from "./components/WeatherPanel";
 import { useInvestigation } from "./hooks/useInvestigation";
 import { useTerritoryReference } from "./hooks/useTerritoryReference";
 import { t } from "./i18n";
@@ -37,6 +40,7 @@ export default function App() {
     useState<TranslationKey>("loadingScenarios");
   const [point, setPoint] = useState<Position | null>(null);
   const [showTiles, setShowTiles] = useState(false);
+  const [saturnNotices, setSaturnNotices] = useState<SaturnNotice[]>([]);
   const [reopenId, setReopenId] = useState("");
   const investigation = useInvestigation();
   const referenceNavigation = useTerritoryReference(country, regions);
@@ -157,6 +161,7 @@ export default function App() {
     if (!countries.some((item) => item.code === value)) return;
     reset();
     setPoint(null);
+    setSaturnNotices([]);
     setCountry(value);
     setTerritory("");
     setScenarioId("");
@@ -290,6 +295,7 @@ export default function App() {
               startingPoint={point}
               showTiles={showTiles}
               referenceGeometry={referenceNavigation.geometry}
+              saturnNotices={saturnNotices}
               onSelect={investigation.setSelectedSite}
               onPoint={setPoint}
             />
@@ -320,6 +326,12 @@ export default function App() {
               <span className="result-id">ID: {investigation.result.id}</span>
             </div>
           )}
+          <SaturnPanel
+            locale={locale}
+            country={country}
+            onNotices={setSaturnNotices}
+          />
+          <WeatherPanel locale={locale} country={country} point={point} />
           <Timeline
             locale={locale}
             stops={stops}

@@ -16,7 +16,12 @@ from melliatlas.planning.api import (
     TreatmentScreening,
     assess_ecology,
 )
-from melliatlas.sources.api import ScenarioListing, ScenarioProvider
+from melliatlas.sources.api import (
+    ScenarioListing,
+    ScenarioProvider,
+    TreatmentNoticeReader,
+    WeatherForecastReader,
+)
 from melliatlas.territories.api import CountryCode
 
 if TYPE_CHECKING:
@@ -85,3 +90,23 @@ def compose_sources(mode: SourceProviderMode) -> SourceComposition:
             treatment_factory=lambda scenario: _synthetic_treatment_planner(provider, scenario),
         )
     raise ValueError(f"Unsupported source provider mode: {mode}")
+
+
+def compose_saturn_reader(enabled: bool) -> TreatmentNoticeReader | None:
+    """Create the opt-in RU-only live transport, separate from scenario selection."""
+    if not enabled:
+        return None
+    from melliatlas.api.saturn_http import post_public_page
+    from melliatlas.sources.providers.saturn.api import SaturnPublicTreatmentReader
+
+    return SaturnPublicTreatmentReader(post_public_page)
+
+
+def compose_weather_reader(enabled: bool) -> WeatherForecastReader | None:
+    """Opt into Open-Meteo reads without creating a global source registry."""
+    if not enabled:
+        return None
+    from melliatlas.api.weather_http import get_public_forecast
+    from melliatlas.sources.providers.open_meteo.api import OpenMeteoForecastReader
+
+    return OpenMeteoForecastReader(get_public_forecast)

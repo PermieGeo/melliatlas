@@ -1,7 +1,8 @@
-"""Offline normalization of an observed legacy Saturn beekeeper treatment-page shape.
+"""Pure normalization of an observed legacy Saturn beekeeper treatment-page shape.
 
-This module never contacts a provider. Decoded entries are unverified source claims,
-not verified spraying events, licensed live data, or apiary safety assessments.
+Caller-supplied payloads may be explicitly marked FIXTURE or LIVE. This module
+never contacts a provider; neither mode establishes completed spraying, public
+API stability, data reuse permission or apiary safety.
 """
 
 from datetime import datetime, timezone
@@ -106,8 +107,9 @@ def parse_saturn_treatment_page(
     captured_at: datetime,
     source_id: str = "saturn:fixture-treatment",
     source_uri: str | None = None,
+    source_mode: Literal["FIXTURE", "LIVE"] = "FIXTURE",
 ) -> SaturnTreatmentPage:
-    """Parse one offline fixture page; never perform network I/O or infer a live feed."""
+    """Normalize one supplied source page; transport and trust remain external."""
     if captured_at.tzinfo is None or captured_at.utcoffset() is None:
         raise ValueError("captured_at must be timezone-aware")
     if not source_id.strip():
@@ -188,7 +190,11 @@ def parse_saturn_treatment_page(
                 scheduled_start = None
                 scheduled_end = None
         geometry = parse_field_geometry(_object(acreage.get("geo")))
-        uncertainties = ["Unverified fixture record; no actual application is established"]
+        uncertainties = [
+            "Unverified fixture record; no actual application is established"
+            if source_mode == "FIXTURE"
+            else "Unverified public notice; actual pesticide application is not established"
+        ]
         if scheduled_start is None or scheduled_end is None:
             uncertainties.append(
                 "Planned application interval is missing, revised or contradictory"
@@ -203,8 +209,8 @@ def parse_saturn_treatment_page(
                 source_id=source_id,
                 source_uri=source_uri,
                 parser_version="saturn-planapplybees-legacy-v1",
-                source_mode="FIXTURE",
-                synthetic=True,
+                source_mode=source_mode,
+                synthetic=source_mode == "FIXTURE",
                 captured_at=captured_at,
                 published_at=_unix_timestamp(acreage.get("datePublishing")),
                 scheduled_start=scheduled_start,

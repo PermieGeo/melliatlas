@@ -606,3 +606,65 @@ h3 {
   font-size: 0.73rem;
   color: #526a91;
 }
+
+.saturn-panel {
+  margin-top: 18px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e2e8df;
+  border-radius: 12px;
+}
+.saturn-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.saturn-controls input {
+  max-width: 180px;
+  padding: 9px;
+}
+.saturn-controls button,
+.saturn-panel button {
+  border: 1px solid #7a907e;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: #edf4ee;
+}
+.saturn-record {
+  border-top: 1px solid #e4e9e3;
+  padding-top: 12px;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* Weather forecast is deliberately separate from synthetic planning results. */
+.weather-panel {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--surface, #fff);
+  border: 1px solid #d7dfd8;
+  border-radius: 12px;
+}
+.weather-scroll {
+  overflow-x: auto;
+  max-height: 350px;
+  overflow-y: auto;
+}
+.weather-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.weather-table th,
+.weather-table td {
+  padding: 0.4rem 0.65rem;
+  border-bottom: 1px solid #e4e9e5;
+  text-align: left;
+}
+.weather-table thead {
+  position: sticky;
+  top: 0;
+  background: #fff;
+}

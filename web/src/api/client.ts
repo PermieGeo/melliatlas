@@ -1,5 +1,8 @@
 import {
   decodeCountries,
+  decodeSources,
+  decodeSaturnPage,
+  decodeWeatherForecast,
   decodeInvestigation,
   decodeScenarios,
   decodeTerritories,
@@ -8,6 +11,10 @@ import {
 } from "./validation";
 import type {
   Country,
+  ExternalSource,
+  SaturnNoticePage,
+  WeatherForecast,
+  Position,
   CountryCode,
   Investigation,
   InvestigationCreate,
@@ -187,5 +194,60 @@ export function getInvestigation(
     `/api/v1/investigations/${encodeURIComponent(id)}`,
     signal,
     decodeInvestigation,
+  );
+}
+
+/** Discover enabled external sources for a country; never infer from its name. */
+export function listExternalSources(
+  country: CountryCode,
+  signal: AbortSignal,
+): Promise<ApiResult<ExternalSource[]>> {
+  return request(
+    `/api/v1/sources?country=${encodeURIComponent(country)}`,
+    signal,
+    decodeSources,
+  );
+}
+
+/** One manual, bounded public-source read; no automatic pagination or retries. */
+export function readSaturnPage(
+  country: CountryCode,
+  regionCode: number,
+  pageNumber: number,
+  signal: AbortSignal,
+): Promise<ApiResult<SaturnNoticePage>> {
+  return request(
+    "/api/v1/sources/saturn/treatments",
+    signal,
+    decodeSaturnPage,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        country,
+        region_code: regionCode,
+        page_number: pageNumber,
+      }),
+    },
+  );
+}
+
+/** Read one short-range forecast only when a user explicitly selects a point. */
+export function readWeatherForecast(
+  point: Position,
+  signal: AbortSignal,
+): Promise<ApiResult<WeatherForecast>> {
+  return request(
+    "/api/v1/sources/weather/forecast",
+    signal,
+    decodeWeatherForecast,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        latitude: point.latitude,
+        longitude: point.longitude,
+      }),
+    },
   );
 }

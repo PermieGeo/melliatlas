@@ -102,3 +102,56 @@ The first slice uses only existing POST/GET operations and additive nullable res
 
 No generic frontend state framework, map drawing engine, Admin workspace or speculative API is part of W01.
 
+### W01 additional user-authorized task — RU-only public Saturn preview
+
+**Public contracts and integration design:** `sources.api.TreatmentNoticeReader`
+abstracts on-demand page reading, `sources.providers.saturn.api` exposes the
+pure decoder and bounded read adapter, and the only permitted network transport
+is `api.saturn_http`. The composition root enables this **independently** of
+`SourceProviderMode` with `AppSettings.saturn_live_enabled` / the exact
+`MELLIATLAS_SATURN_LIVE_ENABLED=true` environment flag. `api.routes_sources`
+provides `GET /api/v1/sources` capability discovery and a strict POST bounded
+read. Source-country validation precedes transport. Reuse permission and exact
+current upstream format remain unverified; the endpoint's payload is based on
+an historical `planapplybees` capture and must fail visibly if incompatible.
+
+**Browser integration:** A separate `SaturnPanel` appears only if the server
+advertises it for the selected country; it accepts an explicit source-specific
+numeric region code, fetches one page on click, attributes every claim and
+provides a distinct optional map polygon layer. It does not influence the
+synthetic season plan or infer that an empty response is complete. RU/BY
+switching clears stale results; no automatic polling/crawling occurs.
+
+**Tests:** `backend/tests/contract/test_saturn_live_http.py` verifies country
+gating, disabled mode, request shape, source metadata and provider failures;
+`web/tests/saturn.test.tsx` checks source discovery, manual-only reads and
+wire rejection. Existing import-policy and Web tests must remain green.
+External authorization, full geographic inventory, live provider compatibility,
+normalization accuracy against observed current response samples, production
+rate control and public release remain separately gated. W01 acceptance is
+still pending.
+
+### W01 additional developer-authorized task — live point weather forecast
+
+**Scope:** add a real, optional, provider-neutral hourly forecast read to the
+existing live-source panel without changing W01 acceptance or synthetic study
+results. This is an independent source observation, not a new planning engine.
+
+**Boundary:** `sources.api.WeatherForecastReader` and typed `WeatherForecast`
+use `sources.providers.open_meteo.api.OpenMeteoForecastReader` through
+`api.composition.compose_weather_reader`. `api.weather_http` is the sole
+fixed-origin transport; it requests 24 UTC hours, has strict time/size bounds,
+and never follows redirects. `AppSettings.weather_live_enabled=False` and
+`MELLIATLAS_WEATHER_LIVE_ENABLED=true` govern opt-in availability. Open-Meteo
+is not RU-specific; Saturn remains unavailable outside RU. Frontend sources are
+advertised by a typed country-scoped catalog; a selected point and explicit
+click trigger a single weather POST. No hidden polling, fake fallback,
+forecast-to-notice join or drift inference is permitted.
+
+**Checks:** `backend/tests/contract/test_open_meteo_live_http.py` checks
+nulls, units, UTC, source attribution, invalid inputs, country listing,
+configuration and upstream failures. `web/tests/weather.test.tsx` verifies
+source discovery, manual requests, schema rejection, attribution and state
+clearing. Full local typecheck, lint, Vitest, browser and real provider
+compatibility remain acceptance gates. Current live-source reading does not
+establish legal/commercial reuse eligibility or forecast accuracy.

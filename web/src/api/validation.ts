@@ -7,6 +7,10 @@ import type {
   TerritoryGeometry,
   Decision,
   Evidence,
+  ExternalSource,
+  WeatherForecast,
+  SaturnNoticePage,
+  SaturnNotice,
   Investigation,
   Replanning,
   ReportedProduct,
@@ -406,4 +410,177 @@ export function decodeInvestigation(value: unknown): Investigation {
     limitations: strings(v.limitations, "limitations"),
     synthetic: booleanTrue(v.synthetic, "synthetic"),
   };
+}
+
+/** Strictly decode the server-advertised source capability and matching kind. */
+export function decodeSources(value: unknown): ExternalSource[] {
+  return list(value, "sources", (entry, path) => {
+    const v = record(entry, path);
+    const id = oneOf(v.id, `${path}.id`, ["saturn", "open-meteo"]);
+    const kind = oneOf(v.kind, `${path}.kind`, [
+      "TREATMENT_NOTICE",
+      "WEATHER_FORECAST",
+    ]);
+    const common = {
+      country: country(v.country, `${path}.country`),
+      mode: oneOf(v.mode, `${path}.mode`, ["LIVE"]),
+      status: oneOf(v.status, `${path}.status`, ["EXPERIMENTAL"]),
+    };
+    if (id === "saturn" && kind === "TREATMENT_NOTICE") {
+      return { id, kind, ...common };
+    }
+    if (id === "open-meteo" && kind === "WEATHER_FORECAST") {
+      return { id, kind, ...common };
+    }
+    throw new WireError(`${path}.sourceKind`);
+  });
+}
+
+/** Do not convert missing weather values to zero or accept swapped units/time. */
+export function decodeWeatherForecast(value: unknown): WeatherForecast {
+  const v = record(value, "weather");
+  const source_id = oneOf(v.source_id, "weather.source_id", [
+    "open-meteo:forecast",
+  ]);
+  if (v.synthetic !== false) throw new WireError("weather.synthetic");
+  const latitude = numeric(v.requested_latitude, "weather.requested_latitude");
+  const longitude = numeric(
+    v.requested_longitude,
+    "weather.requested_longitude",
+  );
+  const grid_latitude = numeric(v.grid_latitude, "weather.grid_latitude");
+  const grid_longitude = numeric(v.grid_longitude, "weather.grid_longitude");
+  if (
+    Math.abs(latitude) > 90 ||
+    Math.abs(grid_latitude) > 90 ||
+    Math.abs(longitude) > 180 ||
+    Math.abs(grid_longitude) > 180
+  ) {
+    throw new WireError("weather.coordinates");
+  }
+  const hours = list(v.hours, "weather.hours", (entry, path) => {
+    const hour = record(entry, path);
+    const optional = (name: string, min: number, max: number) => {
+      const number = maybe(hour[name], numeric, `${path}.${name}`);
+      if (number !== null && (number < min || number > max))
+        throw new WireError(`${path}.${name}`);
+      return number;
+    };
+    const time = nonEmpty(hour.time, `${path}.time`);
+    if (!/(Z|\+00:00)$/.test(time) || !Number.isFinite(Date.parse(time))) {
+      throw new WireError(`${path}.time`);
+    }
+    return {
+      time,
+      wind_speed_kmh: optional("wind_speed_kmh", 0, 500),
+      wind_direction_degrees: optional("wind_direction_degrees", 0, 360),
+      wind_gusts_kmh: optional("wind_gusts_kmh", 0, 600),
+      precipitation_mm: optional("precipitation_mm", 0, 1000),
+    };
+  });
+  if (hours.length !== 24) throw new WireError("weather.hours");
+  let previousTime: number | null = null;
+  for (const hour of hours) {
+    const currentTime = Date.parse(hour.time);
+    if (previousTime !== null && currentTime - previousTime !== 3_600_000) {
+      throw new WireError("weather.hours");
+    }
+    previousTime = currentTime;
+  }
+  const uncertainties = strings(v.uncertainties, "weather.uncertainties");
+  if (uncertainties.length === 0) throw new WireError("weather.uncertainties");
+  return {
+    source_id,
+    source_uri: nonEmpty(v.source_uri, "weather.source_uri"),
+    source_mode: oneOf(v.source_mode, "weather.source_mode", ["LIVE"]),
+    synthetic: false,
+    captured_at: nonEmpty(v.captured_at, "weather.captured_at"),
+    requested_latitude: latitude,
+    requested_longitude: longitude,
+    grid_latitude,
+    grid_longitude,
+    hours,
+    uncertainties,
+  };
+}
+
+function saturnProduct(
+  value: unknown,
+  field: string,
+): SaturnNotice["products"][number] {
+  const v = record(value, field);
+  const hazard = v.reported_bee_hazard_class;
+  if (hazard !== null && hazard !== 1 && hazard !== 2 && hazard !== 3) {
+    throw new WireError(`${field}.reported_bee_hazard_class`);
+  }
+  return {
+    name: maybe(v.name, text, `${field}.name`),
+    crop: maybe(v.crop, text, `${field}.crop`),
+    reported_bee_hazard_class: hazard,
+  };
+}
+
+function saturnNotice(value: unknown, field: string): SaturnNotice {
+  const v = record(value, field);
+  if (v.synthetic !== false) throw new WireError(`${field}.synthetic`);
+  const revised = v.revised;
+  if (revised !== null && typeof revised !== "boolean")
+    throw new WireError(`${field}.revised`);
+  return {
+    record_id: nonEmpty(v.record_id, `${field}.record_id`),
+    plan_id: maybe(v.plan_id, text, `${field}.plan_id`),
+    country: country(v.country, `${field}.country`),
+    source_id: nonEmpty(v.source_id, `${field}.source_id`),
+    source_uri: maybe(v.source_uri, text, `${field}.source_uri`),
+    source_mode: oneOf(v.source_mode, `${field}.source_mode`, ["LIVE"]),
+    synthetic: false,
+    captured_at: nonEmpty(v.captured_at, `${field}.captured_at`),
+    published_at: maybe(v.published_at, text, `${field}.published_at`),
+    scheduled_start: maybe(v.scheduled_start, text, `${field}.scheduled_start`),
+    scheduled_end: maybe(v.scheduled_end, text, `${field}.scheduled_end`),
+    revised,
+    cadastral_number: maybe(
+      v.cadastral_number,
+      text,
+      `${field}.cadastral_number`,
+    ),
+    geometry: maybe(v.geometry, referenceShape, `${field}.geometry`),
+    products: list(v.products, `${field}.products`, saturnProduct),
+    uncertainties: strings(v.uncertainties, `${field}.uncertainties`),
+  };
+}
+
+/** Reject cross-country/mismatched pages before exposing real field geometries. */
+export function decodeSaturnPage(value: unknown): SaturnNoticePage {
+  const v = record(value, "saturnPage");
+  if (v.coverage_complete !== false)
+    throw new WireError("saturnPage.coverage_complete");
+  const page = {
+    source_id: nonEmpty(v.source_id, "saturnPage.source_id"),
+    country: country(v.country, "saturnPage.country"),
+    region_code: integer(v.region_code, "saturnPage.region_code"),
+    captured_at: nonEmpty(v.captured_at, "saturnPage.captured_at"),
+    page_number: integer(v.page_number, "saturnPage.page_number"),
+    next_page: maybe(v.next_page, integer, "saturnPage.next_page"),
+    total_elements: maybe(
+      v.total_elements,
+      integer,
+      "saturnPage.total_elements",
+    ),
+    unidentified_records: integer(
+      v.unidentified_records,
+      "saturnPage.unidentified_records",
+    ),
+    notices: list(v.notices, "saturnPage.notices", saturnNotice),
+    coverage_complete: false as const,
+  };
+  if (
+    page.notices.some(
+      (notice) =>
+        notice.country !== page.country || notice.source_id !== page.source_id,
+    )
+  ) {
+    throw new WireError("saturnPage.noticeScope");
+  }
+  return page;
 }

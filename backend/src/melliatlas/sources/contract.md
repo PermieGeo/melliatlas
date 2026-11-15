@@ -28,3 +28,35 @@ to synthetic evidence. Provider-specific behavior and limitations are documented
 in the module docstrings of `providers/synthetic/api.py` and
 `providers/saturn/api.py`. No network or PostGIS source ingestion is enabled by
 this refactoring.
+
+## Opt-in public treatment-notice reads (experimental)
+
+`TreatmentNoticeReader.read_page(country, region_code, page_number)` is a small,
+source-neutral on-demand port. `TreatmentNoticePage` retains the UTC capture time,
+source, country, upstream region code, pagination and every recognized notice.
+`SourceReadError` communicates unreadable or malformed upstream data; it must not
+be interpreted as an empty notice collection. A notice distinguishes `LIVE`
+with `synthetic=False` from `FIXTURE` with `synthetic=True`.
+
+The single known Saturn adapter is RU-only, disabled by default, and never
+part of synthetic scenario or planner composition. The request is bounded to
+one page, is user-initiated and preserves unknown location/time evidence. A
+publisher's public-facing webpage does not guarantee an approved automated
+interface or permission to reuse its data. Full-source coverage and drift
+analysis remain unimplemented.
+
+## Opt-in hourly weather forecast (experimental)
+
+`WeatherForecastReader.forecast(latitude, longitude)` is a provider-neutral,
+read-only port for an explicitly selected WGS84 point. The return value retains
+the provider, retrieval timestamp, original coordinates, provider grid point,
+24 consecutive UTC forecast hours, nullable physical variables and uncertainty.
+Missing hourly values stay `None`, never zero. `SourceReadError` means unknown
+weather availability, not calm wind or no pesticide exposure.
+
+The Open-Meteo implementation decodes only one 24-hour forecast with 10-m wind
+speed/direction, gusts and precipitation. Its network transport belongs to the
+FastAPI composition boundary and is disabled unless explicitly configured.
+No advection, spray drift, safety rating, automatic refresh or cached forecasts
+are provided. This source does not require a synthetic scenario and is usable
+independently of the country-specific Saturn notice reader.

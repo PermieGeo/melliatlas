@@ -20,6 +20,19 @@ def test_real_source_respects_module_boundaries() -> None:
     assert find_violations(SOURCE_ROOT) == []
 
 
+def test_only_pinned_live_transports_may_import_network_client(tmp_path: Path) -> None:
+    transport = tmp_path / "melliatlas/api/saturn_http.py"
+    transport.parent.mkdir(parents=True)
+    transport.write_text("from urllib.request import Request\n", encoding="utf-8")
+    weather_transport = tmp_path / "melliatlas/api/weather_http.py"
+    weather_transport.write_text("from urllib.request import Request\n", encoding="utf-8")
+    assert find_violations(tmp_path) == []
+    (transport.parent / "not_transport.py").write_text(
+        "from urllib.request import Request\n", encoding="utf-8"
+    )
+    assert any("network client" in issue for issue in find_violations(tmp_path))
+
+
 def test_dependency_matrix_matches_current_implementation_plan() -> None:
     # This independently locked policy must change only with an approved dependency review.
     assert ALLOWED_DEPENDENCIES == {

@@ -63,3 +63,25 @@ returns no executable entries and the workspace shows its unavailable state.
 ## W01 reference navigation (partial R02)
 
 The reference region/district navigation is independent of synthetic scenario selection. It uses the existing territory catalog and WGS84 geometry API. Once a validated reference dataset is explicitly loaded on the backend, selecting a region displays its published geometry and only supported district options; selecting a district displays its own boundary. HTTP `409` means district depth is unsupported; `404` means geometry is missing; `503` means the catalog is unavailable. Older country/territory requests are cancelled and cannot draw a stale boundary. The map displays the reference ID and never invents boundaries when no references are installed. This does not establish full RU/BY inventory approval or W02 acceptance.
+
+## Experimental public Saturn preview (RU only)
+
+When the backend explicitly sets `MELLIATLAS_SATURN_LIVE_ENABLED=true`, the
+client discovers the public Saturn source for RU and offers a manual one-page
+read by the upstream numeric subject code. The same UI does not expose Saturn
+for BY or other countries. Returned unverified notices and available source
+polygons appear independently of the offline synthetic investigation. Empty or
+failed requests prove neither absence of spraying nor complete source coverage;
+there is no current-date filtering or automatic crawling. Provider compatibility
+and reuse terms require independent validation before public deployment.
+
+## Live on-demand weather preview
+
+With `MELLIATLAS_WEATHER_LIVE_ENABLED=true` on the backend, select any map point
+and click **Read 24-hour forecast**. Weather displays forecast 10-m wind,
+reported direction, gusts and precipitation separately from Saturn notices and
+fictional investigation results. This forwards the selected point to
+Open-Meteo via the server; no automatic polling, browser persistence or drift
+safety judgment occurs. A disabled/unreachable source is not assumed to have
+zero wind. Displayed data are attributed to Open-Meteo (CC BY 4.0); the free
+endpoint is licensed for non-commercial use only.

@@ -32,13 +32,21 @@ DATABASE_IMPORTS = frozenset(
     {"sqlalchemy", "psycopg", "psycopg2", "psycopg_pool", "asyncpg", "sqlite3", "geoalchemy2"}
 )
 FRAMEWORK_IMPORTS = frozenset({"fastapi", "starlette", "pydantic"})
+NETWORK_TRANSPORT_MODULES = frozenset({"melliatlas.api.saturn_http", "melliatlas.api.weather_http"})
+
 NETWORK_IMPORTS = frozenset(
     {"httpx", "requests", "aiohttp", "urllib3", "urllib.request", "http.client", "socket"}
 )
 
 # The application composition root is the sole cross-capability entry point
 # allowed to construct a concrete provider. Domain and route modules still use APIs.
-COMPOSITION_ROOT_PROVIDER_IMPORTS = frozenset({"melliatlas.sources.providers.synthetic.api"})
+COMPOSITION_ROOT_PROVIDER_IMPORTS = frozenset(
+    {
+        "melliatlas.sources.providers.synthetic.api",
+        "melliatlas.sources.providers.saturn.api",
+        "melliatlas.sources.providers.open_meteo.api",
+    }
+)
 
 
 def _python_module(source_root: Path, path: Path) -> tuple[str, tuple[str, ...]]:
@@ -125,7 +133,7 @@ def find_violations(source_root: Path) -> list[str]:
                 violations.append(f"{path}:{line}: {owner} imports database {imported}")
             elif external == "framework" and owner != "api":
                 violations.append(f"{path}:{line}: {owner} imports framework {imported}")
-            elif external == "network":
+            elif external == "network" and source_module not in NETWORK_TRANSPORT_MODULES:
                 violations.append(f"{path}:{line}: {owner} imports network client {imported}")
 
             imported_parts = imported.split(".")

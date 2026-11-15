@@ -24,8 +24,8 @@ class TreatmentNotice:
     source_id: str
     source_uri: str | None
     parser_version: Literal["saturn-planapplybees-legacy-v1"]
-    source_mode: Literal["FIXTURE"]
-    synthetic: Literal[True]
+    source_mode: Literal["FIXTURE", "LIVE"]
+    synthetic: bool
     captured_at: datetime
     published_at: datetime | None
     scheduled_start: datetime | None

@@ -67,3 +67,48 @@ rejecting unknown values during startup. External service injection remains expl
 and custom investigation services do not implicitly expose fixture discovery.
 This composition is deliberately small and does not add a service locator, global
 registry, runtime dependency or provider auto-discovery.
+
+## Experimental public Saturn read, separate from investigations (RU only)
+
+`GET /api/v1/sources?country=RU|BY` returns a source capability list from the
+explicit server configuration: with `MELLIATLAS_SATURN_LIVE_ENABLED=true`, `RU`
+returns one `saturn` entry (`LIVE`, `EXPERIMENTAL`), while `BY` returns `[]`.
+The disabled/default mode advertises no live providers. This is not a general
+source catalog or a guarantee of upstream availability.
+
+`POST /api/v1/sources/saturn/treatments` accepts `country=RU`, a strictly
+validated positive provider-specific `region_code` and bounded zero-based
+`page_number`; it performs **one** explicit remote page read through a fixed
+HTTPS endpoint. The response returns `source_id`, capture time, unknown records,
+optional pagination, `coverage_complete=false`, and typed source-reported field
+notices with optional WGS84 geometry and treatment/product claims. No result is
+appended to synthetic investigations, persisted or treated as a safety outcome.
+
+Cross-country requests return `404/SOURCE_NOT_AVAILABLE` before any I/O; an
+disabled source returns `503/SOURCE_NOT_AVAILABLE`, an inaccessible or malformed
+upstream read returns `502/SOURCE_READ_FAILED`, and invalid inputs receive the
+standard `422/INVALID_REQUEST`. No synthetic fallback, retries, crawler,
+redirects, hidden polling or browser-side cross-origin requests are permitted.
+Official public API compatibility and reuse permission have not been verified;
+this feature requires explicit local opt-in and independent acceptance.
+
+## Experimental weather forecast HTTP API
+
+`AppSettings.weather_live_enabled` defaults to `False`. A separately injected
+`WeatherForecastReader` is only used when enabled. Source capability discovery
+adds `open-meteo` / `WEATHER_FORECAST` for currently supported countries without
+changing the independent RU-only restriction for `saturn`.
+
+`POST /api/v1/sources/weather/forecast` accepts only WGS84 `latitude` and
+`longitude` in the JSON body, not query parameters. It returns exactly 24 UTC
+hourly model forecasts with provider ID, retrieval time, provider grid position,
+units documented as km/h, degrees and mm, and explicit uncertainty. Bad input
+returns `422/INVALID_REQUEST`; disabled reading returns
+`503/SOURCE_NOT_AVAILABLE`; missing, corrupt or unreachable upstream data
+returns sanitized `502/SOURCE_READ_FAILED`. No public route performs an automatic
+request or makes a treatment safety decision.
+
+The coordinates are passed to Open-Meteo only after an explicit user action.
+The free endpoint is non-commercial with CC BY 4.0 attribution; commercial use
+requires separate terms. Upstream live responses and rights must be rechecked
+before acceptance or public release.
