@@ -17,15 +17,20 @@ from melliatlas.agent.api import (
     ReplanDecisionKind,
     ReplanOutcome,
     ReplanResult,
+    TreatmentPlanner,
 )
 from melliatlas.planning.api import (
     EcologyStatus,
     EvidenceSummary,
+    ReportedTreatmentProduct,
     SeasonPlan,
     SeasonStop,
     SiteAssessment,
     SyntheticScenario,
     TimeWindow,
+    TreatmentProximity,
+    TreatmentReview,
+    TreatmentScreening,
     build_season_plan,
 )
 from melliatlas.territories.api import CountryCode
@@ -70,6 +75,7 @@ class InvestigationSnapshot:
     decision_trace: tuple[str, ...] = ()
     diagnostics: tuple[str, ...] = ()
     replanning: ReplanResult | None = None
+    treatment_review: TreatmentReview | None = None
 
 
 class InvalidInvestigationRequest(ValueError):
@@ -93,6 +99,7 @@ class InvestigationStorageError(RuntimeError):
 
 
 EcologyPlannerFactory = Callable[[SyntheticScenario], DeterministicPlanner]
+TreatmentPlannerFactory = Callable[[SyntheticScenario], TreatmentPlanner]
 
 
 class CompletedInvestigationStore(Protocol):
@@ -115,6 +122,8 @@ def serialize_completed_snapshot(snapshot: InvestigationSnapshot) -> str:
     encoded = asdict(snapshot)
     if snapshot.replanning is None:
         del encoded["replanning"]
+    if snapshot.treatment_review is None:
+        del encoded["treatment_review"]
     return json.dumps(encoded, default=encode_temporal, sort_keys=True, allow_nan=False)
 
 
@@ -260,6 +269,104 @@ def _stored_replanning(value: object) -> ReplanResult:
     return result
 
 
+def _stored_optional_timestamp(value: object, field: str) -> datetime | None:
+    if value is None:
+        return None
+    timestamp = datetime.fromisoformat(_stored_text(value, field))
+    if timestamp.tzinfo is None or timestamp.utcoffset() is None:
+        raise ValueError(f"Stored {field} requires a timezone offset")
+    return timestamp
+
+
+def _stored_reported_product(value: object) -> ReportedTreatmentProduct:
+    item = _stored_object(value, "reported treatment product")
+    hazard = item["bee_hazard_class"]
+    if hazard is not None and (type(hazard) is not int or hazard not in (1, 2, 3)):
+        raise ValueError("Stored bee hazard class must be a reported value from 1 to 3")
+    reported_hazard: Literal[1, 2, 3] | None = None
+    if hazard == 1:
+        reported_hazard = 1
+    elif hazard == 2:
+        reported_hazard = 2
+    elif hazard == 3:
+        reported_hazard = 3
+    name = item["name"]
+    crop = item["crop"]
+    return ReportedTreatmentProduct(
+        name=_stored_text(name, "product name") if name is not None else None,
+        crop=_stored_text(crop, "crop") if crop is not None else None,
+        bee_hazard_class=reported_hazard,
+    )
+
+
+def _stored_treatment_screening(value: object) -> TreatmentScreening:
+    item = _stored_object(value, "treatment screening")
+    raw_distance = item["approximate_distance_km"]
+    distance = (
+        _stored_number(raw_distance, "approximate_distance_km")
+        if raw_distance is not None
+        else None
+    )
+    if distance is not None and distance < 0:
+        raise ValueError("Treatment screening distance must not be negative")
+    captured_at = _stored_optional_timestamp(item["captured_at"], "captured_at")
+    scheduled_start = _stored_optional_timestamp(item["scheduled_start"], "scheduled_start")
+    scheduled_end = _stored_optional_timestamp(item["scheduled_end"], "scheduled_end")
+    if (
+        scheduled_start is not None
+        and scheduled_end is not None
+        and scheduled_end < scheduled_start
+    ):
+        raise ValueError("Stored treatment interval is reversed")
+    source_uri = item["source_uri"]
+    return TreatmentScreening(
+        site_id=_stored_text(item["site_id"], "screening site_id"),
+        source_record_id=_stored_text(item["source_record_id"], "source_record_id"),
+        source_id=_stored_text(item["source_id"], "screening source_id"),
+        proximity=TreatmentProximity(_stored_text(item["proximity"], "proximity")),
+        approximate_distance_km=distance,
+        warnings=_stored_texts(item["warnings"], "screening warnings"),
+        captured_at=captured_at,
+        scheduled_start=scheduled_start,
+        scheduled_end=scheduled_end,
+        source_uri=_stored_text(source_uri, "source_uri") if source_uri is not None else None,
+        products=tuple(
+            _stored_reported_product(product)
+            for product in _stored_list(item["products"], "reported products")
+        ),
+    )
+
+
+def _stored_treatment_review(value: object) -> TreatmentReview:
+    item = _stored_object(value, "treatment review")
+    screenings = tuple(
+        _stored_treatment_screening(entry)
+        for entry in _stored_list(item["screenings"], "screenings")
+    )
+    avoided_ids = _stored_texts(item["avoided_site_ids"], "avoided_site_ids")
+    if not screenings:
+        raise ValueError("Stored treatment review must retain source observations")
+    seen: set[tuple[str, str, str]] = set()
+    should_avoid: set[str] = set()
+    for screening in screenings:
+        identity = (screening.site_id, screening.source_id, screening.source_record_id)
+        if not all(identity) or identity in seen:
+            raise ValueError("Stored treatment source identities must be nonempty and unique")
+        seen.add(identity)
+        if screening.proximity in (
+            TreatmentProximity.FIELD_INTERSECTION,
+            TreatmentProximity.NEAR_REPORTED_FIELD,
+        ):
+            should_avoid.add(screening.site_id)
+    if avoided_ids != tuple(sorted(should_avoid)):
+        raise ValueError("Stored avoided candidates disagree with treatment findings")
+    return TreatmentReview(
+        screenings=screenings,
+        avoided_site_ids=avoided_ids,
+        warnings=_stored_texts(item["warnings"], "treatment warnings"),
+    )
+
+
 def _stored_evidence(value: object) -> EvidenceSummary:
     item = _stored_object(value, "evidence")
     mode = item["source_mode"]
@@ -297,6 +404,10 @@ def deserialize_completed_snapshot(payload: str) -> InvestigationSnapshot:
     plan = _stored_plan(raw_plan) if raw_plan is not None else None
     raw_replanning = data.get("replanning")
     replanning = _stored_replanning(raw_replanning) if raw_replanning is not None else None
+    raw_treatment = data.get("treatment_review")
+    treatment_review = (
+        _stored_treatment_review(raw_treatment) if raw_treatment is not None else None
+    )
 
     raw_outcome = data["outcome"]
     snapshot = InvestigationSnapshot(
@@ -325,6 +436,7 @@ def deserialize_completed_snapshot(payload: str) -> InvestigationSnapshot:
         decision_trace=_stored_texts(data["decision_trace"], "decision_trace"),
         diagnostics=_stored_texts(data["diagnostics"], "diagnostics"),
         replanning=replanning,
+        treatment_review=treatment_review,
     )
     if snapshot.status is not InvestigationStatus.COMPLETED or snapshot.outcome is None:
         raise ValueError("Stored investigation is not a completed snapshot")
@@ -338,6 +450,22 @@ def deserialize_completed_snapshot(payload: str) -> InvestigationSnapshot:
         }[snapshot.replanning.outcome]
         if snapshot.outcome is not expected_outcome:
             raise ValueError("Stored replanning outcome disagrees with investigation outcome")
+    if snapshot.treatment_review is not None:
+        if snapshot.replanning is not None:
+            raise ValueError("Stored investigation cannot combine independent demo planning paths")
+        source_records = {(item.source_id, item.id) for item in snapshot.evidence}
+        if any(
+            (item.source_id, item.source_record_id) not in source_records
+            for item in snapshot.treatment_review.screenings
+        ):
+            raise ValueError("Stored treatment observations lack matching source evidence")
+        if snapshot.plan is not None and any(
+            stop.site_id in snapshot.treatment_review.avoided_site_ids
+            for stop in snapshot.plan.stops
+        ):
+            raise ValueError("Stored treatment plan uses a candidate withheld by source evidence")
+        if (snapshot.outcome is InvestigationOutcomeKind.PLAN_FOUND) != (snapshot.plan is not None):
+            raise ValueError("Stored treatment plan and outcome disagree")
     if snapshot.created_at.tzinfo is None or snapshot.updated_at.tzinfo is None:
         raise ValueError("Stored investigation timestamps must contain timezone offsets")
     return snapshot
@@ -352,10 +480,12 @@ class InMemoryInvestigationService:
         completed_store: CompletedInvestigationStore | None = None,
         *,
         replan_factory: EcologyPlannerFactory | None = None,
+        treatment_planner_factory: TreatmentPlannerFactory | None = None,
     ) -> None:
         self._provider = provider
         self._completed_store = completed_store
         self._replan_factory = replan_factory
+        self._treatment_planner_factory = treatment_planner_factory
         self._records: dict[UUID, InvestigationSnapshot] = {}
         self._pending: dict[UUID, SyntheticScenario] = {}
         self._lock = Lock()
@@ -413,6 +543,9 @@ class InMemoryInvestigationService:
             )
         try:
             replanning: ReplanResult | None = None
+            treatment_review: TreatmentReview | None = None
+            if scenario.ecology_zones and scenario.treatment_screening_required:
+                raise RuntimeError("Combined ecological and treatment assessment is not configured")
             if scenario.ecology_zones:
                 if self._replan_factory is None:
                     raise RuntimeError("Fictional ecology evaluator has not been configured")
@@ -432,6 +565,26 @@ class InMemoryInvestigationService:
                     else ("Fictional ecology evidence cannot support a qualified plan",)
                 )
                 limitations = current.limitations + replanning.warnings
+            elif scenario.treatment_screening_required:
+                if self._treatment_planner_factory is None:
+                    raise RuntimeError("Fictional treatment screening has not been configured")
+                treatment_result = self._treatment_planner_factory(scenario).plan(
+                    scenario.candidates, current.request.season
+                )
+                plan = treatment_result.plan
+                treatment_review = treatment_result.review
+                outcome = (
+                    InvestigationOutcomeKind.PLAN_FOUND
+                    if plan is not None
+                    else InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE
+                )
+                trace = treatment_result.trace
+                diagnostics = (
+                    ()
+                    if plan is not None
+                    else ("Fictional treatment screening left fewer than two candidate stops",)
+                )
+                limitations = current.limitations + treatment_review.warnings
             else:
                 plan = build_season_plan(scenario.candidates, current.request.season)
                 outcome = (
@@ -464,6 +617,7 @@ class InMemoryInvestigationService:
                 diagnostics=diagnostics,
                 limitations=limitations,
                 replanning=replanning,
+                treatment_review=treatment_review,
             )
         except Exception:
             _LOGGER.exception("Synthetic investigation processing failed")
