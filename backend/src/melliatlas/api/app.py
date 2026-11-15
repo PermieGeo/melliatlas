@@ -119,5 +119,9 @@ def create_app(
             ),
         )
     )
-    app.include_router(create_investigation_router(job_service))
+    app.include_router(
+        create_investigation_router(
+            job_service, fixture_provider.list_scenarios if investigations is None else None
+        )
+    )
     return app

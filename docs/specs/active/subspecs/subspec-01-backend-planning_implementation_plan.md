@@ -8,7 +8,7 @@
 - **Normative sub-spec:** [MVP-01 Backend requirements](subspec-01-backend-planning.md)
 - **Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)
 
-The [active backend sub-spec](subspec-01-backend-planning.md) owns normative behavior and acceptance; this plan records **current implementation choices, public-boundary design, task sequencing, and test oracles**. The [specification guidance](../../AGENTS.md) governs contract-first design and approval. Section 4.1 documents the current V04-05 treatment integration boundary; implemented code and contract tests, not this plan, remain authoritative.
+The [active backend sub-spec](subspec-01-backend-planning.md) owns normative behavior and acceptance; this plan records **current implementation choices, public-boundary design, task sequencing, and test oracles**. The [specification guidance](../../AGENTS.md) governs contract-first design and approval. Sections 4.1–4.2 document the V04-05 and V04-06 integration boundaries; implemented code and contract tests, not this plan, remain authoritative.
 
 ## 1. Current implementation evidence
 
@@ -52,14 +52,14 @@ The remaining **technical choices** should be reviewed at the task that first ne
 
 - **Task ID:** `MVP01-BE-V04`
 - **Status:** Implemented; acceptance pending
-- **Current increment:** `V04-05` — offline treatment evidence in investigations and provisional alternative-site selection. V04-04 normalized historical-shaped fixture notices; V04-03 implemented independent ecology replanning. The V04 stage remains partial.
-- **Goal:** Make planned field-treatment evidence influence actual synthetic investigation results rather than leaving it in an isolated screening utility. Preserve source claims, synthetic boundaries, failure handling and previous response contracts.
+- **Current increment:** `V04-06` — joint offline ecology and treatment investigation. V04-05 added the independent treatment-only path; V04-03 implemented independent ecology replanning. The V04 stage remains partial.
+- **Goal:** Require both existing fictional checks to contribute to one provisional result, preserving their independent evidence and original V01/V04-03/V04-05 response contracts.
 - **Requirement IDs:** `MVP01-BE-R05`, `MVP01-BE-R08`, `MVP01-BE-R10`, `MVP01-BE-R11`, `MVP01-BE-R12`, `MVP01-BE-R13`, `MVP01-BE-R14`, `MVP01-BE-R15`, `MVP01-BE-R16`, `MVP01-BE-R18`
-- **Test inventory IDs:** `BE-T065`, `BE-T066`, `BE-T067`, `BE-T068`, `BE-T069`
-- **Scope:** Explicit Russia-only fictional treatment scenario, typed provider-neutral screening/policy interface, DI into in-process jobs, additive HTTP result and legacy-compatible completed snapshot codec, with contract and regression tests.
+- **Test inventory IDs:** `BE-T070`, `BE-T071`, `BE-T072`, `BE-T073`; prior `BE-T065`–`BE-T069` remain regression coverage.
+- **Scope:** Explicit combined RU fictional scenario, composition of existing bounded agent planners, joint provisional selection, preserved separate observations in HTTP and completed JSON, and fail-closed contract tests.
 - **Existing interfaces:** `backend/src/melliatlas/sources/api.py`, `backend/src/melliatlas/sources/notices.py`, `backend/src/melliatlas/analyzers/api.py`, `backend/src/melliatlas/planning/api.py`, `backend/src/melliatlas/jobs/api.py`, `backend/src/melliatlas/api/app.py`, `backend/src/melliatlas/api/routes_investigations.py`.
-- **Not in scope:** Live Saturn or publication ingestion, new HTTP endpoints, chemical safety ratings, validated atmospheric drift, source coverage guarantees, combined ecology/treatment DAG, runtime dependencies, migrations or genuine PostGIS acceptance.
-- **Exit evidence:** Offline HTTP and persistence codec tests, source/plan trace assertions, failure and zero-network regression, and unchanged V01/V04-03 results. Full backend and MVP acceptance remain pending.
+- **Not in scope:** Live Saturn or publication ingestion, new HTTP endpoints, chemical safety ratings, validated atmospheric drift, source coverage guarantees, generic DAG, runtime dependencies, migrations or genuine PostGIS acceptance.
+- **Exit evidence:** Joint HTTP and JSON codec tests, independent source/plan evidence, fail-closed error cases, zero-network regression and unchanged existing scenario behavior. Full backend and MVP acceptance remain pending.
 - **Approval gates:** Live transport requires up-to-date source/permission/license evidence. Wind and toxicological assessment require independently validated inputs and rules. No approval is inferred from fixture or historical parser behavior.
 
 ### 4.1 Public contracts and integration design
@@ -96,6 +96,15 @@ TDD/contract-first evidence in `backend/src/melliatlas/api/routes_investigations
 
 **Next:** add the smallest typed source/analyzer registration and execution mechanism needed to compose treatment plus ecology without silently dropping either result. **After that:** complete the V05 backend/Web HTTP contract handoff. Live transport and weather models remain separate externally gated tasks.
 
+
+### 4.2 V04-06 public contracts and integration design
+
+- **Source boundary:** `sources.api.SYNTHETIC_COMBINED_SCENARIO_ID` selects a RU-only fixture derived from existing ecology and treatment evidence; `SyntheticFixtureProvider.load_treatment_notices` returns only synthetic claims. No new provider I/O.
+- **Agent boundary:** `agent.api.CombinedPlanner(ecology: DeterministicPlanner, treatment: TreatmentPlanner).plan(candidates, season) -> CombinedPlanningResult`. The result exposes a final `ReplanResult` plus independently attributed `TreatmentReview`; no `analyzers` or concrete `sources` imports in `agent`. Add `ReplanDecisionKind.TREATMENT_CHECK` for source record-linked typed trace. Both per-inspector budgets and validation contracts apply.
+- **Jobs/API boundary:** `InMemoryInvestigationService.process` composes both injected factories only for a fixture requiring both checks. Existing `InvestigationSnapshot.replanning` and `treatment_review` are both populated, and the top-level `plan` equals the final combined `replanning.plan`. `api.routes_investigations` keeps the existing nullable DTO fields and URLs; no new HTTP surface.
+- **Storage:** Preserve historical optional fields, validate exact joint coverage for supported plans, conservative no-plan coverage, treatment source-evidence and trace links, no unqualified/avoided final stops, and consistency between final outcome and plan. Missing collaborator or incomplete evidence is `FAILED`; no two jointly qualified stops is a completed no-alternative outcome.
+- **Contract-first tests:** `backend/tests/contract/test_combined_investigations_http.py` must check a jointly preferred alternative, separate evidence/typed trace, zero provider network, JSON round-trip and forged content rejection, missing factories, incomplete observations and insufficient joint alternatives. Existing V01, ecology-only and treatment-only tests must remain unchanged.
+
 ## 5. Upcoming vertical slices
 
 The V04-04 offline treatment-screening task is in section 4; the V03 runtime loader is already implemented but real geographic coverage remains incomplete. V02 real PostGIS verification remains an **independent pending acceptance gate**; completion of startup wiring does not discharge `BE-T040`–`BE-T044`. These later slices identify **implementation work**, not new requirements or approved designs. Their normative scope and external gates remain in [sub-spec sections 4–7](subspec-01-backend-planning.md#4-requirement-to-umbrella-mapping). Select and review public interfaces only when each slice becomes current.
@@ -108,7 +117,7 @@ The V04-04 offline treatment-screening task is in section 4; the V03 runtime loa
 
 ## 6. Acceptance test inventory
 
-The 69 `BE-Txxx` entries are a **planned inventory**, not claims that each test has run. `U` = unit; `C` = public contract; `I` = real integration; `A` = architecture; `N` = negative; `B` = boundary. Each bounded task selects relevant IDs with independent oracles and records actual execution evidence.
+The 73 `BE-Txxx` entries are a **planned inventory**, not claims that each test has run. `U` = unit; `C` = public contract; `I` = real integration; `A` = architecture; `N` = negative; `B` = boundary. Each bounded task selects relevant IDs with independent oracles and records actual execution evidence.
 
 | Test ID | Category | Module/API | Input / observable assertion | Requirement |
 | --- | --- | --- | --- | --- |
@@ -181,6 +190,10 @@ The 69 `BE-Txxx` entries are a **planned inventory**, not claims that each test 
 | `BE-T067` | C/N | InvestigationService | Missing, mismatched or combined unimplemented screeners terminate without a fabricated plan | R12/R15 |
 | `BE-T068` | C/N | Completed investigation codec | Original result and treatment claims survive storage; invalid timestamps, hazard codes or forged source links fail | R11/R14/R15 |
 | `BE-T069` | A/C | Source and DI boundaries | Russia-only fixture, no external requests or forbidden peer imports; previous scenarios unchanged | R05/R16/R18 |
+| `BE-T070` | C | Joint investigation HTTP | One result retains ecology and treatment observations, source-linked trace and joint two-stop alternative | R08/R10/R13/R18 |
+| `BE-T071` | C/N | Combined saved snapshot | Joint results round-trip; forged source IDs, avoided or unqualified stops fail validation | R11/R14/R15 |
+| `BE-T072` | C/N | Joint evaluator configuration | Missing evaluator or incomplete treatment observations fail closed | R12/R15/R16 |
+| `BE-T073` | U/B | Joint planning | Fewer than two jointly admissible stops yields no plan; check limits do not yield unchecked recommendations | R08/R10/R12/R15 |
 
 **Oracles:** independently captured approved reference inventories for `T001`–`T004/T058`; fixed expected geometry fixtures for `T010/T044`; manually reviewed synthetic scenarios for `T021`–`T027/T035`–`T039`; real test PostGIS instance for `T040`–`T044`; externally visible HTTP payloads for `T048`–`T053`; import graph results for `T054`–`T057`. A test against a mock repository is not evidence for database correctness.
 

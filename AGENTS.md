@@ -13,6 +13,13 @@
 - Avoid global mutable registries, service locators, hidden side effects, speculative wrappers, and generic `common` modules. Extract shared code only when concrete consumers justify it.
 - Prefer clear names, readable control flow, and explicit failure states. Some local duplication is acceptable when premature sharing would obscure ownership.
 
+## Historical implementation reference
+- Treat any earlier MelliAtlas implementation or v01 snapshot as research material, not the active baseline, a feature checklist, or an architectural template. Current specifications, public contracts, code, and tests govern new work.
+- Study historical source formats, observed edge cases, provenance, deduplication, request limits, and test fixtures when relevant. Revalidate provider behavior, access permissions, and assumptions; legacy integration success does not establish present-day correctness or authorization.
+- Do not mechanically port legacy modules, classes, HTTP endpoints, persistence structures, orchestration, admin/operator workflows, or UI components. Reassess the user need and implement the smallest cohesive design within current module boundaries; reuse algorithms only when their behavior is justified and tested.
+- Design from beekeeper decisions, especially advance warning of planned pesticide applications, location and timing, chemical claims, weather uncertainty, and alternative apiary placements. Keep provider-specific acquisition separate from shared evidence models and analysis. Do not rebuild old infrastructure simply because it exists.
+- Build the single beekeeper-facing Web experience around the current map, timeline, evidence, warnings, and alternatives, rather than copying legacy screens. Do not reintroduce a separate admin application without explicitly approved requirements and suitable authorization. Record relevant legacy-derived behavior and deliberate omissions in task-level plans or tests, not as speculative repository architecture.
+
 ## Type safety and behavior
 - Use strict typing and boundary validation; never introduce `Any`, casts, suppressions, or exceptions solely to bypass a check.
 - Model meaningful public states and domain categories with enums when this improves correctness; simple local values do not require enums.

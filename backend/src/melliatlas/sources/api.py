@@ -1,7 +1,8 @@
 """Offline and explicitly fictional source fixture for the first investigation slice."""
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import date
+from typing import Literal
 
 from melliatlas.planning.api import (
     CandidateSite,
@@ -27,11 +28,59 @@ from melliatlas.territories.api import CountryCode
 SYNTHETIC_SCENARIO_ID = "synthetic-ru-2026-v01"
 SYNTHETIC_ECOLOGY_SCENARIO_ID = "synthetic-ru-2026-v04-ecology"
 SYNTHETIC_TREATMENT_SCENARIO_ID = "synthetic-ru-2026-v04-treatment"
+SYNTHETIC_COMBINED_SCENARIO_ID = "synthetic-ru-2026-v04-ecology-treatment"
 _SYNTHETIC_TERRITORY_ID = "ru:region:smolensk"
+
+
+@dataclass(frozen=True)
+class ScenarioListing:
+    """Public metadata for an executable fictional scenario, not a geography catalog."""
+
+    id: str
+    name: str
+    country: CountryCode
+    territory_id: str
+    territory_name: str
+    source_mode: Literal["SYNTHETIC"]
+    season_start: date
+    season_end: date
+    is_default: bool
 
 
 class SyntheticFixtureProvider:
     """A fixed offline source; its territory name does not attest to real reference coverage."""
+
+    def list_scenarios(self, country: CountryCode) -> tuple[ScenarioListing, ...]:
+        """Describe scenarios actually supported by this provider for a country."""
+        definitions = (
+            (SYNTHETIC_COMBINED_SCENARIO_ID, "Ecology and reported treatments"),
+            (SYNTHETIC_ECOLOGY_SCENARIO_ID, "Ecology screening"),
+            (SYNTHETIC_TREATMENT_SCENARIO_ID, "Reported treatment screening"),
+            (SYNTHETIC_SCENARIO_ID, "Forage windows"),
+        )
+        available: list[ScenarioListing] = []
+        for identifier, name in definitions:
+            scenario = self.load(
+                country=country,
+                territory_id=_SYNTHETIC_TERRITORY_ID,
+                scenario_id=identifier,
+            )
+            if scenario is None:
+                continue
+            available.append(
+                ScenarioListing(
+                    id=scenario.id,
+                    name=f"{name} (fictional)",
+                    country=scenario.country,
+                    territory_id=scenario.territory_id,
+                    territory_name="Smolensk region (fictional)",
+                    source_mode="SYNTHETIC",
+                    season_start=scenario.supported_season.start,
+                    season_end=scenario.supported_season.end,
+                    is_default=identifier == SYNTHETIC_COMBINED_SCENARIO_ID,
+                )
+            )
+        return tuple(available)
 
     def load(
         self, *, country: CountryCode, territory_id: str, scenario_id: str
@@ -42,6 +91,7 @@ class SyntheticFixtureProvider:
             SYNTHETIC_SCENARIO_ID,
             SYNTHETIC_ECOLOGY_SCENARIO_ID,
             SYNTHETIC_TREATMENT_SCENARIO_ID,
+            SYNTHETIC_COMBINED_SCENARIO_ID,
         ):
             return None
 
@@ -93,6 +143,34 @@ class SyntheticFixtureProvider:
 
         if scenario_id == SYNTHETIC_SCENARIO_ID:
             return original
+
+        if scenario_id == SYNTHETIC_COMBINED_SCENARIO_ID:
+            ecology = self.load(
+                country=country,
+                territory_id=territory_id,
+                scenario_id=SYNTHETIC_ECOLOGY_SCENARIO_ID,
+            )
+            treatments = self.load(
+                country=country,
+                territory_id=territory_id,
+                scenario_id=SYNTHETIC_TREATMENT_SCENARIO_ID,
+            )
+            if ecology is None or treatments is None:
+                raise ValueError("Combined fictional reference scenarios are unavailable")
+            ecology_ids = {item.id for item in ecology.candidates}
+            evidence_ids = {item.id for item in ecology.evidence}
+            return replace(
+                ecology,
+                id=SYNTHETIC_COMBINED_SCENARIO_ID,
+                reference_version="SYNTHETIC-V04-JOINT-NOT-REAL-APPLICATIONS",
+                candidates=ecology.candidates
+                + tuple(item for item in treatments.candidates if item.id not in ecology_ids),
+                evidence=ecology.evidence
+                + tuple(item for item in treatments.evidence if item.id not in evidence_ids),
+                treatment_screening_required=True,
+                limitations=ecology.limitations
+                + tuple(item for item in treatments.limitations if item not in ecology.limitations),
+            )
 
         if scenario_id == SYNTHETIC_TREATMENT_SCENARIO_ID:
             notices = treatment_fixture_notices()
@@ -229,7 +307,10 @@ class SyntheticFixtureProvider:
 
     def load_treatment_notices(self, scenario_id: str) -> tuple[TreatmentNotice, ...] | None:
         """Return fictional treatment claims only for the explicit treatment scenario."""
-        if scenario_id != SYNTHETIC_TREATMENT_SCENARIO_ID:
+        if scenario_id not in (
+            SYNTHETIC_TREATMENT_SCENARIO_ID,
+            SYNTHETIC_COMBINED_SCENARIO_ID,
+        ):
             return None
         return treatment_fixture_notices()
 
@@ -239,6 +320,7 @@ __all__ = [
     "SYNTHETIC_SCENARIO_ID",
     "SYNTHETIC_ECOLOGY_SCENARIO_ID",
     "SYNTHETIC_TREATMENT_SCENARIO_ID",
+    "SYNTHETIC_COMBINED_SCENARIO_ID",
     "SyntheticFixtureProvider",
     "TreatmentProduct",
     "TreatmentNotice",
