@@ -50,6 +50,11 @@ def test_dependency_matrix_matches_current_implementation_plan() -> None:
     ("owner", "statement", "reason"),
     [
         ("agent", "from melliatlas.engine.executor import run", "private module"),
+        (
+            "analyzers",
+            "from melliatlas.sources.providers.saturn.legacy_treatment import parse_saturn_treatment_page",
+            "private module",
+        ),
         ("agent", "from melliatlas.engine import executor", "private module"),
         ("agent", "from ..engine.executor import run", "private module"),
         ("agent", "import melliatlas.engine.executor", "private module"),

@@ -8,7 +8,7 @@
 - **Normative sub-spec:** [MVP-01 Backend requirements](subspec-01-backend-planning.md)
 - **Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)
 
-The [active backend sub-spec](subspec-01-backend-planning.md) owns normative behavior and acceptance; this plan records **current implementation choices, public-boundary design, task sequencing, and test oracles**. The [specification guidance](../../AGENTS.md) governs contract-first design and approval. Section 4.1 designs the V04-03 integration boundary; implemented code and contract tests, not this plan, remain authoritative.
+The [active backend sub-spec](subspec-01-backend-planning.md) owns normative behavior and acceptance; this plan records **current implementation choices, public-boundary design, task sequencing, and test oracles**. The [specification guidance](../../AGENTS.md) governs contract-first design and approval. Section 4.1 documents the current V04-04 treatment boundary; implemented code and contract tests, not this plan, remain authoritative.
 
 ## 1. Current implementation evidence
 
@@ -52,74 +52,63 @@ The remaining **technical choices** should be reviewed at the task that first ne
 
 - **Task ID:** `MVP01-BE-V04`
 - **Status:** Implemented; acceptance pending
-- **Current increment:** `V04-03` — opt-in fictional ecology investigations through the existing jobs, HTTP and completed-snapshot contracts. V04-01 pure geometry and V04-02 bounded agent are implemented predecessors.
-- **Goal:** Run a distinct synthetic ecology scenario with a reviewable exclusion-driven alternative, expose typed observations and decisions to clients, and preserve completed results through the existing snapshot serialization boundary.
-- **Requirement IDs:** `MVP01-BE-R06`, `MVP01-BE-R08`, `MVP01-BE-R09`, `MVP01-BE-R10`, `MVP01-BE-R12`, `MVP01-BE-R13`, `MVP01-BE-R14`, `MVP01-BE-R15`, `MVP01-BE-R16`
-- **Test inventory IDs:** `BE-T017`, `BE-T020`, `BE-T023`, `BE-T035`, `BE-T037`, `BE-T039`, `BE-T045`, `BE-T051`, `BE-T052`, `BE-T053`, `BE-T054`
-- **Scope:** A new explicit fictional scenario ID, a composition-injected ecology planner for `jobs`, additive typed replanning output on the investigation read contract, codec roundtrip and old-payload compatibility. The existing V01 scenario is untouched.
-- **Not in scope:** Real restrictions or verified coverage; source registry, general DAG, new HTTP route, durable queued/running jobs, new PostGIS acceptance, Web implementation or acceptance of the full V04 stage.
-- **Existing interfaces:** `backend/src/melliatlas/sources/api.py`, `backend/src/melliatlas/planning/api.py`, `backend/src/melliatlas/agent/api.py`, `backend/src/melliatlas/analyzers/api.py`, `backend/src/melliatlas/jobs/api.py`, `backend/src/melliatlas/api/app.py`, `backend/src/melliatlas/api/routes_investigations.py`.
-- **Implemented files:** Existing public interfaces above, `backend/tests/contract/test_ecology_investigations_http.py`, `backend/tests/unit/test_completed_snapshot_codec.py`; linked owning module contracts and feature cross-reference are updated.
-- **Approval gates:** All ecological polygons and conclusions in this increment are fictional; the resulting plan cannot imply real legality or ecological suitability. External data, new runtime libraries and real database access remain unapproved.
-- **Exit evidence:** One scenario begins with a later-excluded stop, selects a different alternative based on geometry and provenance rather than ID, returns at least two bounded checks and ordered stops, and exposes warnings/typed decisions. No-plan, invalid inputs, inspector failure, existing V01, old stored JSON, and fake-store reopen require separate regressions. Real DB and complete RU/BY evidence remain pending.
+- **Current increment:** `V04-04` — Russia-only Saturn treatment fixture normalization and conservative site/period screening. V04-03 ecology investigations are the implemented predecessor; V04 remains partial.
+- **Goal:** Recover the historically proven shape of planned pesticide notifications as a concrete product capability before adding a general registry or DAG. Preserve unknown source claims and leave a narrow seam for later approved live source transport.
+- **Requirement IDs:** `MVP01-BE-R05`, `MVP01-BE-R14`, `MVP01-BE-R15`, `MVP01-BE-R18`
+- **Test inventory IDs:** `BE-T061`, `BE-T062`, `BE-T063`, `BE-T064`
+- **Scope:** Offline `/planapplybees` fixture page validation, source-specific normalization, independent candidate screening and contract tests. No new HTTP route, DB migration, job result field or live network connection.
+- **Existing interfaces:** `backend/src/melliatlas/sources/api.py`, `backend/src/melliatlas/analyzers/api.py`, `backend/src/melliatlas/planning/api.py`, `backend/src/melliatlas/territories/api.py`, `backend/src/melliatlas/agent/api.py`, `backend/src/melliatlas/api/app.py`, and `backend/src/melliatlas/jobs/api.py`.
+- **Not in scope:** Real Saturn access, web/news crawling, wind forecast ingestion or drift estimation, official hazard classification, accepted application permits, additional runtime dependencies, generic source registry and DAG.
+- **Exit evidence:** Offline adapter and analyzer tests, negative cases, architecture boundary checks and unchanged V01/V04-03 API/codec regression; backend-level and MVP acceptance remain pending.
+- **Approval gates:** A real Saturn transport requires independent current endpoint/request verification, access permission, licensing, and an authorized operator/network policy. No approval is inferred from historic captures. Weather inference requires separately validated source accuracy and domain policy.
 
 ### 4.1 Public contracts and integration design
 
-V04-01 and V04-02 declarations in [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py), [`analyzers/api.py`](../../../../backend/src/melliatlas/analyzers/api.py), and [`agent/api.py`](../../../../backend/src/melliatlas/agent/api.py) are authoritative. This section records the reviewed and implemented **V04-03 boundaries**, with code and contract tests now authoritative; the [normative requirements](subspec-01-backend-planning.md#4-requirement-to-umbrella-mapping) remain in the sub-spec.
+The already-implemented V04-01 through V04-03 boundaries are in their owning `api.py`, `contract.md` and contract tests. V04-04 adds limited public boundaries; their implemented definitions and tests are authoritative. These source and analyzer declarations were reviewed against the historical parser and the active dependency policy before selecting concrete behavior.
 
 #### Public types and signatures
 
-| Owner | Implemented typed boundary | Authoritative declaration |
-| --- | --- | --- |
-| `planning` / `sources` | Additive `SyntheticScenario.ecology_zones` and `SYNTHETIC_ECOLOGY_SCENARIO_ID` | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py), [`sources/api.py`](../../../../backend/src/melliatlas/sources/api.py), [`sources/contract.md`](../../../../backend/src/melliatlas/sources/contract.md) |
-| `jobs` / `agent` | Optional `EcologyPlannerFactory`, bounded decisions, and `InvestigationSnapshot.replanning` | [`jobs/api.py`](../../../../backend/src/melliatlas/jobs/api.py), [`agent/api.py`](../../../../backend/src/melliatlas/agent/api.py), [`jobs/contract.md`](../../../../backend/src/melliatlas/jobs/contract.md) |
-| `api` | `ReplanSummaryDto`, `SiteAssessmentDto`, `ReplanDecisionDto` and default injected inspector | [`api/routes_investigations.py`](../../../../backend/src/melliatlas/api/routes_investigations.py), [`api/app.py`](../../../../backend/src/melliatlas/api/app.py), [`api/contract.md`](../../../../backend/src/melliatlas/api/contract.md) |
+Existing `backend/src/melliatlas/sources/api.py` exposes typed `TreatmentNotice`, `SaturnTreatmentPage`, `TreatmentProduct` and fixture normalization; `backend/src/melliatlas/analyzers/api.py` exposes the `TreatmentScreening` and `TreatmentProximity` result types. No provider-specific import is added to the agent or planning policy.
 
+1. `sources.api.parse_saturn_treatment_page(payload: object, *, captured_at: datetime, source_id: str = ...) -> SaturnTreatmentPage` delegates only to `sources/providers/saturn/legacy_treatment.py` and accepts pre-supplied offline data. It normalizes `beeAcreage.id` as a field/observation identity, separate from `planId`; `isUpdated=true` selects only revised dates, and absence or contradictions do not fall back to obsolete dates. It keeps the provider's reported bee hazard class separate from independent risk evaluation. Only explicit synthetic `FIXTURE` records are emitted. Structural, bounded, spatial and pagination failures are typed or fail explicitly. `next_saturn_treatment_page(page, *, requested_page, requested_size)` checks cursor consistency before later persistence.
+2. `analyzers.api.screen_treatment_notices(site: CandidateSite, notices: tuple[TreatmentNotice, ...], *, watch_radius_km: float = 7.0) -> tuple[TreatmentScreening, ...]` is deterministic and pure. It evaluates source-stated UTC dates with a conservative one-day boundary margin, validated field polygons, and a documented approximate local-distance watch radius. Its output is a **screening observation**, not a legal exclusion, atmospheric drift, verified pesticide event, or safe-distance determination. If geometry or dates are missing, the result remains unknown. No input is marked safe even if outside the watch radius.
 #### Module interactions
 
-1. `sources` returns the requested fictional scenario and its explicit ecology zones; only the distinct V04 scenario requests inspection. No implicit source I/O is introduced.
-2. `api.create_app` supplies a factory using `analyzers.find_ecology_overlaps` and `planning.assess_ecology`, which the `agent.DeterministicPlanner` consumes through `SiteInspector`. `jobs` imports `agent.api` and `planning.api` only.
-3. `jobs.process` delegates the V04 scenario through the injected planner, stores `ReplanResult` next to the existing plan and outcome, and keeps `COMPLETED/NO_FEASIBLE_ALTERNATIVE` or `COMPLETED/INSUFFICIENT_EVIDENCE` distinct from technical `FAILED`.
-4. HTTP presents the typed decisions, observations, evidence/rule IDs, warnings and check counts without exposing the private request starting point. The completed-snapshot codec restores the same typed domain values after a new service instance reopens a stored result.
-
+3. Ownership: `sources` is the only parser of historical Saturn payloads; `analyzers` consumes the public source contract and performs geometry/time calculations; `planning` policy and `agent` do not import provider internals. Later ingestion must inject a gated, source-approved transport at composition, persist immutable original evidence, and use the same normalized treatment semantics for RU Saturn and RU/BY publications. No provider network access is introduced in the current task.
 #### Failure contracts
 
-- Unsupported scenario/country/date inputs reject before job creation. A V04 scenario without its injected evaluator must fail closed, not silently reuse the V01 planner.
-- Inspector errors and malformed ecology outputs produce sanitized `FAILED` status and never a successful plan; bounded check exhaustion yields a completed insufficient-evidence outcome with no plan.
-- Historical completed JSON without `replanning` decodes as `None`; malformed nested replanning records are rejected as storage errors. Replanning and top-level plans must agree on reconstruction.
+Malformed data and pagination fail explicitly before cursor advancement. Unknown record geometry and application dates remain source-attributed unknowns and never become verified safety findings. No network transport is initialized.
 
 #### Compatibility
 
-- The V01 scenario's computation, statuses, trace and persistence remain unchanged; only an optional `replanning` field is added to the HTTP schema, with `null` for V01.
-- Existing injectable `create_app` arguments and `InMemoryInvestigationService(provider, completed_store)` positional arguments remain valid. No migration or new runtime dependency is introduced; real PostGIS verification remains independent.
-- Preserve the `agent -> planning`, `jobs -> agent/planning`, and `api -> analyzers/agent/sources/jobs` permitted dependency directions.
+4. Compatibility: existing V01/V04-03 investigations and completed JSON are unmodified; consumer wiring to jobs/API and weather-aware decision policy belong to later, separately designed increments.
 
 #### Contract-first tests
 
-- The implemented HTTP contract tests demonstrate explicit V04 scenario selection, geometry-caused revision, structured trace/assessment evidence, warnings, no private coordinates, immutable GET, and V01 backward compatibility (`BE-T017`, `BE-T035`, `BE-T051`–`BE-T053`).
-- The extended snapshot codec tests cover V04 roundtrip, old JSON without the new optional key, malformed typed nested values and stored plan divergence. Add negative tests for missing inspector and a bounded/no-plan outcome (`BE-T037`, `BE-T039`, `BE-T045`).
-- V04-01/V04-02 unit tests and architecture tests (`BE-T054`) guard the existing layers; real PostGIS and geographic acceptance remain separate.
+TDD test-oracle design covers observed provider fields and negative/boundary cases with no live I/O. Contract and unit tests reference `MVP01-BE-R05/R14/R15/R18`; full backend acceptance remains pending.
 
-### 4.2 Implementation sequence (TDD)
+### 4.2 Verification and subsequent task order
 
-1. Review the new `SyntheticScenario` and `InvestigationSnapshot` additive fields, the factory injection and typed HTTP response against the existing public code and contracts.
-2. Write failing contract/codec tests for the V04 scenario, observable evidence-based revision, no-plan paths, legacy JSON compatibility and failure isolation.
-3. Implement only the reviewed source fixture, API composition, jobs orchestration, HTTP DTO and storage decoder; retain all existing V01 behavior.
-4. Run relevant unit, contract, architecture and SDD checks, then local `FMT,CHK`; do not promote acceptance without approved real evidence or PostGIS tests.
+- `BE-T061`: normalize a synthetic legacy Saturn page, preserve per-field identities and product/date/provenance claims; unknown fields remain unknown (`R05`, `R14`, `R18`).
+- `BE-T062`: revised/inconsistent times, malformed geometry, map-index confusion, missing IDs and conflicting pagination must not silently produce an authorized treatment event (`R15`, `R18`).
+- `BE-T063`: direct/nearby/unknown/out-of-period fixture screening and boundary cases; no wind/no complete coverage is explicit (`R14`, `R18`).
+- `BE-T064`: fixture parsing and screening make zero outbound provider requests and cannot be treated as LIVE (`R05`, `R18`).
+
+**Next:** connect treatment findings to the investigation result and alternatives as an additive, source-attributed output. **After that:** register source categories and implement a bounded typed execution path around the real treatment+ecology operations. Live Saturn transport and weather feeds require separately verified permissions, semantics, and approval; V05 Web contract handoff follows the working backend slice.
 
 ## 5. Upcoming vertical slices
 
-The V04-03 investigation integration task is in section 4; the V03 runtime loader is already implemented but real geographic coverage remains incomplete. V02 real PostGIS verification remains an **independent pending acceptance gate**; completion of startup wiring does not discharge `BE-T040`–`BE-T044`. These later slices identify **implementation work**, not new requirements or approved designs. Their normative scope and external gates remain in [sub-spec sections 4–7](subspec-01-backend-planning.md#4-requirement-to-umbrella-mapping). Select and review public interfaces only when each slice becomes current.
+The V04-04 offline treatment-screening task is in section 4; the V03 runtime loader is already implemented but real geographic coverage remains incomplete. V02 real PostGIS verification remains an **independent pending acceptance gate**; completion of startup wiring does not discharge `BE-T040`–`BE-T044`. These later slices identify **implementation work**, not new requirements or approved designs. Their normative scope and external gates remain in [sub-spec sections 4–7](subspec-01-backend-planning.md#4-requirement-to-umbrella-mapping). Select and review public interfaces only when each slice becomes current.
 
 | Slice | Implementation decision to make when selected | Planned test IDs |
 | --- | --- | --- |
 | `V03` — approved real geography (remaining) | Finish independent RU/BY inventories, verify full real coverage, and decide whether persistent multi-version reference storage is needed. The opt-in local runtime loader is implemented but not accepted as complete geography. | `BE-T001`–`BE-T012`, `BE-T058` |
-| `V04` — evidence-driven replanning (remaining) | Extend the reviewable fictional investigation scenario with a typed source/agent execution graph and negative evidence-boundary cases after V04-03 integration. | `BE-T013`–`BE-T039`, `BE-T054`–`BE-T059` |
+| `V04` — pesticide evidence and bounded execution (remaining) | Connect offline treatment findings to alternative-site decisions and result evidence, then introduce the smallest necessary typed source/execution graph around those concrete operations. | `BE-T013`–`BE-T039`, `BE-T054`–`BE-T059` |
 | `V05` — backend/Web contract handoff | Verify source/investigation response schemas and fixture examples before the separately scoped Web slice consumes them. | `BE-T048`–`BE-T053`, `BE-T060` |
 
 ## 6. Acceptance test inventory
 
-The 60 `BE-Txxx` entries are a **planned inventory**, not claims that each test has run. `U` = unit; `C` = public contract; `I` = real integration; `A` = architecture; `N` = negative; `B` = boundary. Each bounded task selects relevant IDs with independent oracles and records actual execution evidence.
+The 64 `BE-Txxx` entries are a **planned inventory**, not claims that each test has run. `U` = unit; `C` = public contract; `I` = real integration; `A` = architecture; `N` = negative; `B` = boundary. Each bounded task selects relevant IDs with independent oracles and records actual execution evidence.
 
 | Test ID | Category | Module/API | Input / observable assertion | Requirement |
 | --- | --- | --- | --- | --- |
@@ -183,6 +172,10 @@ The 60 `BE-Txxx` entries are a **planned inventory**, not claims that each test 
 | `BE-T058` | I | Full authorized seed | Independent RU/BY+pilot reference coverage/integrity report passes | R02–R04 |
 | `BE-T059` | I/N | Source descriptors | No source advertises a live Saturn/web integration in MVP-01 | R05/R14 |
 | `BE-T060` | C | Handoff fixture | OpenAPI examples distinguish real geography and synthetic investigation | R13/R14 |
+| `BE-T061` | C | Saturn fixture normalization | Field IDs, plan grouping, product claims, UTC dates and nullable geometry remain distinct and synthetic | R05/R14/R18 |
+| `BE-T062` | C/N | Saturn fixture parsing/cursor | Map index, revised date gaps, invalid polygons, contradictory pages cannot masquerade as complete treatment evidence | R15/R18 |
+| `BE-T063` | U/B | Treatment screening | Direct, nearby, out-of-window, missing time/geometry and radius boundary produce conservative results with wind unknown | R14/R18 |
+| `BE-T064` | C/N | Offline source capability | Fixture parser and analyzer never perform outbound provider I/O or advertise LIVE access | R05/R18 |
 
 **Oracles:** independently captured approved reference inventories for `T001`–`T004/T058`; fixed expected geometry fixtures for `T010/T044`; manually reviewed synthetic scenarios for `T021`–`T027/T035`–`T039`; real test PostGIS instance for `T040`–`T044`; externally visible HTTP payloads for `T048`–`T053`; import graph results for `T054`–`T057`. A test against a mock repository is not evidence for database correctness.
 

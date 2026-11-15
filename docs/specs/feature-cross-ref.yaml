@@ -61,11 +61,21 @@ features:
     owners: []
     test_files: []
   - feature_id: SOURCES.SATURN_RU
-    implementation_status: planned
+    implementation_status: partial
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
-    owners: []
-    test_files: []
+    owners:
+      - backend/src/melliatlas/sources/providers/saturn/legacy_treatment.py#parse_saturn_treatment_page
+    test_files:
+      - backend/tests/unit/test_saturn_treatment_screening.py
+  - feature_id: AGRICULTURE.NOTICES
+    implementation_status: partial
+    stages: [MVP-01]
+    spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
+    owners:
+      - backend/src/melliatlas/analyzers/api.py#screen_treatment_notices
+    test_files:
+      - backend/tests/unit/test_saturn_treatment_screening.py
   - feature_id: DATA.PROVENANCE
     implementation_status: partial
     stages: [MVP-01]

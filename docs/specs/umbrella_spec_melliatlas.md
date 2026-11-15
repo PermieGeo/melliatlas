@@ -235,7 +235,7 @@ Every completed stage should provide:
 | Stage | Product increment | Mandatory predecessor |
 | --- | --- | --- |
 | `MVP-01` | Runnable ecology-aware planning slice, RU/BY maps and first-level regions, Smolensk/Vitebsk districts, fixture-backed source categories | Repository scaffold |
-| `MVP-02` | Live RU/BY public-web sources and RU Saturn integration; initial forage/flowering continuity | `MVP-01` |
+| `MVP-02` | Approved RU Saturn and RU/BY treatment-notice ingestion; planned pesticide exposure screening with verified weather inputs and uncertainty; initial forage continuity | `MVP-01` |
 | `MVP-03` | Evidence-aware adaptive agent and decision-trace comparison | `MVP-02` |
 | `MVP-04` | Robust jobs, server caching, recovery, and run history | `MVP-03` |
 | `MVP-05` | Multi-district comparisons, extended subregional coverage, and cross-boundary analysis | `MVP-04` |
@@ -293,9 +293,9 @@ The table defines a **default logical order**, not an immutable dependency graph
 
 **Completion gate.** A reviewer can run the application locally, navigate RU/BY regional maps and both complete pilot district catalogs, complete a synthetic planning scenario through React, inspect persisted results and agent decisions, and obtain passing catalog-coverage, contract, integration, and browser checks. No live website or Saturn connector is a prerequisite for this **synthetic-analysis** MVP.
 
-### MVP-02 — Live RU/BY public web and RU Saturn sources; forage continuity
+### MVP-02 — Pesticide-treatment warnings with RU Saturn and RU/BY web evidence
 
-**Objective.** Implement the first permitted, provenance-preserving public-website/news sources in **both Russia and Belarus** and the first controlled **FGIS Saturn source for Russia**, while improving the existing flowering/forage comparison. A source integration is not a scientific risk assessment or proof of geographic coverage.
+**Objective.** Make prevention of apiary pesticide exposure the central decision-support workflow. Integrate the first permitted, provenance-preserving treatment notices from **Russia-only FGIS Saturn** and reviewed public websites/news in **Russia and Belarus**. Evaluate relevant application times, field geometry/precision, candidate apiary presence and, where independently validated weather evidence is available, plausible downwind exposure under explicit uncertainty. Use this information to compare site/date alternatives together with flowering and forage continuity. A source claim or modeled exposure is not a verified spraying event, scientific toxicity verdict, legal conclusion or proof of complete coverage.
 
 **Required behavior**
 
@@ -308,6 +308,7 @@ The table defines a **default logical order**, not an immutable dependency graph
 - `MVP-02.R07` — Introduce forage categories and flowering evidence with spatial scope, provenance and expected beginning/peak/end where known; distinguish reported, observed, modeled and synthetic values. Compare candidate sites over time, identify overlapping periods and potential honey-flow gaps, and explain relative trade-offs without fabricated yields.
 - `MVP-02.R08` — Present live, cached, fixture-only, unavailable, partial, and access-blocked source states clearly in the same React experience. Preserve the existing synthetic demonstration workflow and ecological exclusion behavior when real feeds are unavailable or incomplete; never silently substitute fixture data for a live result.
 - `MVP-02.R09` — Preserve immutable document/page identity and revisions where retention is permitted, deduplicate repeated retrievals, maintain bounded errors/audit metadata, and expose source freshness and known coverage. The absence of a publication or Saturn entry must never be reported as proof that pesticide treatment is absent.
+- `MVP-02.R10` — Compare scheduled treatments against the time and place of a proposed apiary stay. Distinguish direct mapped-field overlap, proximity, missing or imprecise locations, incomplete time windows, weather unknowns, and explicitly sourced wind/forecast hypotheses. Prioritize cautious review and alternative site/date comparisons; never treat a radius or directional wind estimate as an authoritative safe distance, and never claim treatment prevention without a verified notification workflow.
 
 **Non-goals.** Unrestricted Internet crawling, unsupported Saturn bulk collection, live source coverage for every RU/BY district, automated permit/legal decisions, proven treatment-to-polygon associations from unverified API joins, universal flowering or honey-yield predictions, or a guarantee that every named provider grants machine access. Any inaccessible source needs an explicit developer-approved rescope rather than an invented live result.
 
@@ -684,4 +685,5 @@ These decisions should not block agreement on the product mission or the umbrell
 **Research and conservation maturity (`MVP-12`–`MVP-13`)** adds comparative analysis, controlled data sharing, field observations, and multi-year monitoring. Its scientific credibility depends on documented methods and evidence, not just software completeness.
 
 **Document status:** Working roadmap; this document is not blanket approval of future stages. The active `MVP-01` backend sub-spec has separate developer approval and authorization, while its implementation and acceptance remain incomplete. The umbrella itself does not create product code or stage acceptance.
+
 

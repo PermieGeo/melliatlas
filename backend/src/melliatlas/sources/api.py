@@ -11,6 +11,12 @@ from melliatlas.planning.api import (
     SyntheticScenario,
     TimeWindow,
 )
+from melliatlas.sources.notices import TreatmentNotice, TreatmentProduct
+from melliatlas.sources.providers.saturn.legacy_treatment import parse_saturn_treatment_page
+from melliatlas.sources.providers.saturn.pagination import (
+    SaturnTreatmentPage,
+    next_saturn_treatment_page,
+)
 from melliatlas.territories.api import CountryCode
 
 SYNTHETIC_SCENARIO_ID = "synthetic-ru-2026-v01"
@@ -161,3 +167,16 @@ class SyntheticFixtureProvider:
                 "CAUTION is non-binding; outside the demo zones ecological coverage is unknown",
             ),
         )
+
+
+# These are intentional public re-exports and must survive Ruff auto-fix.
+__all__ = [
+    "SYNTHETIC_SCENARIO_ID",
+    "SYNTHETIC_ECOLOGY_SCENARIO_ID",
+    "SyntheticFixtureProvider",
+    "TreatmentProduct",
+    "TreatmentNotice",
+    "SaturnTreatmentPage",
+    "parse_saturn_treatment_page",
+    "next_saturn_treatment_page",
+]
