@@ -2,7 +2,7 @@
 
 `web/` is the **only** MelliAtlas browser client. It is a React 19 / TypeScript / Leaflet Vite application. There is no operator/Admin UI, no live pesticide-source collection and no browser telemetry.
 
-The first W01 workspace lets a beekeeper select an explicitly fictional Russian demo scenario, choose a season and optional private point, run the existing FastAPI investigation, and explore stop alternatives using a map, seasonal timeline and attributed ecology/treatment findings. Source claims and synthetic geometric screening are not confirmed spray events or safe-placement assessments. Country and region controls read the API; when validated RU/BY catalogs are missing, the app displays the HTTP `503` limitation instead of inventing regional coverage.
+The first W01 workspace lets a beekeeper select an API-advertised country and executable fictional scenario, choose a server-bounded season and optional private point, run the existing FastAPI investigation, and explore stop alternatives using a map, seasonal timeline and attributed ecology/treatment findings. Source claims and synthetic geometric screening are not confirmed spray events or safe-placement assessments. Country, scenario and region controls read the API; when validated RU/BY catalogs are missing, the app displays the HTTP `503` limitation instead of inventing regional coverage.
 
 ## Run locally
 
@@ -44,6 +44,13 @@ Frontend unit tests and browser checks are offline API-mocked. The backend fixtu
 ## Architecture and current limits
 
 - [`src/api/types.ts`](src/api/types.ts), [`src/api/validation.ts`](src/api/validation.ts), [`src/api/client.ts`](src/api/client.ts) are the only HTTP boundary; see the [API contract](src/api/contract.md).
-- `App.tsx` owns investigation lifecycle, cancellation and stale-response guards. Map, timeline and evidence panels are presentational.
+- `App.tsx` composes API-advertised selections and views. `hooks/useInvestigation.ts` owns bounded polling, request cancellation and stale-response guards; `components/InvestigationControls.tsx` renders typed selections. `notifications.ts` maps errors without language-specific inline text, and `i18n.ts` provides RU/EN UI dictionaries. Map, timeline and evidence panels are presentational.
 - W01 has no real boundary dataset, live source ingestion, wind-drift modeling, durable default server jobs, notifications or production authentication. A selection on the map is a demo starting point, not a validated apiary address.
 - The [selected Web sub-spec](../docs/specs/active/subspecs/subspec-01-web-mvp.md) and [implementation plan](../docs/specs/active/subspecs/subspec-01-web-mvp_implementation_plan.md) define remaining W01 acceptance and follow-on work. A successful build alone does not approve the product feature.
+
+
+### Country, language and synthetic scenarios
+
+The country preference is RU when the API advertises it, otherwise the first returned country. Country names are rendered using the selected locale and `Intl.DisplayNames`; selecting any future backend-supported country does not require browser-side `if (code === ...)` branches. RU and EN labels are available independently of the chosen country. The English source-report/evidence wording is preserved as received and is not presented as a translated provider claim.
+
+The client calls `GET /api/v1/investigations/scenarios?country=...` to list only executable fictional scenarios and their supported territory and season range. No synthetic territory IDs, scenario IDs or fixed fixture dates are compiled into the UI. A country without executable scenarios disables submission but still permits reopening a previously completed investigation. Validated region reference coverage remains a separate concern; a fictional scenario does not prove real boundaries.

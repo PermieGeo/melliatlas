@@ -1,6 +1,7 @@
 import {
   decodeCountries,
   decodeInvestigation,
+  decodeScenarios,
   decodeTerritories,
   WireError,
 } from "./validation";
@@ -9,6 +10,7 @@ import type {
   CountryCode,
   Investigation,
   InvestigationCreate,
+  ScenarioListing,
   Territory,
 } from "./types";
 
@@ -142,6 +144,18 @@ export function listDistricts(
     decodeTerritories,
   );
 }
+/** Discover actual executable scenarios; an empty list means none for that country. */
+export function listScenarios(
+  country: CountryCode,
+  signal: AbortSignal,
+): Promise<ApiResult<ScenarioListing[]>> {
+  return request(
+    `/api/v1/investigations/scenarios?country=${encodeURIComponent(country)}`,
+    signal,
+    decodeScenarios,
+  );
+}
+
 export function startInvestigation(
   body: InvestigationCreate,
   signal: AbortSignal,

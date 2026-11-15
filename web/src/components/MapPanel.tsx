@@ -1,8 +1,12 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { Position, Stop } from "../api/types";
+import { t } from "../i18n";
+import type { Locale } from "../i18n";
 
+/** Render-only Leaflet inputs; user coordinates are never logged or persisted. */
 interface Props {
+  locale: Locale;
   stops: Stop[];
   selectedId: string | null;
   startingPoint: Position | null;
@@ -13,6 +17,7 @@ interface Props {
 
 /** The basemap is opt-in because remote tile services observe approximate viewports. */
 export function MapPanel({
+  locale,
   stops,
   selectedId,
   startingPoint,
@@ -33,7 +38,7 @@ export function MapPanel({
       zoomControl: true,
       attributionControl: true,
     });
-    instance.setView([54.1, 32.15], 9);
+    instance.setView([0, 0], 2);
     instance.on("click", (event: L.LeafletMouseEvent) => {
       pointCallback.current({
         longitude: Number(event.latlng.lng.toFixed(5)),
@@ -101,8 +106,11 @@ export function MapPanel({
           weight: 3,
         },
       );
-      point.bindTooltip("Ваша точка (только для текущего запроса)");
+      point.bindTooltip(t(locale, "mapStartingPoint"));
       layer.addLayer(point);
+    }
+    if (stops.length === 0 && startingPoint !== null) {
+      instance.setView([startingPoint.latitude, startingPoint.longitude], 9);
     }
     if (stops.length > 0) {
       const bounds = L.latLngBounds(
@@ -110,7 +118,7 @@ export function MapPanel({
       );
       instance.fitBounds(bounds.pad(0.3), { maxZoom: 11, animate: false });
     }
-  }, [onSelect, selectedId, startingPoint, stops]);
+  }, [locale, onSelect, selectedId, startingPoint, stops]);
 
   return (
     <div className="map-shell">
@@ -118,16 +126,14 @@ export function MapPanel({
         ref={host}
         className="map-canvas"
         role="application"
-        aria-label="Карта стоянок"
+        aria-label={t(locale, "mapLabel")}
       />
       <div className="map-legend" aria-hidden="true">
-        <span className="legend-dot" /> Предлагаемая стоянка
-        <span className="legend-dot legend-selected" /> Выбрана
+        <span className="legend-dot" /> {t(locale, "mapProposed")}
+        <span className="legend-dot legend-selected" />{" "}
+        {t(locale, "mapSelected")}
       </div>
-      <p className="map-note">
-        Координаты демонстрационных стоянок вымышлены. Нажмите на карту, чтобы
-        выбрать свою точку для расчёта.
-      </p>
+      <p className="map-note">{t(locale, "mapNote")}</p>
     </div>
   );
 }

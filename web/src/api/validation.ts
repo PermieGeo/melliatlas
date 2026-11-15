@@ -8,12 +8,14 @@ import type {
   Replanning,
   ReportedProduct,
   Screening,
+  ScenarioListing,
   SeasonPlan,
   Stop,
   Territory,
   TreatmentReview,
 } from "./types";
 
+/** Boundary rejection for malformed or unsupported server response data. */
 class WireError extends Error {
   constructor(field: string) {
     super(`Invalid API response field: ${field}`);
@@ -80,7 +82,7 @@ function list<T>(
 }
 const strings = (value: unknown, field: string): string[] =>
   list(value, field, text);
-const countries = ["RU", "BY"] as const;
+
 const statuses = ["QUEUED", "RUNNING", "COMPLETED", "FAILED"] as const;
 const outcomes = [
   "PLAN_FOUND",
@@ -106,7 +108,9 @@ const decisionKinds = [
 ] as const;
 
 function country(value: unknown, field: string): CountryCode {
-  return oneOf(value, field, countries);
+  const code = text(value, field);
+  if (!/^[A-Z]{2}$/.test(code)) throw new WireError(field);
+  return code;
 }
 export function decodeCountries(value: unknown): Country[] {
   return list(value, "countries", (entry, path) => {
@@ -117,6 +121,52 @@ export function decodeCountries(value: unknown): Country[] {
     };
   });
 }
+/** Validate dynamic source availability without allowing untrusted dates or cross-country scopes. */
+export function decodeScenarios(value: unknown): ScenarioListing[] {
+  const entries = list(value, "scenarios", (entry, path) => {
+    const item = record(entry, path);
+    const seasonStart = text(item.season_start, `${path}.season_start`);
+    const seasonEnd = text(item.season_end, `${path}.season_end`);
+    if (
+      !isIsoDate(seasonStart) ||
+      !isIsoDate(seasonEnd) ||
+      seasonStart > seasonEnd
+    )
+      throw new WireError(`${path}.season`);
+    if (typeof item.is_default !== "boolean")
+      throw new WireError(`${path}.is_default`);
+    return {
+      id: nonEmpty(item.id, `${path}.id`),
+      name: nonEmpty(item.name, `${path}.name`),
+      country: country(item.country, `${path}.country`),
+      territory_id: nonEmpty(item.territory_id, `${path}.territory_id`),
+      territory_name: nonEmpty(item.territory_name, `${path}.territory_name`),
+      source_mode: oneOf(item.source_mode, `${path}.source_mode`, [
+        "SYNTHETIC",
+      ]),
+      season_start: seasonStart,
+      season_end: seasonEnd,
+      is_default: item.is_default,
+    };
+  });
+  const ids = entries.map((item) => item.id);
+  if (
+    new Set(ids).size !== ids.length ||
+    entries.filter((item) => item.is_default).length > 1
+  )
+    throw new WireError("scenarios");
+  return entries;
+}
+
+/** Reject malformed or normalized calendar dates at the API boundary. */
+function isIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return (
+    Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
+  );
+}
+
 export function decodeTerritories(value: unknown): Territory[] {
   return list(value, "territories", (entry, path) => {
     const item = record(entry, path);

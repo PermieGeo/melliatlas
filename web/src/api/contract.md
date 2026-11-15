@@ -7,3 +7,7 @@
 An error retains the HTTP status and stable server error code when available. Cancelled requests return `ABORTED`, transport failures return `NETWORK_ERROR`, and incorrectly structured responses return `INVALID_RESPONSE`. A successful HTTP 202 is not a completed analysis; polling and bounded retries belong to `App.tsx`.
 
 The private `starting_point` exists only in the POST body; the decoder rejects an unexpected private coordinate in the returned request. Do not log, store or place it in a URL. Completed data may be reloaded by opaque investigation UUID only while the server still has a snapshot. No frontend action triggers source scraping or a background provider collection job.
+
+## Country-neutral executable scenario discovery (W01 refactor)
+
+`listScenarios(country, signal)` calls `GET /api/v1/investigations/scenarios?country=...` and validates each scenario's country code, opaque ID, fictional territory ID and title, `SYNTHETIC` mode, canonical inclusive dates, and default flag. Invalid, duplicate or contradictory metadata becomes `INVALID_RESPONSE`. Empty discovery means no executable scenario for that country, not safe or fully covered geography. The UI never keeps scenario/fixture IDs or default season years in source code. The backend still authorizes individual POST requests. Country codes have an open ISO alpha-2 representation on the client; languages RU/EN are independent UI locales.

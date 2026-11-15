@@ -566,3 +566,28 @@ h3 {
     font-size: 0.8rem;
   }
 }
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.header-actions select {
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0.2rem;
+}
+
+.header-actions .header-version {
+  margin-left: 0;
+}
+
+@media (max-width: 720px) {
+  .header-actions .header-version {
+    display: none;
+  }
+}

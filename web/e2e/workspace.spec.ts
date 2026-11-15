@@ -21,6 +21,25 @@ test.beforeEach(async ({ page }) => {
           },
         },
       });
+    } else if (url.pathname === "/api/v1/investigations/scenarios") {
+      await route.fulfill({
+        json:
+          url.searchParams.get("country") === "RU"
+            ? [
+                {
+                  id: "synthetic-ru-2026-v04-ecology-treatment",
+                  name: "Ecology and reported treatments (fictional)",
+                  country: "RU",
+                  territory_id: "ru:region:smolensk",
+                  territory_name: "Smolensk region (fictional)",
+                  source_mode: "SYNTHETIC",
+                  season_start: "2026-05-01",
+                  season_end: "2026-08-15",
+                  is_default: true,
+                },
+              ]
+            : [],
+      });
     } else if (
       url.pathname === "/api/v1/investigations" &&
       route.request().method() === "POST"

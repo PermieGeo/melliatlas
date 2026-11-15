@@ -9,6 +9,28 @@ import { afterEach, expect, it, vi } from "vitest";
 import App from "../src/App";
 import fixture from "./fixtures/combined.json";
 
+const jointScenario = {
+  id: "synthetic-ru-2026-v04-ecology-treatment",
+  name: "Ecology and reported treatments (fictional)",
+  country: "RU",
+  territory_id: "ru:region:smolensk",
+  territory_name: "Smolensk region (fictional)",
+  source_mode: "SYNTHETIC",
+  season_start: "2026-05-01",
+  season_end: "2026-08-15",
+  is_default: true,
+};
+
+async function waitForDemo() {
+  await waitFor(() =>
+    expect(
+      screen
+        .getByRole("button", { name: /Исследовать размещение/ })
+        .hasAttribute("disabled"),
+    ).toBe(false),
+  );
+}
+
 vi.mock("../src/components/MapPanel", () => ({
   MapPanel: ({
     onSelect,
@@ -61,6 +83,10 @@ function mockApi() {
           }),
           { status: 503 },
         );
+      if (input.startsWith("/api/v1/investigations/scenarios?"))
+        return new Response(
+          JSON.stringify(input.endsWith("country=RU") ? [jointScenario] : []),
+        );
       if (input === "/api/v1/investigations")
         return new Response(
           JSON.stringify({
@@ -85,10 +111,11 @@ function mockApi() {
 it("runs the joint fixture, shows attributed findings and synchronizes map/timeline selection", async () => {
   const calls = mockApi();
   render(<App />);
-  expect(screen.getByText(/Только вымышленные данные/)).toBeTruthy();
+  expect(await screen.findByText(/Только вымышленные данные/)).toBeTruthy();
   expect(
     await screen.findByText(/Границы и перечень регионов пока не загружены/),
   ).toBeTruthy();
+  await waitForDemo();
   fireEvent.click(
     screen.getByRole("button", { name: /Исследовать размещение/ }),
   );
@@ -126,6 +153,7 @@ it("sends a selected coordinate only in the body, never in URLs or browser stora
   fireEvent.click(
     screen.getByRole("button", { name: "Выбрать исходную точку" }),
   );
+  await waitForDemo();
   fireEvent.click(
     screen.getByRole("button", { name: /Исследовать размещение/ }),
   );
@@ -171,6 +199,7 @@ it("reopens a completed result and shows a distinct missing-ID error", async () 
 it("disables an unsupported BY demonstration and ignores a stale result after country switch", async () => {
   mockApi();
   render(<App />);
+  await waitForDemo();
   fireEvent.change(screen.getByLabelText("Страна"), {
     target: { value: "BY" },
   });
@@ -208,6 +237,11 @@ it("ignores a delayed completed response after the user changes country", async 
           { status: 503 },
         );
       }
+      if (input.startsWith("/api/v1/investigations/scenarios?")) {
+        return new Response(
+          JSON.stringify(input.endsWith("country=RU") ? [jointScenario] : []),
+        );
+      }
       if (input === "/api/v1/investigations") {
         return new Promise<Response>((resolve) => {
           pending.resolve = resolve;
@@ -217,6 +251,7 @@ it("ignores a delayed completed response after the user changes country", async 
     }),
   );
   render(<App />);
+  await waitForDemo();
   fireEvent.click(
     screen.getByRole("button", { name: /Исследовать размещение/ }),
   );
@@ -245,6 +280,10 @@ it("distinguishes completed insufficient evidence from a backend failure", async
         return new Response(JSON.stringify([{ code: "RU", name: "Russia" }]));
       if (input.startsWith("/api/v1/territories/regions"))
         return new Response(JSON.stringify([]));
+      if (input.startsWith("/api/v1/investigations/scenarios?"))
+        return new Response(
+          JSON.stringify(input.endsWith("country=RU") ? [jointScenario] : []),
+        );
       if (input === "/api/v1/investigations")
         return new Response(
           JSON.stringify({
@@ -268,6 +307,7 @@ it("distinguishes completed insufficient evidence from a backend failure", async
     }),
   );
   render(<App />);
+  await waitForDemo();
   fireEvent.click(
     screen.getByRole("button", { name: /Исследовать размещение/ }),
   );
@@ -275,4 +315,88 @@ it("distinguishes completed insufficient evidence from a backend failure", async
     await screen.findByText(/недостаточно проверенных стоянок/),
   ).toBeTruthy();
   expect(screen.queryByText(/Предварительный план сформирован/)).toBeNull();
+});
+
+it("switches RU/EN without discarding the investigation and keeps source evidence intact", async () => {
+  mockApi();
+  render(<App />);
+  await waitForDemo();
+  fireEvent.change(screen.getByLabelText("Язык"), { target: { value: "en" } });
+  expect(screen.getByLabelText("Country")).toBeTruthy();
+  expect(screen.getByLabelText("Analysis source")).toBeTruthy();
+  expect(screen.getByLabelText("Season start")).toHaveProperty(
+    "value",
+    "2026-05-01",
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /Investigate placement/ }),
+  );
+  expect(await screen.findByText(/Provisional plan prepared/)).toBeTruthy();
+  expect(screen.getByText("Reported treatments")).toBeTruthy();
+  fireEvent.change(screen.getByLabelText("Language"), {
+    target: { value: "ru" },
+  });
+  expect(screen.getByText(/Предварительный план сформирован/)).toBeTruthy();
+});
+
+it("uses server-supplied country, scenario, territory and season without RU-specific branches", async () => {
+  const payloads: string[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string, options?: RequestInit) => {
+      if (input === "/api/v1/territories/countries")
+        return new Response(JSON.stringify([{ code: "PL", name: "Poland" }]));
+      if (input.startsWith("/api/v1/territories/regions"))
+        return new Response(JSON.stringify([]));
+      if (input.startsWith("/api/v1/investigations/scenarios?"))
+        return new Response(
+          JSON.stringify(
+            input.endsWith("country=PL")
+              ? [
+                  {
+                    ...jointScenario,
+                    id: "fictional-pl-2030",
+                    country: "PL",
+                    territory_id: "pl:region:fixture",
+                    territory_name: "Fictional region",
+                    season_start: "2030-06-01",
+                    season_end: "2030-09-15",
+                  },
+                ]
+              : [],
+          ),
+        );
+      if (input === "/api/v1/investigations") {
+        if (typeof options?.body === "string") payloads.push(options.body);
+        return new Response(JSON.stringify({ ...fixture, status: "FAILED" }), {
+          status: 202,
+        });
+      }
+      return new Response(JSON.stringify(fixture));
+    }),
+  );
+  render(<App />);
+  await waitFor(() =>
+    expect(
+      screen
+        .getByRole("button", { name: /Исследовать размещение/ })
+        .hasAttribute("disabled"),
+    ).toBe(false),
+  );
+  expect(screen.getByLabelText("Страна")).toHaveProperty("value", "PL");
+  expect(screen.getByLabelText("Начало сезона")).toHaveProperty(
+    "value",
+    "2030-06-01",
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /Исследовать размещение/ }),
+  );
+  await waitFor(() => expect(payloads).toHaveLength(1));
+  expect(JSON.parse(payloads[0] ?? "{}")).toMatchObject({
+    country: "PL",
+    territory_id: "pl:region:fixture",
+    scenario_id: "fictional-pl-2030",
+    season_start: "2030-06-01",
+    season_end: "2030-09-15",
+  });
 });

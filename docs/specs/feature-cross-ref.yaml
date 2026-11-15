@@ -188,6 +188,8 @@ features:
     owners:
       - web/src/App.tsx
       - web/src/api/client.ts
+      - web/src/hooks/useInvestigation.ts
+      - web/src/components/InvestigationControls.tsx
     test_files:
       - web/tests/client.test.ts
       - web/tests/workflow.test.tsx
@@ -200,3 +202,4 @@ features:
       - web/src/components/Timeline.tsx
     test_files:
       - web/tests/workflow.test.tsx
+

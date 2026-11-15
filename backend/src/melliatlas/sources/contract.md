@@ -22,3 +22,8 @@ The generic `TreatmentNotice` and `TreatmentProduct` types are owned by `sources
 ## V04-06 combined fixture
 
 `SYNTHETIC_COMBINED_SCENARIO_ID` composes existing offline ecology and treatment fixtures, retaining each source-linked evidence record and adding an alternative candidate whose fictional coordinates are outside the configured treatment screening radius but still within the fictional ecology precaution zone. `load_treatment_notices` accepts this explicit scenario in addition to the treatment-only scenario. No new Saturn transport, source type or local administrative interface is introduced.
+
+
+## Executable synthetic scenario listing (W01 follow-up)
+
+`SyntheticFixtureProvider.list_scenarios(country)` returns immutable `ScenarioListing` records for scenarios that `load(country, territory_id, scenario_id)` actually supports. Each advertises a source-owned fictional scope and the same supported inclusive season used by request validation. The joint fictional scenario is marked as the default of the current RU fixture collection; countries without supported fixtures return an empty tuple. This is not a public geographic reference catalog, live source registry or evidence-coverage assertion.

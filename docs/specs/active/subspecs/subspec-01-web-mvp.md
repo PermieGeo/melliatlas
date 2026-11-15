@@ -14,19 +14,21 @@ A beekeeper opens **one responsive client**, selects a country, a supported terr
 
 Pesticide-treatment information is the primary practical focus; forage and ecology are evaluated alongside it. A source report, a geometric proximity result, a synthetic rule and a validated chemical-exposure model are distinct concepts. No UI treatment status may imply that spraying occurred, that wind-borne exposure was calculated, or that a candidate is safe.
 
-This workstream does **not** port the former administration interface, map components or navigation from the historical repository. There is no separate Admin client, provider-configuration screen, login, live source collection, alerts or new public API in this sub-spec. The only MVP UI is `web/`.
+This workstream does **not** port the former administration interface, map components or navigation from the historical repository. There is no separate Admin client, provider-configuration screen, login, live source collection or alerts. One read-only executable-scenario discovery operation supports the server-driven W01 controls; it is not source ingestion or a reference geography catalog. The only MVP UI is `web/`.
 
 ## 2. Requirements
 
 | ID | Observable browser requirement | Umbrella anchor |
 | --- | --- | --- |
 | `MVP01-WEB-R01` | Provide one responsive React/TypeScript/Leaflet application with a keyboard-accessible map-adjacent workflow and no Admin surface. | `MVP-01.R01`, `R08` |
-| `MVP01-WEB-R02` | Select RU or BY, display only API-backed regions and supported districts, and show unavailable/partial geometry explicitly. Do not invent administrative coverage or use provider-specific IDs as canonical IDs. | `MVP-01.R10`–`R14` |
+| `MVP01-WEB-R02` | Select an API-advertised country (currently RU/BY), display only API-backed regions and supported districts, and show unavailable/partial geometry explicitly. Do not invent administrative coverage or use provider-specific IDs as canonical IDs. | `MVP-01.R10`–`R14` |
 | `MVP01-WEB-R03` | Let a user choose a season and optional WGS84 point, validate them locally, and submit them in a POST body only. Mark the available demonstration scenario as synthetic, without claiming live provider capability. | `MVP-01.R02`, `R08`, `R09` |
 | `MVP01-WEB-R04` | Handle `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, domain outcomes without a plan, typed HTTP errors, polling cancellation and stale responses. Preserve the investigation ID for reopening without persisting private coordinates in a URL or browser storage. | `MVP-01.R07`–`R09` |
 | `MVP01-WEB-R05` | Show ordered stops together on the map and seasonal timeline, with date windows, forage level and relocation count; explain why an original candidate was replaced and why alternatives remain provisional. | `MVP-01.R04`–`R08` |
 | `MVP01-WEB-R06` | Show reported field-treatment dates, products, reported bee-hazard classes, geometric proximity and uncertainty separately from fictional ecology exclusions and cautions. Do not turn unreported/no-overlap into a safety verdict. | `MVP-01.R05`, `R08`; `SYS-02`, `SYS-04` |
 | `MVP01-WEB-R07` | Present evidence IDs, source mode, synthetic marker, decision history and limitations in a legible details view. Never describe a fixture as a live Saturn or public-web observation. | `MVP-01.R05`, `R08`, `R13` |
+| `MVP01-WEB-R09` | Provide RU and EN UI localization with one explicit language selector; extend translations through a typed resource dictionary, not country-dependent conditional rendering. | `MVP-01.R01`, `R08` |
+| `MVP01-WEB-R10` | Discover executable synthetic scenarios and their country, territory and inclusive supported season from the backend. No scenario identifiers, fixture territory IDs or fixture years may be embedded in production browser code; empty country coverage is an explicit state. | `MVP-01.R02`, `R09` |
 | `MVP01-WEB-R08` | Preserve predictable empty/loading/error states, mobile/touch usability, visible focus and basic screen-reader semantics; do not expose protected source contents or private apiary coordinates in logs, query strings or telemetry. | `MVP-01.R01`, `R09`; `SYS-14` |
 
 ## 3. UX composition
@@ -49,9 +51,12 @@ The country selector is independent of source applicability. Country/region/dist
 | `MVP01-WEB-A06` | RU/BY switching and region navigation use verified catalogs when provided; unsupported districts or missing reference data are accurately communicated. |
 | `MVP01-WEB-A07` | Browser checks cover touch viewport, keyboard navigation, focus handling, synthetic labeling, evidence attribution and absence of private point data in navigable URLs/logs. |
 
+| `MVP01-WEB-A08` | EN/RU UI switching, third-country API fixture, server-provided season bounds, absence of scenarios, and cancellation after country changes are tested without a country-specific browser branch. |
+
 ## 5. Dependencies, gaps and explicit gates
 
-- **Implemented API:** `GET /api/v1/territories/countries`, `/regions`, `/districts`, `/geometry/{territory_id}` and `POST/GET /api/v1/investigations`. Contract details are owned by [`backend/src/melliatlas/api/contract.md`](../../../../backend/src/melliatlas/api/contract.md), the Python DTOs and OpenAPI, not this proposal.
-- **Known gaps:** there is no `GET /api/v1/scenarios`, `GET /api/v1/sources`, paginated investigation history or verified complete RU/BY reference dataset. Only documented fixture IDs may be offered as development options until a discovery API exists. Completed snapshots are durable only with an explicitly configured and independently verified PostGIS store.
+- **Implemented API:** `GET /api/v1/territories/countries`, `/regions`, `/districts`, `/geometry/{territory_id}` and `POST/GET /api/v1/investigations`, plus read-only `GET /api/v1/investigations/scenarios?country=...`. Contract details are owned by [`backend/src/melliatlas/api/contract.md`](../../../../backend/src/melliatlas/api/contract.md), the Python DTOs and OpenAPI, not this proposal.
+- **Known gaps:** there is no live-source catalog `GET /api/v1/sources`, paginated investigation history or verified complete RU/BY reference dataset. Executable synthetic scenario identifiers, territory associations and supported seasons are exposed by the new read-only discovery operation; it does not provide reference geography, permissions or real source coverage. Completed snapshots are durable only with an explicitly configured and independently verified PostGIS store.
 - **Web authorization:** this workstream authorizes only the W01 fictional-browser slice and its standard React/Leaflet tooling. Backend acceptance and umbrella MVP-01 acceptance are still pending. Runtime credentials, live sources and third-party data reuse remain separately gated.
 - **Environmental evidence:** no approved live Saturn/web ingestion, validated pesticide drift or weather-based exposure model is delivered by MVP-01. No synthetic treatment result provides a permission or safety conclusion.
+

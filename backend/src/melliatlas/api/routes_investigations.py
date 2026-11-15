@@ -1,5 +1,6 @@
 """Typed HTTP boundary for the synthetic, non-durable investigation workflow."""
 
+from collections.abc import Callable
 from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
@@ -21,7 +22,22 @@ from melliatlas.jobs.api import (
     InvestigationStorageError,
 )
 from melliatlas.planning.api import EcologyStatus, TimeWindow, TreatmentProximity
+from melliatlas.sources.api import ScenarioListing
 from melliatlas.territories.api import CountryCode
+
+
+class ScenarioListingDto(BaseModel):
+    """Read-only executable scenario metadata; does not assert real reference coverage."""
+
+    id: str
+    name: str
+    country: CountryCode
+    territory_id: str
+    territory_name: str
+    source_mode: Literal["SYNTHETIC"]
+    season_start: date
+    season_end: date
+    is_default: bool
 
 
 class StartingPointDto(BaseModel):
@@ -274,8 +290,25 @@ def _error(status: int, code: ApiErrorCode, message: str) -> JSONResponse:
     )
 
 
-def create_investigation_router(service: InvestigationService) -> APIRouter:
+def create_investigation_router(
+    service: InvestigationService,
+    list_scenarios: Callable[[CountryCode], tuple[ScenarioListing, ...]] | None = None,
+) -> APIRouter:
     router = APIRouter(prefix="/api/v1/investigations", tags=["investigations"])
+
+    @router.get(
+        "/scenarios",
+        response_model=list[ScenarioListingDto],
+        responses={422: {"model": ErrorResponse}},
+    )
+    async def available_scenarios(country: CountryCode) -> list[ScenarioListingDto]:
+        """List advertised executable fixtures; custom services advertise none by default."""
+        if list_scenarios is None:
+            return []
+        return [
+            ScenarioListingDto.model_validate(item, from_attributes=True)
+            for item in list_scenarios(country)
+        ]
 
     @router.post(
         "",

@@ -1,113 +1,70 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  getInvestigation,
-  listCountries,
-  listRegions,
-  startInvestigation,
-} from "./api/client";
-import type { ApiResult } from "./api/client";
+import { useEffect, useState } from "react";
+import { listCountries, listRegions, listScenarios } from "./api/client";
 import type {
   Country,
   CountryCode,
-  Investigation,
   Position,
+  ScenarioListing,
   Territory,
 } from "./api/types";
+import { InvestigationControls } from "./components/InvestigationControls";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { MapPanel } from "./components/MapPanel";
 import { Timeline } from "./components/Timeline";
+import { useInvestigation } from "./hooks/useInvestigation";
+import { t } from "./i18n";
+import type { Locale, TranslationKey } from "./i18n";
 
-const DEMO_TERRITORY = "demo:smolensk";
-const DEMO_FIXTURE_TERRITORY = "ru:region:smolensk";
-const DEMO_SCENARIO = "synthetic-ru-2026-v04-ecology-treatment";
-const MAX_POLLS = 24;
+const PREFERRED_COUNTRY: CountryCode = "RU";
 
-interface Notice {
-  kind: "error" | "info";
-  message: string;
-}
-
-function failure<T>(result: Extract<ApiResult<T>, { kind: "error" }>): Notice {
-  if (result.code === "ABORTED")
-    return { kind: "info", message: "Запрос отменён" };
-  if (result.status === 404)
-    return {
-      kind: "error",
-      message:
-        "Исследование не найдено. Результат в памяти сервера мог исчезнуть после перезапуска.",
-    };
-  if (result.status === 422)
-    return {
-      kind: "error",
-      message:
-        "API отклонил параметры исследования. Проверьте сезон и выбранный сценарий.",
-    };
-  if (result.status === 409)
-    return {
-      kind: "error",
-      message: "Выбранная глубина каталога территорий не поддерживается.",
-    };
-  if (result.status === 503)
-    return {
-      kind: "error",
-      message:
-        "Хранилище или справочник временно недоступен. Отсутствие данных не означает безопасность.",
-    };
-  return { kind: "error", message: `${result.message} (${result.code})` };
-}
-
-async function pause(
-  milliseconds: number,
-  signal: AbortSignal,
-): Promise<boolean> {
-  if (signal.aborted) return false;
-  return new Promise((resolve) => {
-    const handle = setTimeout(() => finish(true), milliseconds);
-    const onAbort = () => finish(false);
-    function finish(completed: boolean) {
-      clearTimeout(handle);
-      signal.removeEventListener("abort", onAbort);
-      resolve(completed);
-    }
-    signal.addEventListener("abort", onAbort, { once: true });
-  });
-}
-
+/** Top-level composition: server-backed source selection plus a cancellable investigation. */
 export default function App() {
+  const [locale, setLocale] = useState<Locale>("ru");
   const [countries, setCountries] = useState<Country[]>([]);
-  const [country, setCountry] = useState<CountryCode>("RU");
+  const [country, setCountry] = useState<CountryCode>("");
   const [regions, setRegions] = useState<Territory[]>([]);
-  const [referenceMessage, setReferenceMessage] = useState(
-    "Получаем сведения о территориях…",
-  );
-  const [territory, setTerritory] = useState(DEMO_TERRITORY);
-  const [seasonStart, setSeasonStart] = useState("2026-05-01");
-  const [seasonEnd, setSeasonEnd] = useState("2026-08-15");
+  const [scenarios, setScenarios] = useState<ScenarioListing[]>([]);
+  const [territory, setTerritory] = useState("");
+  const [scenarioId, setScenarioId] = useState("");
+  const [seasonStart, setSeasonStart] = useState("");
+  const [seasonEnd, setSeasonEnd] = useState("");
+  const [countryMessage, setCountryMessage] =
+    useState<TranslationKey>("loadingCountries");
+  const [referenceMessage, setReferenceMessage] =
+    useState<TranslationKey>("loadingRegions");
+  const [scenariosMessage, setScenariosMessage] =
+    useState<TranslationKey>("loadingScenarios");
   const [point, setPoint] = useState<Position | null>(null);
-  const [result, setResult] = useState<Investigation | null>(null);
-  const [selectedSite, setSelectedSite] = useState<string | null>(null);
-  const [notice, setNotice] = useState<Notice | null>(null);
-  const [busy, setBusy] = useState(false);
   const [showTiles, setShowTiles] = useState(false);
   const [reopenId, setReopenId] = useState("");
-  const activeRequest = useRef<AbortController | null>(null);
-  const sequence = useRef(0);
+  const investigation = useInvestigation();
+  const { reset } = investigation;
+  const tr = (key: TranslationKey, values?: Record<string, string | number>) =>
+    t(locale, key, values);
 
-  const cancel = useCallback(() => {
-    sequence.current += 1;
-    activeRequest.current?.abort();
-    activeRequest.current = null;
-  }, []);
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   useEffect(() => {
     const controller = new AbortController();
     void listCountries(controller.signal).then((response) => {
       if (controller.signal.aborted) return;
-      if (response.kind === "ok") setCountries(response.data);
-      else
-        setReferenceMessage(
-          `Список стран недоступен: ${failure(response).message}`,
+      if (response.kind === "ok") {
+        setCountries(response.data);
+        setCountryMessage(
+          response.data.length === 0 ? "countriesEmpty" : "selectCountry",
         );
+        setCountry(
+          response.data.find((item) => item.code === PREFERRED_COUNTRY)?.code ??
+            response.data[0]?.code ??
+            "",
+        );
+      } else {
+        setCountries([]);
+        setCountry("");
+        setCountryMessage("countriesFailure");
+      }
     });
     return () => controller.abort();
   }, []);
@@ -115,130 +72,117 @@ export default function App() {
   useEffect(() => {
     const controller = new AbortController();
     setRegions([]);
-    setReferenceMessage("Проверяем справочник регионов…");
+    setReferenceMessage("loadingRegions");
+    if (!country) return () => controller.abort();
     void listRegions(country, controller.signal).then((response) => {
       if (controller.signal.aborted) return;
       if (response.kind === "ok") {
         setRegions(response.data);
         setReferenceMessage(
-          response.data.length === 0
-            ? "Справочник не содержит подтверждённых регионов. Это не сведения о полном покрытии."
-            : "Показаны регионы из текущего API-справочника.",
+          response.data.length === 0 ? "emptyRegions" : "availableRegions",
         );
       } else {
         setReferenceMessage(
-          response.status === 503
-            ? "Границы и перечень регионов пока не загружены (HTTP 503). Демо доступно отдельно."
-            : `Не удалось загрузить регионы: ${failure(response).message}`,
+          response.status === 503 ? "unavailableRegions" : "regionsFailure",
         );
       }
     });
     return () => controller.abort();
   }, [country]);
 
-  useEffect(() => () => cancel(), [cancel]);
-
-  const chooseCountry = (next: CountryCode) => {
-    cancel();
-    setCountry(next);
-    setTerritory(next === "RU" ? DEMO_TERRITORY : "");
-    setResult(null);
-    setSelectedSite(null);
-    setNotice(null);
-    setBusy(false);
-    setPoint(null);
-  };
-
-  const run = async (
-    id: number,
-    controller: AbortController,
-    first: Investigation,
-  ) => {
-    let snapshot = first;
-    setResult(snapshot);
-    for (
-      let attempt = 0;
-      attempt < MAX_POLLS &&
-      (snapshot.status === "QUEUED" || snapshot.status === "RUNNING");
-      attempt++
-    ) {
-      if (!(await pause(700, controller.signal))) return;
-      const updated = await getInvestigation(snapshot.id, controller.signal);
-      if (controller.signal.aborted || sequence.current !== id) return;
-      if (updated.kind === "error") {
-        setNotice(failure(updated));
-        setBusy(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    setScenarios([]);
+    setTerritory("");
+    setScenarioId("");
+    setSeasonStart("");
+    setSeasonEnd("");
+    setScenariosMessage("loadingScenarios");
+    if (!country) return () => controller.abort();
+    void listScenarios(country, controller.signal).then((response) => {
+      if (controller.signal.aborted) return;
+      if (response.kind === "error") {
+        setScenariosMessage("scenarioFailure");
         return;
       }
-      snapshot = updated.data;
-      setResult(snapshot);
-    }
-    if (controller.signal.aborted || sequence.current !== id) return;
-    setBusy(false);
-    setSelectedSite(snapshot.plan?.stops[0]?.site_id ?? null);
-    if (snapshot.status === "QUEUED" || snapshot.status === "RUNNING") {
-      setNotice({
-        kind: "info",
-        message:
-          "Обработка ещё продолжается. Можно повторно открыть исследование по ID.",
-      });
-    } else if (snapshot.status === "FAILED") {
-      setNotice({
-        kind: "error",
-        message:
-          "Выполнение исследования завершилось ошибкой. Подробности доступны в диагностике ответа.",
-      });
-    } else if (!snapshot.plan) {
-      setNotice({
-        kind: "info",
-        message:
-          "Исследование завершено, но для плана недостаточно проверенных стоянок.",
-      });
-    } else {
-      setNotice(null);
-    }
-  };
+      // Do not trust a cross-country descriptor even when the wire shape is valid.
+      if (response.data.some((item) => item.country !== country)) {
+        setScenariosMessage("scenarioFailure");
+        return;
+      }
+      setScenarios(response.data);
+      setScenariosMessage(
+        response.data.length === 0 ? "noScenarios" : "selectScenario",
+      );
+      const preferred =
+        response.data.find((item) => item.is_default) ?? response.data[0];
+      if (preferred) {
+        setTerritory(preferred.territory_id);
+        setScenarioId(preferred.id);
+        setSeasonStart(preferred.season_start);
+        setSeasonEnd(preferred.season_end);
+      }
+    });
+    return () => controller.abort();
+  }, [country]);
 
-  const begin = async (mode: "submit" | "reopen") => {
-    cancel();
-    const id = sequence.current;
-    const controller = new AbortController();
-    activeRequest.current = controller;
-    setBusy(true);
-    setResult(null);
-    setSelectedSite(null);
-    setNotice(null);
-    const response =
-      mode === "submit"
-        ? await startInvestigation(
-            {
-              country: "RU",
-              territory_id: DEMO_FIXTURE_TERRITORY,
-              scenario_id: DEMO_SCENARIO,
-              season_start: seasonStart,
-              season_end: seasonEnd,
-              ...(point !== null ? { starting_point: point } : {}),
-            },
-            controller.signal,
-          )
-        : await getInvestigation(reopenId.trim(), controller.signal);
-    if (controller.signal.aborted || sequence.current !== id) return;
-    if (response.kind === "error") {
-      setBusy(false);
-      setNotice(failure(response));
-      return;
-    }
-    await run(id, controller, response.data);
-  };
-
+  const selectedScenario =
+    scenarios.find(
+      (item) =>
+        item.id === scenarioId &&
+        item.country === country &&
+        item.territory_id === territory,
+    ) ?? null;
   const canSubmit =
-    country === "RU" &&
-    territory === DEMO_TERRITORY &&
-    seasonStart >= "2026-05-01" &&
-    seasonEnd <= "2026-08-15" &&
-    seasonStart <= seasonEnd &&
-    !busy;
-  const stops = result?.plan?.stops ?? [];
+    !investigation.busy &&
+    countries.some((item) => item.code === country) &&
+    selectedScenario !== null &&
+    !!seasonStart &&
+    !!seasonEnd &&
+    seasonStart >= selectedScenario.season_start &&
+    seasonEnd <= selectedScenario.season_end &&
+    seasonStart <= seasonEnd;
+
+  const chooseCountry = (value: CountryCode) => {
+    if (!countries.some((item) => item.code === value)) return;
+    reset();
+    setPoint(null);
+    setCountry(value);
+    setTerritory("");
+    setScenarioId("");
+  };
+  const chooseTerritory = (value: string) => {
+    reset();
+    setTerritory(value);
+    const preferred =
+      scenarios.find(
+        (item) => item.territory_id === value && item.is_default,
+      ) ?? scenarios.find((item) => item.territory_id === value);
+    setScenarioId(preferred?.id ?? "");
+    setSeasonStart(preferred?.season_start ?? "");
+    setSeasonEnd(preferred?.season_end ?? "");
+  };
+  const chooseScenario = (value: string) => {
+    reset();
+    const chosen = scenarios.find(
+      (item) => item.id === value && item.territory_id === territory,
+    );
+    setScenarioId(chosen?.id ?? "");
+    setSeasonStart(chosen?.season_start ?? "");
+    setSeasonEnd(chosen?.season_end ?? "");
+  };
+  const begin = () => {
+    if (!canSubmit || !selectedScenario) return;
+    void investigation.begin({
+      country: selectedScenario.country,
+      territory_id: selectedScenario.territory_id,
+      scenario_id: selectedScenario.id,
+      season_start: seasonStart,
+      season_end: seasonEnd,
+      ...(point ? { starting_point: point } : {}),
+    });
+  };
+  const stops = investigation.result?.plan?.stops ?? [];
 
   return (
     <div className="app-shell">
@@ -252,163 +196,69 @@ export default function App() {
           </span>
         </div>
         <div className="header-context">
-          <span className="status-dot" /> Моделирование размещения пасеки{" "}
-          <span className="header-separator">/</span> Демонстрационный режим
+          <span className="status-dot" /> {tr("headerContext")}
+          {selectedScenario?.source_mode === "SYNTHETIC" && (
+            <>
+              <span className="header-separator">/</span> {tr("syntheticMode")}
+            </>
+          )}
         </div>
-        <span className="header-version">MVP · W01</span>
+        <div className="header-actions">
+          <label htmlFor="language">{tr("language")}</label>
+          <select
+            id="language"
+            value={locale}
+            onChange={(event) =>
+              setLocale(event.target.value === "en" ? "en" : "ru")
+            }
+          >
+            <option value="ru">RU</option>
+            <option value="en">EN</option>
+          </select>
+          <span className="header-version">MVP · W01</span>
+        </div>
       </header>
       <div className="workspace">
-        <aside className="controls" aria-label="Параметры исследования">
-          <div className="eyebrow">01 / ПОДГОТОВКА</div>
-          <h1>Где разместить пасеку в этом сезоне?</h1>
-          <p className="lead">
-            Сопоставьте периоды медосбора с сообщениями об обработке полей и
-            экологическими ограничениями.
-          </p>
-          <div className="demo-notice" role="note">
-            <strong>Только вымышленные данные.</strong> Это демонстрация
-            механизма, не прогноз, оповещение или подтверждение безопасности.
-          </div>
-          <div className="form-group">
-            <label htmlFor="country">Страна</label>
-            <select
-              id="country"
-              value={country}
-              onChange={(event) =>
-                chooseCountry(event.target.value === "BY" ? "BY" : "RU")
-              }
-            >
-              {(countries.length > 0
-                ? countries
-                : [
-                    {
-                      code: "RU" as const,
-                      name: "Россия (список API недоступен)",
-                    },
-                    {
-                      code: "BY" as const,
-                      name: "Беларусь (список API недоступен)",
-                    },
-                  ]
-              ).map((item) => (
-                <option key={item.code} value={item.code}>
-                  {item.code === "RU" ? "Россия" : "Беларусь"}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="territory">Территория</label>
-            <select
-              id="territory"
-              value={territory}
-              onChange={(event) => {
-                cancel();
-                setTerritory(event.target.value);
-                setResult(null);
-                setNotice(null);
-                setBusy(false);
-              }}
-            >
-              {country === "RU" && (
-                <option value={DEMO_TERRITORY}>
-                  Демо · Смоленская область (фиктивная)
-                </option>
-              )}
-              <option value="">Выберите подтверждённый регион</option>
-              {regions.map((item) => (
-                <option value={item.id} key={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-            <p className="field-help" role="status">
-              {referenceMessage}
-            </p>
-          </div>
-          <div className="form-group">
-            <label>Период размещения</label>
-            <div className="date-range">
-              <input
-                aria-label="Начало сезона"
-                type="date"
-                value={seasonStart}
-                onChange={(event) => setSeasonStart(event.target.value)}
-              />
-              <span>—</span>
-              <input
-                aria-label="Конец сезона"
-                type="date"
-                value={seasonEnd}
-                onChange={(event) => setSeasonEnd(event.target.value)}
-              />
-            </div>
-            <p className="field-help">
-              Демо поддерживает май — август 2026 года.
-            </p>
-          </div>
-          <div className="form-group">
-            <label>Исходная точка</label>
-            <p className="field-help">
-              Необязательно: нажмите на карту. Точка передаётся только в теле
-              запроса и не сохраняется в браузере.
-            </p>
-            {point && (
-              <div className="point-row">
-                <span>
-                  Точка выбрана ({point.latitude.toFixed(3)},{" "}
-                  {point.longitude.toFixed(3)})
-                </span>
-                <button type="button" onClick={() => setPoint(null)}>
-                  Очистить
-                </button>
-              </div>
-            )}
-          </div>
-          <button
-            type="button"
-            className="primary-button"
-            disabled={!canSubmit}
-            onClick={() => void begin("submit")}
-          >
-            {busy ? "Анализ выполняется…" : "Исследовать размещение"}
-            <span aria-hidden="true">↗</span>
-          </button>
-          {!canSubmit && !busy && (
-            <p className="field-help">
-              Фиктивное исследование пока доступно только для демонстрационной
-              территории RU.
-            </p>
-          )}
-          <div className="reopen">
-            <label htmlFor="reopen-id">Открыть по ID</label>
-            <div className="reopen-row">
-              <input
-                id="reopen-id"
-                placeholder="UUID исследования"
-                value={reopenId}
-                onChange={(event) => setReopenId(event.target.value)}
-              />
-              <button
-                type="button"
-                disabled={busy || !/^[0-9a-fA-F-]{36}$/.test(reopenId.trim())}
-                onClick={() => void begin("reopen")}
-              >
-                Открыть
-              </button>
-            </div>
-            <p className="field-help">
-              По умолчанию сервер хранит результаты в памяти до перезапуска.
-            </p>
-          </div>
-        </aside>
-
+        <InvestigationControls
+          locale={locale}
+          countries={countries}
+          country={country}
+          regions={regions}
+          scenarios={scenarios}
+          territory={territory}
+          scenarioId={scenarioId}
+          seasonStart={seasonStart}
+          seasonEnd={seasonEnd}
+          selectedScenario={selectedScenario}
+          point={point}
+          busy={investigation.busy}
+          canSubmit={canSubmit}
+          countryMessage={countryMessage}
+          referenceMessage={referenceMessage}
+          scenariosMessage={scenariosMessage}
+          reopenId={reopenId}
+          onCountry={chooseCountry}
+          onTerritory={chooseTerritory}
+          onScenario={chooseScenario}
+          onSeasonStart={(value) => {
+            reset();
+            setSeasonStart(value);
+          }}
+          onSeasonEnd={(value) => {
+            reset();
+            setSeasonEnd(value);
+          }}
+          onClearPoint={() => setPoint(null)}
+          onSubmit={begin}
+          onReopenId={setReopenId}
+          onReopen={() => void investigation.begin(reopenId.trim())}
+        />
         <main className="canvas-column">
-          <section className="map-section" aria-label="Карта исследования">
+          <section className="map-section" aria-label={tr("mapLabel")}>
             <div className="section-header">
               <div>
-                <span className="eyebrow">02 / ПРОСТРАНСТВО</span>
-                <h2>Карта стоянок</h2>
+                <span className="eyebrow">{tr("mapSpace")}</span>
+                <h2>{tr("mapHeading")}</h2>
               </div>
               <label className="tile-switch">
                 <input
@@ -416,61 +266,66 @@ export default function App() {
                   checked={showTiles}
                   onChange={(event) => setShowTiles(event.target.checked)}
                 />{" "}
-                Онлайн-подложка{" "}
-                <span
-                  className="tile-info"
-                  title="При включении сторонний сервис получает координаты запрошенных картографических тайлов."
-                >
+                {tr("basemap")}
+                <span className="tile-info" title={tr("basemapPrivacy")}>
                   ⓘ
                 </span>
               </label>
             </div>
             <MapPanel
+              locale={locale}
               stops={stops}
-              selectedId={selectedSite}
+              selectedId={investigation.selectedSite}
               startingPoint={point}
               showTiles={showTiles}
-              onSelect={setSelectedSite}
+              onSelect={investigation.setSelectedSite}
               onPoint={setPoint}
             />
           </section>
-          {notice && (
-            <div className={`message message-${notice.kind}`} role="status">
-              {notice.message}
+          {investigation.notice && (
+            <div
+              className={`message message-${investigation.notice.kind}`}
+              role="status"
+            >
+              {tr(investigation.notice.key, investigation.notice.values)}
             </div>
           )}
-          {result && (
+          {investigation.result && (
             <div className="result-banner" aria-live="polite">
               <strong>
-                {result.status === "COMPLETED"
-                  ? result.plan
-                    ? "Предварительный план сформирован"
-                    : "План не сформирован"
-                  : `Состояние: ${result.status}`}
+                {investigation.result.status === "COMPLETED"
+                  ? tr(investigation.result.plan ? "planReady" : "noPlan")
+                  : tr("status", { status: investigation.result.status })}
               </strong>
               <span>
-                {result.plan
-                  ? `${result.plan.stops.length} стоянки · ${result.plan.relocations} перемещения`
-                  : (result.outcome ?? "Ожидаем анализ")}
+                {investigation.result.plan
+                  ? tr("stopsCount", {
+                      count: investigation.result.plan.stops.length,
+                      moves: investigation.result.plan.relocations,
+                    })
+                  : (investigation.result.outcome ?? tr("awaiting"))}
               </span>
-              <span className="result-id">ID: {result.id}</span>
+              <span className="result-id">ID: {investigation.result.id}</span>
             </div>
           )}
           <Timeline
+            locale={locale}
             stops={stops}
-            seasonStart={result?.request.season_start ?? seasonStart}
-            seasonEnd={result?.request.season_end ?? seasonEnd}
-            selectedId={selectedSite}
-            onSelect={setSelectedSite}
+            seasonStart={
+              investigation.result?.request.season_start ?? seasonStart
+            }
+            seasonEnd={investigation.result?.request.season_end ?? seasonEnd}
+            selectedId={investigation.selectedSite}
+            onSelect={investigation.setSelectedSite}
           />
         </main>
-        <EvidencePanel result={result} selectedId={selectedSite} />
+        <EvidencePanel
+          locale={locale}
+          result={investigation.result}
+          selectedId={investigation.selectedSite}
+        />
       </div>
-      <footer className="footer-note">
-        MelliAtlas · Экспериментальная система поддержки решений. Не
-        подтверждает отсутствие химического воздействия, законность размещения
-        или безопасность стоянки.
-      </footer>
+      <footer className="footer-note">{tr("footer")}</footer>
     </div>
   );
 }

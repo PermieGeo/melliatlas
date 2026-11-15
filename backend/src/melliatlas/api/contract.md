@@ -44,3 +44,10 @@ Full versioned investigation/source endpoints, source provenance DTOs, PostGIS r
 ## Joint fictional ecology/treatment scenario (V04-06 partial)
 
 `scenario_id=synthetic-ru-2026-v04-ecology-treatment` uses the unchanged investigation POST/GET operations. Completed responses populate **both** `replanning` and `treatment_review` while `plan` is the final joint result, not either standalone intermediate proposal. `replanning.decisions` includes typed `TREATMENT_CHECK` entries with attributed record IDs alongside ecology decisions; the treatment review retains reported dates/products and screening uncertainties. A missing evaluator or malformed observation returns sanitized `FAILED` without a plan. The original V01, ecology-only and treatment-only scenario contracts are unchanged. All evidence is synthetic; no spraying occurrence, site safety, weather drift or real-world eligibility is established.
+
+
+## Read-only synthetic scenario discovery (W01 client refactor)
+
+`GET /api/v1/investigations/scenarios?country=RU|BY` returns a typed list of executable source-declared fictional scenarios, with an opaque `id`, display `name`, `country`, source-owned `territory_id` and `territory_name`, `source_mode=SYNTHETIC`, inclusive `season_start`/`season_end`, and an optional `is_default` preference. Values derive from `SyntheticFixtureProvider.list_scenarios` and actual provider-supported seasons, not client configuration. A supported country with no scenario returns `200 []`; an invalid country returns the normal `422/INVALID_REQUEST` envelope. With a custom investigation service injected, the default application advertises no fictional scenarios instead of implying execution support.
+
+This is **not** a full source registry, an approval of any territory reference, live treatment data, a safe-site guarantee or a provider discovery endpoint. Current country support is RU/BY; future country support requires backend catalog and fixture/provider implementation, but no browser-side country cases. The existing POST/GET DTOs remain unchanged.

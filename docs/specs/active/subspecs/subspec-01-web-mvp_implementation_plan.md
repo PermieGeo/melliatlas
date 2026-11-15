@@ -13,16 +13,17 @@ The selected task is a **first runnable browser vertical slice**, not a wholesal
 
 | Operation | Existing contract | Consumer behavior |
 | --- | --- | --- |
-| `GET /api/v1/territories/countries` | `list[CountryResponse]`, RU/BY; no claim of reference readiness | Show country options; region availability is separate |
+| `GET /api/v1/territories/countries` | `list[CountryResponse]`, currently RU/BY; no claim of reference readiness | Show country options; region availability is separate |
 | `GET /api/v1/territories/regions?country=RU|BY` | `list[TerritoryResponse]`; `422`, `503` | Render versioned references or a precise unavailable state |
 | `GET /api/v1/territories/districts?region_id=...` | `list[TerritoryResponse]`; `404`, `409`, `422`, `503` | Navigate only supported depth; do not make an empty list imply complete coverage |
 | `GET /api/v1/territories/geometry/{territory_id}` | `GeometryResponse` with WGS84 geometry and reference ID; `404`, `422`, `503` | Render only validated geometry; fallback to textual selection |
+| `GET /api/v1/investigations/scenarios?country=...` | `list[ScenarioListingDto]`, executed-only fictional sources; empty list means unavailable for that country | Supply selectable scenario, synthetic territory association and inclusive date bounds; never embed fixture IDs in browser code |
 | `POST /api/v1/investigations` | `InvestigationCreateDto`, returns `202` + `InvestigationResponse` | Submit season and optional private starting point in the body; retain UUID |
 | `GET /api/v1/investigations/{id}` | `InvestigationResponse`; `404`, `422`, `503` | Poll/reopen without replaying POST; stop at terminal state |
 
 `InvestigationResponse` includes `status`, nullable `outcome` and `plan`, `synthetic`, `evidence`, `limitations`, `decision_trace`, nullable `replanning` and nullable `treatment_review`. For the joint fixture, both findings are present; `replanning` includes `assessments` and typed `decisions`, while `treatment_review` includes source record IDs, reported product claims, proposed application times, proximity and warnings. The private `starting_point` occurs only in the create DTO, not the response request echo.
 
-**Concrete consumer fixture for the first slice:** `country=RU`, `territory_id=ru:region:smolensk`, `scenario_id=synthetic-ru-2026-v04-ecology-treatment`, season `2026-05-01` through `2026-08-15`. This is an explicitly synthetic RU demonstration, **not** a substitute for the unfinished RU/BY reference catalogs or source discovery API. These identifiers and dates are for the fixture selector, not hardcoded domain decisions.
+**Concrete consumer fixture for the first slice:** the backend currently advertises the joint fictional RU scenario as its default. Fixture IDs, territories and inclusive season limits are read from scenario discovery, not encoded in the UI. Discovery is independent of the unfinished RU/BY reference catalogs and does not supply real geographic coverage.
 
 Source declarations: [`api/routes_investigations.py`](../../../../backend/src/melliatlas/api/routes_investigations.py), [`api/routes_territories.py`](../../../../backend/src/melliatlas/api/routes_territories.py), [`api/contract.md`](../../../../backend/src/melliatlas/api/contract.md), [`sources/api.py`](../../../../backend/src/melliatlas/sources/api.py). Existing OpenAPI is the wire-schema source of truth. No duplicated handwritten HTTP schema may silently diverge from it.
 
@@ -50,7 +51,7 @@ Cancel in-flight requests when switching run IDs, country/territory or unmountin
 
 #### Compatibility
 
-The first slice uses only existing POST/GET operations and additive nullable response fields. No new backend endpoint is required for a fixture-only demo. Full region/district navigation, sources/scenarios discovery and true post-restart result durability are separate backend gaps, not reasons to invent data in React. Do not persist `starting_point` in URLs, browser storage, logs or telemetry. The URL may contain only an opaque investigation ID.
+The first slice uses only existing POST/GET operations and additive nullable response fields. A bounded read-only executable-scenario listing was added for W01 follow-up requirements. Full region/district navigation, live-source catalogs and true post-restart result durability remain separate backend gaps, not reasons to invent data in React. Do not persist `starting_point` in URLs, browser storage, logs or telemetry. The URL may contain only an opaque investigation ID.
 
 #### Contract-first tests
 
@@ -68,13 +69,26 @@ The first slice uses only existing POST/GET operations and additive nullable res
 
 **Approval gates:** W01 is selected for implementation. React, Leaflet, Vite, TypeScript and task-scoped test tooling are limited to the user-requested browser MVP. No feature acceptance or live-data permission is implied by implementation. Browser execution and dependency installation still require local verification.
 
+### W01 refactor — multi-country, two locales and server-driven fixtures (developer-authorized)
+
+**Requirement IDs:** `MVP01-WEB-R02`, `R04`, `R08`–`R10`. **Acceptance remains pending.**
+
+**Public contracts and integration design:** `sources.api.SyntheticFixtureProvider.list_scenarios(country)` advertises only executable fictional sources and their supported `TimeWindow`. `api.routes_investigations` maps these records to a `ScenarioListingDto` with stable `id`, `name`, `country`, `territory_id`, `territory_name`, `source_mode`, `season_start`, `season_end`, `is_default`. `GET /api/v1/investigations/scenarios?country=...` returns `200` and an empty array for countries with no scenario, and the existing `422/INVALID_REQUEST` response for unsupported country codes. For explicitly injected custom investigation services, no synthetic source is advertised without an injected scenario listing.
+
+`web/src/api/` validates the response before any scenario can be selected. The UI country code is an open ISO alpha-2 string validated at the network boundary; backend support is still governed by its declared current country catalog. The default preference is RU when offered, otherwise the first API country. Switching country aborts stale results and reloads both actual regions and executable scenarios. Scenario boundaries set the initial dates and constrain user input. An unavailable catalog is never represented as validated geography; fictional options are clearly labeled. UI-controlled text lives in a typed RU/EN dictionary, while provider-authored source claims remain unmodified for provenance.
+
+**Interaction layers:** `components/InvestigationControls.tsx` owns the input view, `hooks/useInvestigation.ts` owns bounded polling and cancellation, `notifications.ts` maps error and outcome types to translation keys, `i18n.ts` owns presentational strings. `App.tsx` composes these capabilities without country-specific feature branches or scenario identifiers. Country-specific fictional evidence remains inside `sources`, never the client. No new runtime dependencies are introduced.
+
+**Tests:** `backend/tests/contract/test_web_scenario_discovery.py` checks executable metadata, non-RU empty country, invalid country and HTTP POST compatibility. `web/tests/scenarios.test.ts`, `web/tests/i18n.test.ts`, `web/tests/workflow.test.tsx` validate wire parsing, typed translation, country switches, third-country fixture, dynamic seasons and in-flight cancellation. Existing `WEB-T001`–`WEB-T005` tests remain required. W01 acceptance still requires local TypeScript, lint, Vitest, build and browser E2E verification.
+
 ## 3. Follow-on work (do not predesign)
 
 | Order | Slice | Dependency and unresolved decision |
 | --- | --- | --- |
 | W02 | Territory navigation and validated geometry layers | Approved, complete RU/BY references and correct `409/503` handling; real data availability must be proven |
 | W03 | Treatment timelines and source transparency polish | Validate the exact server DTOs and distinguish source notices from spatial screening and unknown wind |
-| V05 backend | Source/scenario discovery and complete HTTP contract handoff | Current API does not expose `/api/v1/sources` or `/api/v1/scenarios`; plan and contract-test these on the backend workstream |
+| V05 backend | Approved source catalog and complete HTTP handoff | The new executable-fixture listing does not implement live `/api/v1/sources`, geographical discovery or verified source coverage |
 | V04 backend | Minimal typed source/analyzer execution | Required for full MVP-01 backend acceptance, but need not block the first browser demo |
 
 No generic frontend state framework, map drawing engine, Admin workspace or speculative API is part of W01.
+

@@ -1,31 +1,40 @@
-import type { Investigation } from "../api/types";
+import type { EcologyStatus, Investigation, Proximity } from "../api/types";
+import { t } from "../i18n";
+import type { Locale, TranslationKey } from "../i18n";
 
+/** Source-attributed evidence view; unknown or missing findings never imply clearance. */
 interface Props {
+  locale: Locale;
   result: Investigation | null;
   selectedId: string | null;
 }
-const proximityNames: Record<string, string> = {
-  FIELD_INTERSECTION: "Совпадает с полем",
-  NEAR_REPORTED_FIELD: "Рядом с указанным полем",
-  OUTSIDE_SCREEN_RADIUS: "Вне радиуса предварительной проверки",
-  UNKNOWN_GEOMETRY: "Геометрия неизвестна",
-  OUTSIDE_STATED_PERIOD: "Вне указанного периода",
-  UNKNOWN_PERIOD: "Период неизвестен",
+
+const ecologyKeys: Record<EcologyStatus, TranslationKey> = {
+  EXCLUDED: "ecologyExcluded",
+  CAUTION: "ecologyCaution",
+  UNKNOWN: "ecologyUnknown",
+  ELIGIBLE: "ecologyEligible",
 };
 
-export function EvidencePanel({ result, selectedId }: Props) {
+const proximityKeys: Record<Proximity, TranslationKey> = {
+  FIELD_INTERSECTION: "proximityIntersection",
+  NEAR_REPORTED_FIELD: "proximityNear",
+  OUTSIDE_SCREEN_RADIUS: "proximityOutside",
+  UNKNOWN_GEOMETRY: "proximityUnknownGeometry",
+  OUTSIDE_STATED_PERIOD: "proximityOutsidePeriod",
+  UNKNOWN_PERIOD: "proximityUnknownPeriod",
+};
+
+/** Presents server-authored observations verbatim while translating all UI chrome. */
+export function EvidencePanel({ result, selectedId, locale }: Props) {
+  const tr = (key: TranslationKey, values?: Record<string, string | number>) =>
+    t(locale, key, values);
   if (result === null) {
     return (
-      <aside className="evidence-panel" aria-label="Сведения и ограничения">
-        <h2>Почему предлагается стоянка</h2>
-        <p className="muted">
-          После исследования здесь появятся исходные сообщения, результаты
-          проверки и причины выбора альтернатив.
-        </p>
-        <p className="warning-text">
-          Отсутствие сведений об обработках никогда не означает отсутствие
-          риска.
-        </p>
+      <aside className="evidence-panel" aria-label={tr("evidenceLabel")}>
+        <h2>{tr("why")}</h2>
+        <p className="muted">{tr("evidenceEmpty")}</p>
+        <p className="warning-text">{tr("noEvidenceIsNotSafe")}</p>
       </aside>
     );
   }
@@ -37,58 +46,62 @@ export function EvidencePanel({ result, selectedId }: Props) {
       (entry) => entry.site_id === selectedId,
     ) ?? [];
   return (
-    <aside className="evidence-panel" aria-label="Сведения и ограничения">
+    <aside className="evidence-panel" aria-label={tr("evidenceLabel")}>
       <div className="evidence-heading">
-        <h2>Основания решения</h2>
-        <span className="tag tag-synthetic">
-          FIXTURE · синтетические данные
-        </span>
+        <h2>{tr("evidenceHeading")}</h2>
+        {result.synthetic && (
+          <span className="tag tag-synthetic">{tr("evidenceSynthetic")}</span>
+        )}
       </div>
       <p className="muted">
-        Исследование {result.id.slice(0, 8)} · {result.status}
+        {tr("investigation", {
+          id: result.id.slice(0, 8),
+          status: result.status,
+        })}
       </p>
       {selectedId && (
         <p className="selected-caption">
-          Стоянка: <strong>{selectedId}</strong>
+          {tr("selectedSite")} <strong>{selectedId}</strong>
         </p>
       )}
-
       <section className="evidence-section">
-        <h3>Химические обработки</h3>
+        <h3>{tr("treatments")}</h3>
         {screenings.length === 0 ? (
-          <p className="muted">
-            Для выбранной стоянки нет отдельного уведомления в результатах. Это
-            не подтверждение безопасности.
-          </p>
+          <p className="muted">{tr("noTreatment")}</p>
         ) : (
           screenings.map((entry) => (
             <div
               className="evidence-record"
-              key={`${entry.site_id}:${entry.source_record_id}`}
+              key={`${entry.site_id}:${entry.source_id}:${entry.source_record_id}`}
             >
-              <strong>
-                {proximityNames[entry.proximity] ?? entry.proximity}
-              </strong>
+              <strong>{tr(proximityKeys[entry.proximity])}</strong>
               <p>
-                Заявленный период:{" "}
-                {entry.scheduled_start?.slice(0, 10) ?? "неизвестен"} —{" "}
-                {entry.scheduled_end?.slice(0, 10) ?? "неизвестен"}
+                {tr("proposedWindow", {
+                  start:
+                    entry.scheduled_start?.slice(0, 10) ?? tr("unknownValue"),
+                  end: entry.scheduled_end?.slice(0, 10) ?? tr("unknownValue"),
+                })}
               </p>
               <p>
-                Источник: <code>{entry.source_id}</code>, запись{" "}
-                <code>{entry.source_record_id}</code>
+                {tr("source", {
+                  source: entry.source_id,
+                  record: entry.source_record_id,
+                })}
               </p>
               {entry.products.map((product, index) => (
                 <p key={index}>
-                  Препарат: {product.name ?? "не указан"}; культура:{" "}
-                  {product.crop ?? "не указана"}; заявленный класс опасности для
-                  пчёл: {product.bee_hazard_class ?? "неизвестен"}
+                  {tr("product", {
+                    name: product.name ?? tr("missingValue"),
+                    crop: product.crop ?? tr("missingValue"),
+                    hazard: product.bee_hazard_class ?? tr("unknownValue"),
+                  })}
                 </p>
               ))}
               {entry.approximate_distance_km !== null && (
                 <p>
-                  Приблизительное расстояние:{" "}
-                  {entry.approximate_distance_km.toFixed(1)} км
+                  {tr("approximateDistance", {
+                    distance: entry.approximate_distance_km.toFixed(1),
+                  })}
                 </p>
               )}
               {entry.warnings.map((warning) => (
@@ -102,17 +115,17 @@ export function EvidencePanel({ result, selectedId }: Props) {
         {result.treatment_review &&
           result.treatment_review.avoided_site_ids.length > 0 && (
             <p className="warning-text">
-              После проверки обработок рассмотрены альтернативы вместо:{" "}
-              {result.treatment_review.avoided_site_ids.join(", ")}
+              {tr("avoidedSites", {
+                sites: result.treatment_review.avoided_site_ids.join(", "),
+              })}
             </p>
           )}
       </section>
-
       <section className="evidence-section">
-        <h3>Экология</h3>
+        <h3>{tr("ecology")}</h3>
         {assessment ? (
           <div className="evidence-record">
-            <span className="tag">{assessment.status}</span>
+            <span className="tag">{tr(ecologyKeys[assessment.status])}</span>
             {assessment.reasons.map((reason) => (
               <p key={reason}>{reason}</p>
             ))}
@@ -122,22 +135,22 @@ export function EvidencePanel({ result, selectedId }: Props) {
               </p>
             ))}
             <p className="muted">
-              Правила: {assessment.rule_ids.join(", ") || "не определены"}
+              {tr("rules", {
+                value: assessment.rule_ids.join(", ") || tr("noneDefined"),
+              })}
             </p>
             <p className="muted">
-              Доказательства:{" "}
-              {assessment.evidence_ids.join(", ") || "не указаны"}
+              {tr("evidenceIds", {
+                value: assessment.evidence_ids.join(", ") || tr("noneReported"),
+              })}
             </p>
           </div>
         ) : (
-          <p className="muted">
-            Для этой стоянки нет отдельной экологической оценки.
-          </p>
+          <p className="muted">{tr("noEcology")}</p>
         )}
       </section>
-
       <section className="evidence-section">
-        <h3>История решений</h3>
+        <h3>{tr("decisions")}</h3>
         <ol className="decision-list">
           {(result.replanning?.decisions ?? []).map((decision, index) => (
             <li key={`${decision.kind}:${index}`}>
@@ -152,9 +165,8 @@ export function EvidencePanel({ result, selectedId }: Props) {
           ))}
         </ol>
       </section>
-
       <section className="evidence-section">
-        <h3>Источники и ограничения</h3>
+        <h3>{tr("sourcesAndLimits")}</h3>
         <ul className="evidence-list">
           {result.evidence.map((entry) => (
             <li key={entry.id}>
