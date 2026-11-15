@@ -13,6 +13,27 @@ const en = {
     "This illustrates the workflow, not a forecast, warning or safety clearance.",
   country: "Country",
   language: "Language",
+  referenceHeading: "Reference geography",
+  referenceHelp:
+    "Administrative boundaries are independent of synthetic study results.",
+  referenceRegion: "Referenced region",
+  referenceDistrict: "Supported district",
+  referenceSelectRegion: "Select a region",
+  referenceSelectDistrict: "No district selected",
+  referenceDistrictLoading: "Loading districts…",
+  referenceDistrictUnsupported:
+    "District depth is unsupported for this region (HTTP 409).",
+  referenceDistrictUnavailable:
+    "District catalog unavailable; coverage is unverified.",
+  referenceDistrictEmpty: "No districts listed; coverage is unverified.",
+  referenceDistrictAvailable: "District catalog returned by the API.",
+  referenceGeometryLoading: "Loading boundary…",
+  referenceGeometryMissing: "No validated geometry for this territory.",
+  referenceGeometryInvalid: "The reference geometry is marked invalid.",
+  referenceGeometryUnavailable: "Cannot load a validated boundary.",
+  referenceGeometryAvailable:
+    "Showing reference boundary, not an analysis result.",
+  referenceVersion: "Reference version",
   territory: "Territory",
   scenario: "Analysis source",
   selectCountry: "Loading countries…",
@@ -144,6 +165,29 @@ const ru: Record<keyof typeof en, string> = {
     "Это демонстрация механизма, не прогноз, оповещение или подтверждение безопасности.",
   country: "Страна",
   language: "Язык",
+  referenceHeading: "Географический справочник",
+  referenceHelp:
+    "Административные границы загружаются отдельно от синтетического исследования.",
+  referenceRegion: "Проверенный регион",
+  referenceDistrict: "Поддерживаемый район",
+  referenceSelectRegion: "Выберите регион",
+  referenceSelectDistrict: "Без выбора района",
+  referenceDistrictLoading: "Загрузка районов…",
+  referenceDistrictUnsupported:
+    "Районы этого региона не поддерживаются (HTTP 409).",
+  referenceDistrictUnavailable:
+    "Список районов недоступен; полнота данных не подтверждена.",
+  referenceDistrictEmpty:
+    "Районы не перечислены; полнота данных не подтверждена.",
+  referenceDistrictAvailable: "Список районов получен от API.",
+  referenceGeometryLoading: "Загрузка границы…",
+  referenceGeometryMissing:
+    "Для выбранной территории нет проверенной геометрии.",
+  referenceGeometryInvalid: "Геометрия отмечена как некорректная.",
+  referenceGeometryUnavailable: "Невозможно загрузить проверенную границу.",
+  referenceGeometryAvailable:
+    "Отображается граница из справочника, не результат анализа.",
+  referenceVersion: "Версия справочника",
   territory: "Территория",
   scenario: "Источник анализа",
   selectCountry: "Получаем список стран…",

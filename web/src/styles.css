@@ -591,3 +591,18 @@ h3 {
     display: none;
   }
 }
+
+.reference-navigation {
+  border-top: 1px solid #e4e9e2;
+  border-bottom: 1px solid #e4e9e2;
+  padding: 14px 0 5px;
+  margin: 4px 0 18px;
+}
+.reference-navigation h3 {
+  margin-bottom: 6px;
+}
+.reference-provenance {
+  overflow-wrap: anywhere;
+  font-size: 0.73rem;
+  color: #526a91;
+}

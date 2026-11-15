@@ -81,6 +81,16 @@ The first slice uses only existing POST/GET operations and additive nullable res
 
 **Tests:** `backend/tests/contract/test_web_scenario_discovery.py` checks executable metadata, non-RU empty country, invalid country and HTTP POST compatibility. `web/tests/scenarios.test.ts`, `web/tests/i18n.test.ts`, `web/tests/workflow.test.tsx` validate wire parsing, typed translation, country switches, third-country fixture, dynamic seasons and in-flight cancellation. Existing `WEB-T001`–`WEB-T005` tests remain required. W01 acceptance still requires local TypeScript, lint, Vitest, build and browser E2E verification.
 
+### W01 R02 — read-only territory reference navigation (implementation increment)
+
+**Requirement and oracle:** `MVP01-WEB-R02` / `MVP01-WEB-A06`, partial pending approved reference catalogs. Implement against existing `GET /api/v1/territories/regions`, `/districts`, and `/geometry/{territory_id}` with no backend contract changes.
+
+**Public contracts and integration design:** `web/src/api/types.ts` defines `TerritoryGeometry` and Polygon/MultiPolygon WGS84 wire structures; `validation.ts` strictly decodes coordinates, rings and CRS. `client.ts` exposes `getTerritoryGeometry(territoryId, signal): Promise<ApiResult<TerritoryGeometry>>`; `listDistricts` remains unchanged. The view-level `useTerritoryReference(country, regions)` owns cancellable district and geometry reads, ID/version matching and explicit `404/409/503` presentation states. `ReferenceControls` is a separate reference selector; the fictional scenario selector never treats administrative catalogs as executable sources. `MapPanel` renders only a returned, validated reference polygon; external map tiles remain opt-in.
+
+**Contract tests:** `web/tests/reference-geometry.test.ts` checks Polygon/MultiPolygon decoding, malformed coordinates, CRS and encoded IDs. `web/tests/reference-navigation.test.tsx` checks a reference region and district, unsupported depth, missing/mismatched geometry, country switching and separation from investigation POSTs. No complete RU/BY inventory, real spatial audit, or post-import country coverage is claimed.
+
+**Acceptance gate:** use independently approved actual reference snapshots and real browser checks before declaring `MVP01-WEB-A06` complete. Retain the selected W01 workstream; do not change `STATE.json` or begin full W02.
+
 ## 3. Follow-on work (do not predesign)
 
 | Order | Slice | Dependency and unresolved decision |

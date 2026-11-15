@@ -2,6 +2,9 @@ import type {
   Assessment,
   Country,
   CountryCode,
+  GeoPosition,
+  ReferenceShape,
+  TerritoryGeometry,
   Decision,
   Evidence,
   Investigation,
@@ -186,6 +189,71 @@ export function decodeTerritories(value: unknown): Territory[] {
     };
   });
 }
+/** Decode a WGS84 polygon response without trusting backend JSON shapes implicitly. */
+function position(value: unknown, field: string): GeoPosition {
+  if (!Array.isArray(value) || value.length !== 2) throw new WireError(field);
+  const longitude = numeric(value[0], `${field}[0]`);
+  const latitude = numeric(value[1], `${field}[1]`);
+  if (Math.abs(longitude) > 180 || Math.abs(latitude) > 90)
+    throw new WireError(field);
+  return [longitude, latitude];
+}
+function ring(value: unknown, field: string): GeoPosition[] {
+  const positions = list(value, field, position);
+  if (positions.length < 4) throw new WireError(field);
+  const first = positions[0];
+  const last = positions[positions.length - 1];
+  if (!first || !last || first[0] !== last[0] || first[1] !== last[1])
+    throw new WireError(field);
+  return positions;
+}
+function polygonCoordinates(value: unknown, field: string): GeoPosition[][] {
+  const rings = list(value, field, ring);
+  if (!rings.length) throw new WireError(field);
+  return rings;
+}
+function referenceShape(value: unknown, field: string): ReferenceShape {
+  const object = record(value, field);
+  if (object.type === "Polygon") {
+    return {
+      type: "Polygon",
+      coordinates: polygonCoordinates(
+        object.coordinates,
+        `${field}.coordinates`,
+      ),
+    };
+  }
+  if (object.type === "MultiPolygon") {
+    const polygons = list(
+      object.coordinates,
+      `${field}.coordinates`,
+      polygonCoordinates,
+    );
+    if (!polygons.length) throw new WireError(field);
+    return { type: "MultiPolygon", coordinates: polygons };
+  }
+  throw new WireError(`${field}.type`);
+}
+export function decodeTerritoryGeometry(value: unknown): TerritoryGeometry {
+  const object = record(value, "territoryGeometry");
+  return {
+    territory_id: nonEmpty(
+      object.territory_id,
+      "territoryGeometry.territory_id",
+    ),
+    reference_id: nonEmpty(
+      object.reference_id,
+      "territoryGeometry.reference_id",
+    ),
+    coordinate_system: oneOf(
+      object.coordinate_system,
+      "territoryGeometry.coordinate_system",
+      ["EPSG:4326"],
+    ),
+    geometry: referenceShape(object.geometry, "territoryGeometry.geometry"),
+  };
+}
+
 function stop(value: unknown, path: string): Stop {
   const v = record(value, path);
   const longitude = numeric(v.longitude, `${path}.longitude`);

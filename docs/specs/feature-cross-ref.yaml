@@ -200,6 +200,11 @@ features:
     owners:
       - web/src/components/MapPanel.tsx
       - web/src/components/Timeline.tsx
+      - web/src/components/ReferenceControls.tsx
+      - web/src/hooks/useTerritoryReference.ts
+      - web/src/api/client.ts
     test_files:
       - web/tests/workflow.test.tsx
+      - web/tests/reference-geometry.test.ts
+      - web/tests/reference-navigation.test.tsx
 

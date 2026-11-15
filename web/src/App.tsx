@@ -12,6 +12,7 @@ import { EvidencePanel } from "./components/EvidencePanel";
 import { MapPanel } from "./components/MapPanel";
 import { Timeline } from "./components/Timeline";
 import { useInvestigation } from "./hooks/useInvestigation";
+import { useTerritoryReference } from "./hooks/useTerritoryReference";
 import { t } from "./i18n";
 import type { Locale, TranslationKey } from "./i18n";
 
@@ -38,6 +39,7 @@ export default function App() {
   const [showTiles, setShowTiles] = useState(false);
   const [reopenId, setReopenId] = useState("");
   const investigation = useInvestigation();
+  const referenceNavigation = useTerritoryReference(country, regions);
   const { reset } = investigation;
   const tr = (key: TranslationKey, values?: Record<string, string | number>) =>
     t(locale, key, values);
@@ -77,6 +79,14 @@ export default function App() {
     void listRegions(country, controller.signal).then((response) => {
       if (controller.signal.aborted) return;
       if (response.kind === "ok") {
+        if (
+          response.data.some(
+            (item) => item.country !== country || item.kind !== "region",
+          )
+        ) {
+          setReferenceMessage("regionsFailure");
+          return;
+        }
         setRegions(response.data);
         setReferenceMessage(
           response.data.length === 0 ? "emptyRegions" : "availableRegions",
@@ -224,6 +234,7 @@ export default function App() {
           countries={countries}
           country={country}
           regions={regions}
+          referenceNavigation={referenceNavigation}
           scenarios={scenarios}
           territory={territory}
           scenarioId={scenarioId}
@@ -278,6 +289,7 @@ export default function App() {
               selectedId={investigation.selectedSite}
               startingPoint={point}
               showTiles={showTiles}
+              referenceGeometry={referenceNavigation.geometry}
               onSelect={investigation.setSelectedSite}
               onPoint={setPoint}
             />

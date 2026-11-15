@@ -59,3 +59,7 @@ The client calls `GET /api/v1/investigations/scenarios?country=...` to list only
 The backend must be started with `MELLIATLAS_SOURCE_PROVIDER=synthetic` for the
 fictional W01 investigation demo. Without this explicit choice, scenario discovery
 returns no executable entries and the workspace shows its unavailable state.
+
+## W01 reference navigation (partial R02)
+
+The reference region/district navigation is independent of synthetic scenario selection. It uses the existing territory catalog and WGS84 geometry API. Once a validated reference dataset is explicitly loaded on the backend, selecting a region displays its published geometry and only supported district options; selecting a district displays its own boundary. HTTP `409` means district depth is unsupported; `404` means geometry is missing; `503` means the catalog is unavailable. Older country/territory requests are cancelled and cannot draw a stale boundary. The map displays the reference ID and never invents boundaries when no references are installed. This does not establish full RU/BY inventory approval or W02 acceptance.

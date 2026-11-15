@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import type { Position, Stop } from "../api/types";
+import type { Position, Stop, TerritoryGeometry } from "../api/types";
 import { t } from "../i18n";
 import type { Locale } from "../i18n";
 
@@ -11,6 +11,7 @@ interface Props {
   selectedId: string | null;
   startingPoint: Position | null;
   showTiles: boolean;
+  referenceGeometry: TerritoryGeometry | null;
   onSelect: (siteId: string) => void;
   onPoint: (point: Position) => void;
 }
@@ -22,6 +23,7 @@ export function MapPanel({
   selectedId,
   startingPoint,
   showTiles,
+  referenceGeometry,
   onSelect,
   onPoint,
 }: Props) {
@@ -29,6 +31,7 @@ export function MapPanel({
   const map = useRef<L.Map | null>(null);
   const overlays = useRef<L.LayerGroup | null>(null);
   const tiles = useRef<L.TileLayer | null>(null);
+  const boundaryLayer = useRef<L.GeoJSON | null>(null);
   const pointCallback = useRef(onPoint);
   pointCallback.current = onPoint;
 
@@ -53,6 +56,7 @@ export function MapPanel({
       map.current = null;
       overlays.current = null;
       tiles.current = null;
+      boundaryLayer.current = null;
     };
   }, []);
 
@@ -119,6 +123,30 @@ export function MapPanel({
       instance.fitBounds(bounds.pad(0.3), { maxZoom: 11, animate: false });
     }
   }, [locale, onSelect, selectedId, startingPoint, stops]);
+
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance) return;
+    if (boundaryLayer.current) {
+      instance.removeLayer(boundaryLayer.current);
+      boundaryLayer.current = null;
+    }
+    if (!referenceGeometry) return;
+    // Only the validated server reference is used to draw administrative geometry.
+    const boundary = L.geoJSON(referenceGeometry.geometry, {
+      style: {
+        color: "#6475a2",
+        weight: 2,
+        fillColor: "#9aa7cf",
+        fillOpacity: 0.14,
+      },
+      interactive: false,
+    }).addTo(instance);
+    boundaryLayer.current = boundary;
+    if (!stops.length && startingPoint === null) {
+      instance.fitBounds(boundary.getBounds(), { animate: false });
+    }
+  }, [referenceGeometry, stops.length, startingPoint]);
 
   return (
     <div className="map-shell">

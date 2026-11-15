@@ -3,6 +3,7 @@ import {
   decodeInvestigation,
   decodeScenarios,
   decodeTerritories,
+  decodeTerritoryGeometry,
   WireError,
 } from "./validation";
 import type {
@@ -12,6 +13,7 @@ import type {
   InvestigationCreate,
   ScenarioListing,
   Territory,
+  TerritoryGeometry,
 } from "./types";
 
 export type ApiResult<T> =
@@ -142,6 +144,17 @@ export function listDistricts(
     `/api/v1/territories/districts?region_id=${encodeURIComponent(regionId)}`,
     signal,
     decodeTerritories,
+  );
+}
+/** Read a validated WGS84 reference shape; no synthetic fallbacks. */
+export function getTerritoryGeometry(
+  territoryId: string,
+  signal: AbortSignal,
+): Promise<ApiResult<TerritoryGeometry>> {
+  return request(
+    `/api/v1/territories/geometry/${encodeURIComponent(territoryId)}`,
+    signal,
+    decodeTerritoryGeometry,
   );
 }
 /** Discover actual executable scenarios; an empty list means none for that country. */
