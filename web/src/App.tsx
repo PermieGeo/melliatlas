@@ -326,12 +326,20 @@ export default function App() {
               <span className="result-id">ID: {investigation.result.id}</span>
             </div>
           )}
-          <SaturnPanel
-            locale={locale}
-            country={country}
-            onNotices={setSaturnNotices}
-          />
-          <WeatherPanel locale={locale} country={country} point={point} />
+          <section
+            id="live-sources"
+            className="live-sources-section"
+            aria-label={tr("liveSourcesHeading")}
+          >
+            <h2>{tr("liveSourcesHeading")}</h2>
+            <p className="field-help">{tr("liveSourcesAvailability")}</p>
+            <SaturnPanel
+              locale={locale}
+              country={country}
+              onNotices={setSaturnNotices}
+            />
+            <WeatherPanel locale={locale} country={country} point={point} />
+          </section>
           <Timeline
             locale={locale}
             stops={stops}

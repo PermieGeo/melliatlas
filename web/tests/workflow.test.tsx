@@ -203,14 +203,20 @@ it("disables an unsupported BY demonstration and ignores a stale result after co
   fireEvent.change(screen.getByLabelText("Страна"), {
     target: { value: "BY" },
   });
+  await waitFor(() =>
+    expect(
+      screen.getByText(/Демонстрационный планировщик отключён/),
+    ).toBeTruthy(),
+  );
+  expect(screen.queryByLabelText("Территория")).toBeNull();
   expect(
-    (
-      screen.getByRole("button", {
-        name: /Исследовать размещение/,
-      }) as HTMLButtonElement
-    ).disabled,
-  ).toBe(true);
-  await waitFor(() => expect(screen.getByLabelText("Территория")).toBeTruthy());
+    screen.queryByRole("button", { name: /Исследовать размещение/ }),
+  ).toBeNull();
+  expect(
+    screen
+      .getByRole("link", { name: "Перейти к реальным источникам" })
+      .getAttribute("href"),
+  ).toBe("#live-sources");
 });
 
 it("ignores a delayed completed response after the user changes country", async () => {
@@ -263,13 +269,11 @@ it("ignores a delayed completed response after the user changes country", async 
   await waitFor(() =>
     expect(screen.queryByText(/Предварительный план сформирован/)).toBeNull(),
   );
-  expect(
-    (
-      screen.getByRole("button", {
-        name: /Исследовать размещение/,
-      }) as HTMLButtonElement
-    ).disabled,
-  ).toBe(true);
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: /Исследовать размещение/ }),
+    ).toBeNull(),
+  );
 });
 
 it("distinguishes completed insufficient evidence from a backend failure", async () => {
@@ -399,4 +403,104 @@ it("uses server-supplied country, scenario, territory and season without RU-spec
     season_start: "2030-06-01",
     season_end: "2030-09-15",
   });
+});
+
+it("keeps RU Saturn and RU/BY weather accessible without synthetic scenarios or regional references", async () => {
+  const calls: string[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      calls.push(input);
+      if (input === "/api/v1/territories/countries") {
+        return new Response(
+          JSON.stringify([
+            { code: "RU", name: "Russia" },
+            { code: "BY", name: "Belarus" },
+          ]),
+        );
+      }
+      if (input.startsWith("/api/v1/territories/regions")) {
+        return new Response(
+          JSON.stringify({
+            error: {
+              code: "TERRITORY_REFERENCE_UNAVAILABLE",
+              message: "Not loaded",
+            },
+          }),
+          { status: 503 },
+        );
+      }
+      if (input.startsWith("/api/v1/investigations/scenarios?")) {
+        return new Response(JSON.stringify([]));
+      }
+      if (input.startsWith("/api/v1/sources?")) {
+        const country = input.includes("country=BY") ? "BY" : "RU";
+        return new Response(
+          JSON.stringify([
+            {
+              id: "open-meteo",
+              country,
+              kind: "WEATHER_FORECAST",
+              mode: "LIVE",
+              status: "EXPERIMENTAL",
+            },
+            ...(country === "RU"
+              ? [
+                  {
+                    id: "saturn",
+                    country,
+                    kind: "TREATMENT_NOTICE",
+                    mode: "LIVE",
+                    status: "EXPERIMENTAL",
+                  },
+                ]
+              : []),
+          ]),
+        );
+      }
+      return new Response(null, { status: 404 });
+    }),
+  );
+  render(<App />);
+  expect(
+    await screen.findByRole("heading", {
+      level: 2,
+      name: "Реальные источники данных",
+    }),
+  ).toBeTruthy();
+  await screen.findByRole("heading", {
+    name: "Сатурн: сообщения об обработках",
+  });
+  await screen.findByRole("heading", { name: /Прогноз погоды/ });
+  expect(screen.queryByLabelText("Территория")).toBeNull();
+  expect(
+    screen
+      .getByRole("link", { name: "Перейти к реальным источникам" })
+      .getAttribute("href"),
+  ).toBe("#live-sources");
+  expect(
+    screen.getByLabelText("Проверенный регион").hasAttribute("disabled"),
+  ).toBe(true);
+  fireEvent.click(screen.getByText("Выбрать исходную точку"));
+  expect(
+    screen
+      .getByRole("button", { name: "Загрузить прогноз на 24 часа" })
+      .hasAttribute("disabled"),
+  ).toBe(false);
+  fireEvent.change(screen.getByLabelText("Страна"), {
+    target: { value: "BY" },
+  });
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("heading", {
+        name: "Сатурн: сообщения об обработках",
+      }),
+    ).toBeNull(),
+  );
+  expect(
+    await screen.findByRole("heading", { name: /Прогноз погоды/ }),
+  ).toBeTruthy();
+  expect(
+    calls.filter((url) => url === "/api/v1/sources/saturn/treatments"),
+  ).toHaveLength(0);
 });

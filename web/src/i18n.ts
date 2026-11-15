@@ -2,12 +2,12 @@
 export type Locale = "ru" | "en";
 
 const en = {
-  headerContext: "Apiary placement planning",
+  headerContext: "Environmental source explorer",
   syntheticMode: "Synthetic source",
   setup: "01 / SETUP",
-  heading: "Where should the apiary move this season?",
+  heading: "Explore sources around your apiary",
   introduction:
-    "Compare forage periods with reported field treatments and ecological restrictions.",
+    "Read available treatment notices and weather forecasts. Fictional planning is a separate optional mode.",
   syntheticTitle: "Fictional data only.",
   syntheticDisclaimer:
     "This illustrates the workflow, not a forecast, warning or safety clearance.",
@@ -15,7 +15,7 @@ const en = {
   language: "Language",
   referenceHeading: "Reference geography",
   referenceHelp:
-    "Administrative boundaries are independent of synthetic study results.",
+    "Verified region boundaries require an imported reference catalog; this does not affect the live sources below.",
   referenceRegion: "Referenced region",
   referenceDistrict: "Supported district",
   referenceSelectRegion: "Select a region",
@@ -34,6 +34,15 @@ const en = {
   referenceGeometryAvailable:
     "Showing reference boundary, not an analysis result.",
   referenceVersion: "Reference version",
+  liveSourcesHeading: "Live data sources",
+  liveSourcesHelp:
+    "The country determines available providers. A missing region catalog does not prevent a manual Saturn read or weather for a selected map point.",
+  liveSourcesJump: "Open live data sources",
+  liveSourcesAvailability:
+    "Only providers enabled on the server will appear. Missing data cannot be interpreted as no risk.",
+  demoWorkflowHeading: "Optional fictional investigation",
+  demoWorkflowUnavailable:
+    "Fictional planning is disabled. Live sources remain usable without a scenario, territory or season.",
   saturnTitle: "Saturn: public treatment notices",
   saturnCode: "Saturn subject code",
   saturnCodeHint:
@@ -78,8 +87,7 @@ const en = {
   countriesEmpty: "No countries are available from the API.",
   selectTerritory: "Select a territory",
   selectScenario: "Select an available scenario",
-  noScenarios:
-    "No executable scenarios are available for the selected country or territory.",
+  noScenarios: "No executable fictional scenarios are available.",
   loadingScenarios: "Loading available scenarios…",
   scenarioFailure: "Cannot load available scenarios: {reason}",
   loadingCountries: "Loading country list…",
@@ -90,7 +98,7 @@ const en = {
     "No verified regions are listed. This does not confirm complete geographic coverage.",
   availableRegions: "Regions from the current API reference are shown.",
   unavailableRegions:
-    "Regional boundaries and listings are not available (HTTP 503). Synthetic sources are listed separately.",
+    "Regional reference is not loaded (HTTP 503). Saturn and weather can be used separately.",
   season: "Placement period",
   seasonStart: "Season start",
   seasonEnd: "Season end",
@@ -192,12 +200,12 @@ const en = {
 } as const;
 
 const ru: Record<keyof typeof en, string> = {
-  headerContext: "Моделирование размещения пасеки",
+  headerContext: "Исследование данных для пчеловода",
   syntheticMode: "Синтетический источник",
   setup: "01 / ПОДГОТОВКА",
-  heading: "Где разместить пасеку в этом сезоне?",
+  heading: "Изучение данных вокруг пасеки",
   introduction:
-    "Сопоставьте периоды медосбора с сообщениями об обработке полей и экологическими ограничениями.",
+    "Проверяйте доступные сообщения об обработках и прогноз погоды. Демонстрационное планирование — отдельный режим.",
   syntheticTitle: "Только вымышленные данные.",
   syntheticDisclaimer:
     "Это демонстрация механизма, не прогноз, оповещение или подтверждение безопасности.",
@@ -205,7 +213,7 @@ const ru: Record<keyof typeof en, string> = {
   language: "Язык",
   referenceHeading: "Географический справочник",
   referenceHelp:
-    "Административные границы загружаются отдельно от синтетического исследования.",
+    "Проверенные регионы требуют загруженного справочника. Это не мешает работе реальных источников ниже.",
   referenceRegion: "Проверенный регион",
   referenceDistrict: "Поддерживаемый район",
   referenceSelectRegion: "Выберите регион",
@@ -226,6 +234,15 @@ const ru: Record<keyof typeof en, string> = {
   referenceGeometryAvailable:
     "Отображается граница из справочника, не результат анализа.",
   referenceVersion: "Версия справочника",
+  liveSourcesHeading: "Реальные источники данных",
+  liveSourcesHelp:
+    "Доступные источники зависят от страны. Отсутствие справочника регионов не мешает запросу Saturn по коду или погоды по точке на карте.",
+  liveSourcesJump: "Перейти к реальным источникам",
+  liveSourcesAvailability:
+    "Показываются только источники, включённые на сервере. Отсутствие данных не означает отсутствие риска.",
+  demoWorkflowHeading: "Необязательное демонстрационное исследование",
+  demoWorkflowUnavailable:
+    "Демонстрационный планировщик отключён. Для реальных источников сценарий, территория и сезон не требуются.",
   saturnTitle: "Сатурн: сообщения об обработках",
   saturnCode: "Код субъекта в Сатурн",
   saturnCodeHint:
@@ -283,7 +300,7 @@ const ru: Record<keyof typeof en, string> = {
     "Справочник не содержит подтверждённых регионов. Это не сведения о полном покрытии.",
   availableRegions: "Показаны регионы из текущего API-справочника.",
   unavailableRegions:
-    "Границы и перечень регионов пока не загружены (HTTP 503). Синтетические источники доступны отдельно.",
+    "Границы и перечень регионов пока не загружены (HTTP 503). Saturn и погода работают независимо.",
   season: "Период размещения",
   seasonStart: "Начало сезона",
   seasonEnd: "Конец сезона",

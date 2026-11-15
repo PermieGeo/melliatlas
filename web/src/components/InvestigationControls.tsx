@@ -10,7 +10,7 @@ import type { TerritoryNavigation } from "../hooks/useTerritoryReference";
 import { countryName, t } from "../i18n";
 import type { Locale, TranslationKey } from "../i18n";
 
-/** Inputs for one investigation. Source capabilities and dates are supplied by the API. */
+/** Controls for live-source discovery and optional server-advertised fictional studies. */
 interface Props {
   locale: Locale;
   countries: Country[];
@@ -70,11 +70,6 @@ export function InvestigationControls(props: Props) {
       <div className="eyebrow">{tr("setup")}</div>
       <h1>{tr("heading")}</h1>
       <p className="lead">{tr("introduction")}</p>
-      {selectedScenario?.source_mode === "SYNTHETIC" && (
-        <div className="demo-notice" role="note">
-          <strong>{tr("syntheticTitle")}</strong> {tr("syntheticDisclaimer")}
-        </div>
-      )}
       <div className="form-group">
         <label htmlFor="country">{tr("country")}</label>
         <select
@@ -98,79 +93,20 @@ export function InvestigationControls(props: Props) {
           </p>
         )}
       </div>
-      <div className="form-group">
-        <label htmlFor="territory">{tr("territory")}</label>
-        <select
-          id="territory"
-          value={territory}
-          onChange={(event) => props.onTerritory(event.target.value)}
-        >
-          <option value="">{tr("selectTerritory")}</option>
-          {syntheticTerritories.map(([id, name]) => (
-            <option key={`synthetic:${id}`} value={id}>
-              {tr("syntheticMode")} · {name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <section
+        className="live-source-navigation"
+        aria-label={tr("liveSourcesHeading")}
+      >
+        <h3>{tr("liveSourcesHeading")}</h3>
+        <p className="field-help">{tr("liveSourcesHelp")}</p>
+        <a href="#live-sources">{tr("liveSourcesJump")}</a>
+      </section>
       <ReferenceControls
         locale={locale}
         regions={regions}
         navigation={props.referenceNavigation}
         catalogMessage={props.referenceMessage}
       />
-      <div className="form-group">
-        <label htmlFor="scenario">{tr("scenario")}</label>
-        <select
-          id="scenario"
-          value={scenarioId}
-          onChange={(event) => props.onScenario(event.target.value)}
-        >
-          <option value="">{tr("selectScenario")}</option>
-          {scenarios
-            .filter((item) => item.territory_id === territory)
-            .map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-        </select>
-        <p className="field-help" role="status">
-          {tr(props.scenariosMessage)}
-        </p>
-      </div>
-      <div className="form-group">
-        <label>{tr("season")}</label>
-        <div className="date-range">
-          <input
-            aria-label={tr("seasonStart")}
-            type="date"
-            value={seasonStart}
-            min={selectedScenario?.season_start}
-            max={selectedScenario?.season_end}
-            disabled={selectedScenario === null}
-            onChange={(event) => props.onSeasonStart(event.target.value)}
-          />
-          <span>—</span>
-          <input
-            aria-label={tr("seasonEnd")}
-            type="date"
-            value={seasonEnd}
-            min={selectedScenario?.season_start}
-            max={selectedScenario?.season_end}
-            disabled={selectedScenario === null}
-            onChange={(event) => props.onSeasonEnd(event.target.value)}
-          />
-        </div>
-        <p className="field-help">
-          {selectedScenario
-            ? tr("seasonRange", {
-                start: selectedScenario.season_start,
-                end: selectedScenario.season_end,
-              })
-            : tr("seasonNoSource")}
-        </p>
-      </div>
       <div className="form-group">
         <label>{tr("startingPoint")}</label>
         <p className="field-help">{tr("pointHelp")}</p>
@@ -188,15 +124,107 @@ export function InvestigationControls(props: Props) {
           </div>
         )}
       </div>
-      <button
-        type="button"
-        className="primary-button"
-        disabled={!canSubmit}
-        onClick={props.onSubmit}
+      <section
+        className="synthetic-workflow"
+        aria-label={tr("demoWorkflowHeading")}
       >
-        {busy ? tr("running") : tr("run")} <span aria-hidden="true">↗</span>
-      </button>
-      {!canSubmit && !busy && <p className="field-help">{tr("submitHelp")}</p>}
+        <h3>{tr("demoWorkflowHeading")}</h3>
+        {scenarios.length === 0 ? (
+          <p className="field-help" role="status">
+            {props.scenariosMessage === "noScenarios"
+              ? tr("demoWorkflowUnavailable")
+              : tr(props.scenariosMessage)}
+          </p>
+        ) : (
+          <>
+            {selectedScenario?.source_mode === "SYNTHETIC" && (
+              <div className="demo-notice" role="note">
+                <strong>{tr("syntheticTitle")}</strong>{" "}
+                {tr("syntheticDisclaimer")}
+              </div>
+            )}
+            <div className="form-group">
+              <label htmlFor="territory">{tr("territory")}</label>
+              <select
+                id="territory"
+                value={territory}
+                onChange={(event) => props.onTerritory(event.target.value)}
+              >
+                <option value="">{tr("selectTerritory")}</option>
+                {syntheticTerritories.map(([id, name]) => (
+                  <option key={`synthetic:${id}`} value={id}>
+                    {tr("syntheticMode")} · {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="scenario">{tr("scenario")}</label>
+              <select
+                id="scenario"
+                value={scenarioId}
+                onChange={(event) => props.onScenario(event.target.value)}
+              >
+                <option value="">{tr("selectScenario")}</option>
+                {scenarios
+                  .filter((item) => item.territory_id === territory)
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+              </select>
+              <p className="field-help" role="status">
+                {tr(props.scenariosMessage)}
+              </p>
+            </div>
+            <div className="form-group">
+              <label>{tr("season")}</label>
+              <div className="date-range">
+                <input
+                  aria-label={tr("seasonStart")}
+                  type="date"
+                  value={seasonStart}
+                  min={selectedScenario?.season_start}
+                  max={selectedScenario?.season_end}
+                  disabled={selectedScenario === null}
+                  onChange={(event) => props.onSeasonStart(event.target.value)}
+                />
+                <span>—</span>
+                <input
+                  aria-label={tr("seasonEnd")}
+                  type="date"
+                  value={seasonEnd}
+                  min={selectedScenario?.season_start}
+                  max={selectedScenario?.season_end}
+                  disabled={selectedScenario === null}
+                  onChange={(event) => props.onSeasonEnd(event.target.value)}
+                />
+              </div>
+              <p className="field-help">
+                {selectedScenario
+                  ? tr("seasonRange", {
+                      start: selectedScenario.season_start,
+                      end: selectedScenario.season_end,
+                    })
+                  : tr("seasonNoSource")}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="primary-button"
+              disabled={!canSubmit}
+              onClick={props.onSubmit}
+            >
+              {busy ? tr("running") : tr("run")}{" "}
+              <span aria-hidden="true">↗</span>
+            </button>
+            {!canSubmit && !busy && (
+              <p className="field-help">{tr("submitHelp")}</p>
+            )}
+          </>
+        )}
+      </section>
       <div className="reopen">
         <label htmlFor="reopen-id">{tr("reopen")}</label>
         <div className="reopen-row">

@@ -155,3 +155,23 @@ source discovery, manual requests, schema rejection, attribution and state
 clearing. Full local typecheck, lint, Vitest, browser and real provider
 compatibility remain acceptance gates. Current live-source reading does not
 establish legal/commercial reuse eligibility or forecast accuracy.
+
+### W01 follow-up — usable live sources without fictional catalog entries
+
+**Scope and requirement:** W01 source discovery and explicit `503` catalog handling,
+not new geographic coverage or an accepted live Saturn mapping.
+
+The country selector is the entry to real provider capabilities. The left
+navigation links directly to on-demand live sources, while the synthetic
+territory/scenario/season form is shown only when the backend advertises
+executable fictional scenarios. A disabled synthetic provider must not leave
+an apparently mandatory empty territory picker or block direct live reads.
+The independent reference region selector continues to indicate unloaded
+validated geography; it must never silently supply guessed Saturn subject IDs.
+
+**Regression:** `web/tests/workflow.test.tsx` exercises the live-only RU/BY
+workflow with an unavailable reference catalog and no synthetic scenarios,
+including source discovery, manual selection of a weather point, and RU-only
+Saturn visibility. Existing synthetic-plan and browser tests remain required.
+**Acceptance:** local frontend checks and a real, permitted provider response
+remain outstanding; no new actual regional catalog was imported.
