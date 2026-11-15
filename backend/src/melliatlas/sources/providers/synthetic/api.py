@@ -1,4 +1,20 @@
-"""Pure offline synthetic scenario provider for deterministic demonstrations."""
+"""Explicitly configured offline fixture provider for deterministic scenarios.
+
+``SyntheticFixtureProvider`` implements ``sources.api.ScenarioProvider`` for a
+single fictional RU territory. Forage windows, ecology zones and reported field
+treatments are synthetic examples, never real observations or verified coverage.
+``treatments.py`` uses the offline Saturn parser on supplied fixtures only; it
+does not contact Saturn or another external service.
+
+The provider is enabled only by an explicit
+``AppSettings(source_provider=SourceProviderMode.SYNTHETIC)`` selection or
+``MELLIATLAS_SOURCE_PROVIDER=synthetic``. Provider-specific scenario identifiers,
+territory labels and seasons stay in this package, not in ``sources.api`` or the
+browser. Unsupported countries expose no executable scenarios.
+
+``load_treatment_notices`` is a provider-specific composition adapter, not part
+of the generic ``ScenarioProvider`` protocol.
+"""
 
 from dataclasses import replace
 from datetime import date
@@ -23,7 +39,11 @@ _SYNTHETIC_TERRITORY_ID = "ru:region:smolensk"
 
 
 class SyntheticFixtureProvider:
-    """A fixed offline source; its territory name does not attest to real reference coverage."""
+    """Offer fixed fictional scenarios without implying geographic verification.
+
+    Only the explicitly supported fixture territory can be loaded; unsupported
+    countries and scenario identifiers are not advertised as executable.
+    """
 
     def list_scenarios(self, country: CountryCode) -> tuple[ScenarioListing, ...]:
         """Describe scenarios actually supported by this provider for a country."""

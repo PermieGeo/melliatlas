@@ -24,6 +24,7 @@ Concrete providers are private to `sources/providers/`. The application composit
 root may choose a provider explicitly and inject its collaborators into jobs; ordinary
 peer capabilities must depend on `sources.api` contracts rather than concrete adapters.
 The current `disabled` provider mode returns no scenarios and never silently falls back
-to synthetic evidence. See `providers/synthetic/README.md` and
-`providers/saturn/README.md` for implementation-specific constraints. No network or
-PostGIS source ingestion is enabled by this refactoring.
+to synthetic evidence. Provider-specific behavior and limitations are documented
+in the module docstrings of `providers/synthetic/api.py` and
+`providers/saturn/api.py`. No network or PostGIS source ingestion is enabled by
+this refactoring.
