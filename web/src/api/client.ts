@@ -1,5 +1,7 @@
 import {
   decodeCountries,
+  decodeSources,
+  decodeSaturnPage,
   decodeInvestigation,
   decodeScenarios,
   decodeTerritories,
@@ -8,6 +10,8 @@ import {
 } from "./validation";
 import type {
   Country,
+  ExternalSource,
+  SaturnNoticePage,
   CountryCode,
   Investigation,
   InvestigationCreate,
@@ -187,5 +191,40 @@ export function getInvestigation(
     `/api/v1/investigations/${encodeURIComponent(id)}`,
     signal,
     decodeInvestigation,
+  );
+}
+
+/** Discover enabled external sources for a country; never infer from its name. */
+export function listExternalSources(
+  country: CountryCode,
+  signal: AbortSignal,
+): Promise<ApiResult<ExternalSource[]>> {
+  return request(
+    `/api/v1/sources?country=${encodeURIComponent(country)}`,
+    signal,
+    decodeSources,
+  );
+}
+
+/** One manual, bounded public-source read; no automatic pagination or retries. */
+export function readSaturnPage(
+  country: CountryCode,
+  regionCode: number,
+  pageNumber: number,
+  signal: AbortSignal,
+): Promise<ApiResult<SaturnNoticePage>> {
+  return request(
+    "/api/v1/sources/saturn/treatments",
+    signal,
+    decodeSaturnPage,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        country,
+        region_code: regionCode,
+        page_number: pageNumber,
+      }),
+    },
   );
 }

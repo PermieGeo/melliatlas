@@ -77,3 +77,14 @@ The planned application is a **Python modular monolith** with FastAPI, PostgreSQ
 | `docs/specs/` | Umbrella specification, active sub-specifications, plans, and checkpoints |
 
 The [source evidence register](docs/source-register.md) records historical Saturn protocol leads and Russian publication candidates without granting collection permission. The [umbrella specification](docs/specs/umbrella_spec_melliatlas.md) defines the roadmap and acceptance criteria. The [specification index](docs/specs/README.md) identifies the active workstream and the documents governing implementation. See [installation](docs/INSTALLATION.md) and [testing](docs/TESTS.md) for the currently supported commands.
+
+### Experimental RU-only Saturn notice preview
+
+An independently enabled `MELLIATLAS_SATURN_LIVE_ENABLED=true` mode now adds a
+manual one-page read of public Saturn beekeeper notices for RU only. The Web
+client discovers the capability from the backend and shows its reported field
+polygons separately from fictitious investigation plans; BY does not receive
+this source. The HTTPS request profile is based on an older observed portal
+payload and was **not** verified against the current live service. Errors and
+unknown coverage remain explicit, and source reuse rights require independent
+validation before deployment. See [installation](docs/INSTALLATION.md).

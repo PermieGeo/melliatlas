@@ -28,3 +28,19 @@ to synthetic evidence. Provider-specific behavior and limitations are documented
 in the module docstrings of `providers/synthetic/api.py` and
 `providers/saturn/api.py`. No network or PostGIS source ingestion is enabled by
 this refactoring.
+
+## Opt-in public treatment-notice reads (experimental)
+
+`TreatmentNoticeReader.read_page(country, region_code, page_number)` is a small,
+source-neutral on-demand port. `TreatmentNoticePage` retains the UTC capture time,
+source, country, upstream region code, pagination and every recognized notice.
+`SourceReadError` communicates unreadable or malformed upstream data; it must not
+be interpreted as an empty notice collection. A notice distinguishes `LIVE`
+with `synthetic=False` from `FIXTURE` with `synthetic=True`.
+
+The single known Saturn adapter is RU-only, disabled by default, and never
+part of synthetic scenario or planner composition. The request is bounded to
+one page, is user-initiated and preserves unknown location/time evidence. A
+publisher's public-facing webpage does not guarantee an approved automated
+interface or permission to reuse its data. Full-source coverage and drift
+analysis remain unimplemented.

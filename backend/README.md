@@ -20,3 +20,14 @@ The territory service deliberately starts **without approved real reference data
 
 See the [repository overview](../README.md) and [specification index](../docs/specs/README.md) for scope. For setup and testing, see [installation](../docs/INSTALLATION.md) and [tests](../docs/TESTS.md).
 
+## Experimental real Saturn read
+
+Only if `MELLIATLAS_SATURN_LIVE_ENABLED=true`, the FastAPI composition root
+injects a bounded `SaturnPublicTreatmentReader`. The fixed HTTPS transport is
+isolated in `api/saturn_http.py`; the decoder remains in `sources/providers/saturn/`.
+`GET /api/v1/sources?country=RU` advertises this capability; a manual POST to
+`/api/v1/sources/saturn/treatments` reads one public portal page. Country BY
+is rejected before transport. A 502 response means the live portal could not
+be read or its response failed validation, not that no treatments exist.
+Source records are not automatically stored or combined with synthetic plans.
+The historical read endpoint and public-use terms still require verification.

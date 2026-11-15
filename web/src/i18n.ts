@@ -34,6 +34,28 @@ const en = {
   referenceGeometryAvailable:
     "Showing reference boundary, not an analysis result.",
   referenceVersion: "Reference version",
+  saturnTitle: "Saturn: public treatment notices",
+  saturnCode: "Saturn subject code",
+  saturnCodeHint:
+    "Enter the provider's numeric subject code from the official portal. It is not a district or ISO code.",
+  saturnRead: "Read one live page",
+  saturnNext: "Read next page",
+  saturnLoading: "Reading the public portal…",
+  saturnError: "Saturn read failed: {reason}. Data availability is unknown.",
+  saturnCount:
+    "Page {page} · {count} identified notices · {skipped} unrecognized entries",
+  saturnEmpty:
+    "No identified notices on this page. This does not prove that no treatments are planned.",
+  saturnWarning:
+    "Experimental, unverified public reports. No automatic refresh, completeness guarantee, or validated drift model.",
+  saturnField: "Field record {record}; plan {plan}",
+  saturnDates: "Reported period: {start} — {end}",
+  saturnProduct: "Product {name}; crop {crop}; bee hazard class {hazard}",
+  saturnCaptured: "Read at {time}; source {source}",
+  saturnMissing: "not reported",
+  saturnGeometry: "Field geometry is not provided or not valid.",
+  saturnMore:
+    "Additional provider pages may exist. This display is not a complete register.",
   territory: "Territory",
   scenario: "Analysis source",
   selectCountry: "Loading countries…",
@@ -188,6 +210,29 @@ const ru: Record<keyof typeof en, string> = {
   referenceGeometryAvailable:
     "Отображается граница из справочника, не результат анализа.",
   referenceVersion: "Версия справочника",
+  saturnTitle: "Сатурн: сообщения об обработках",
+  saturnCode: "Код субъекта в Сатурн",
+  saturnCodeHint:
+    "Укажи числовой код субъекта из официального портала. Это не код района и не ISO-код.",
+  saturnRead: "Загрузить одну страницу",
+  saturnNext: "Загрузить следующую",
+  saturnLoading: "Чтение публичного портала…",
+  saturnError: "Ошибка чтения Сатурн: {reason}. Доступность данных неизвестна.",
+  saturnCount:
+    "Страница {page} · найдено {count} сообщений · не распознано {skipped}",
+  saturnEmpty:
+    "На этой странице нет распознанных сообщений. Это не доказывает отсутствия обработок.",
+  saturnWarning:
+    "Экспериментальные, непроверенные сообщения. Без автообновления, гарантии полноты или расчёта ветрового переноса.",
+  saturnField: "Поле {record}; план {plan}",
+  saturnDates: "Указанный период: {start} — {end}",
+  saturnProduct:
+    "Препарат {name}; культура {crop}; класс опасности для пчёл {hazard}",
+  saturnCaptured: "Получено {time}; источник {source}",
+  saturnMissing: "не указано",
+  saturnGeometry: "Геометрия поля отсутствует или невалидна.",
+  saturnMore:
+    "Могут существовать другие страницы. Отображение не является полным реестром.",
   territory: "Территория",
   scenario: "Источник анализа",
   selectCountry: "Получаем список стран…",

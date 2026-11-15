@@ -62,3 +62,29 @@ explicit offline demonstration, start the backend with
 `MELLIATLAS_SOURCE_PROVIDER=synthetic` in its environment. This is a fixture-only
 mode and does not activate real Saturn/network data. An unsupported mode causes
 startup to fail instead of silently choosing a provider.
+
+## Experimental RU-only public Saturn preview
+
+The experimental live source is disabled by default and independent of the
+offline demonstration provider. For a deliberately user-triggered public portal
+request from a local development instance only:
+
+```bash
+export MELLIATLAS_SATURN_LIVE_ENABLED=true
+python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000
+```
+
+Use the Web client with country `RU`; the server advertises `saturn` only there.
+Enter the provider's own numeric subject identifier as seen in its portal and
+click **Read one live page**. No source-specific region code is inferred from
+MelliAtlas administrative IDs. The request sends one bounded POST to a pinned
+legacy public URL; status 403/404, changed response shape or inaccessible site
+returns an explicit error, never fabricated data. `BY` never offers or contacts
+Saturn. No automatic polling, rate-intensive scanning, scheduled crawling or
+plan calculations on the live observations are provided.
+
+The request format is based on older observed portal traffic, not an official
+verified current machine-readable read contract. Public website access does
+not establish permission to bulk reuse data. Confirm the current API and reuse
+conditions before any public deployment. The real source has not been reachable
+from this development environment for live acceptance testing.

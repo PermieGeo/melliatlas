@@ -7,6 +7,9 @@ import type {
   TerritoryGeometry,
   Decision,
   Evidence,
+  ExternalSource,
+  SaturnNoticePage,
+  SaturnNotice,
   Investigation,
   Replanning,
   ReportedProduct,
@@ -406,4 +409,99 @@ export function decodeInvestigation(value: unknown): Investigation {
     limitations: strings(v.limitations, "limitations"),
     synthetic: booleanTrue(v.synthetic, "synthetic"),
   };
+}
+
+/** Strictly decode the server's country-scoped, opt-in source capabilities. */
+export function decodeSources(value: unknown): ExternalSource[] {
+  return list(value, "sources", (entry, path) => {
+    const v = record(entry, path);
+    return {
+      id: oneOf(v.id, `${path}.id`, ["saturn"]),
+      country: country(v.country, `${path}.country`),
+      kind: oneOf(v.kind, `${path}.kind`, ["TREATMENT_NOTICE"]),
+      mode: oneOf(v.mode, `${path}.mode`, ["LIVE"]),
+      status: oneOf(v.status, `${path}.status`, ["EXPERIMENTAL"]),
+    };
+  });
+}
+
+function saturnProduct(
+  value: unknown,
+  field: string,
+): SaturnNotice["products"][number] {
+  const v = record(value, field);
+  const hazard = v.reported_bee_hazard_class;
+  if (hazard !== null && hazard !== 1 && hazard !== 2 && hazard !== 3) {
+    throw new WireError(`${field}.reported_bee_hazard_class`);
+  }
+  return {
+    name: maybe(v.name, text, `${field}.name`),
+    crop: maybe(v.crop, text, `${field}.crop`),
+    reported_bee_hazard_class: hazard,
+  };
+}
+
+function saturnNotice(value: unknown, field: string): SaturnNotice {
+  const v = record(value, field);
+  if (v.synthetic !== false) throw new WireError(`${field}.synthetic`);
+  const revised = v.revised;
+  if (revised !== null && typeof revised !== "boolean")
+    throw new WireError(`${field}.revised`);
+  return {
+    record_id: nonEmpty(v.record_id, `${field}.record_id`),
+    plan_id: maybe(v.plan_id, text, `${field}.plan_id`),
+    country: country(v.country, `${field}.country`),
+    source_id: nonEmpty(v.source_id, `${field}.source_id`),
+    source_uri: maybe(v.source_uri, text, `${field}.source_uri`),
+    source_mode: oneOf(v.source_mode, `${field}.source_mode`, ["LIVE"]),
+    synthetic: false,
+    captured_at: nonEmpty(v.captured_at, `${field}.captured_at`),
+    published_at: maybe(v.published_at, text, `${field}.published_at`),
+    scheduled_start: maybe(v.scheduled_start, text, `${field}.scheduled_start`),
+    scheduled_end: maybe(v.scheduled_end, text, `${field}.scheduled_end`),
+    revised,
+    cadastral_number: maybe(
+      v.cadastral_number,
+      text,
+      `${field}.cadastral_number`,
+    ),
+    geometry: maybe(v.geometry, referenceShape, `${field}.geometry`),
+    products: list(v.products, `${field}.products`, saturnProduct),
+    uncertainties: strings(v.uncertainties, `${field}.uncertainties`),
+  };
+}
+
+/** Reject cross-country/mismatched pages before exposing real field geometries. */
+export function decodeSaturnPage(value: unknown): SaturnNoticePage {
+  const v = record(value, "saturnPage");
+  if (v.coverage_complete !== false)
+    throw new WireError("saturnPage.coverage_complete");
+  const page = {
+    source_id: nonEmpty(v.source_id, "saturnPage.source_id"),
+    country: country(v.country, "saturnPage.country"),
+    region_code: integer(v.region_code, "saturnPage.region_code"),
+    captured_at: nonEmpty(v.captured_at, "saturnPage.captured_at"),
+    page_number: integer(v.page_number, "saturnPage.page_number"),
+    next_page: maybe(v.next_page, integer, "saturnPage.next_page"),
+    total_elements: maybe(
+      v.total_elements,
+      integer,
+      "saturnPage.total_elements",
+    ),
+    unidentified_records: integer(
+      v.unidentified_records,
+      "saturnPage.unidentified_records",
+    ),
+    notices: list(v.notices, "saturnPage.notices", saturnNotice),
+    coverage_complete: false as const,
+  };
+  if (
+    page.notices.some(
+      (notice) =>
+        notice.country !== page.country || notice.source_id !== page.source_id,
+    )
+  ) {
+    throw new WireError("saturnPage.noticeScope");
+  }
+  return page;
 }

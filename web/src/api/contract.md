@@ -17,3 +17,17 @@ The private `starting_point` exists only in the POST body; the decoder rejects a
 `getTerritoryGeometry(territoryId, signal)` reads the existing `GET /api/v1/territories/geometry/{territory_id}` response. `decodeTerritoryGeometry` checks its territory ID, nonempty reference version, `EPSG:4326`, WGS84 finite longitude/latitude, closed rings and Polygon/MultiPolygon structure. The UI separately checks that the returned territory ID and reference ID match the currently selected catalog entry before displaying it. Geometry topology and catalog completeness remain backend reference-validation responsibilities.
 
 `listDistricts(regionId, signal)` supplies only supported children; HTTP `409`, `404`, and `503` remain explicit states. Country/region/district switches abort obsolete reads. Administrative outlines are a view-only map layer, never synthetic source evidence or validated pesticide safety. No new backend routes or live reference data are introduced.
+
+## Explicit live public notice read (W01 experimental addition)
+
+`listExternalSources(country)` reads the backend's enabled capability listing.
+The presence of `saturn` for `RU` enables an isolated, manual source-read panel.
+A country with no advertised Saturn capability has no Saturn UI or transport
+calls. `readSaturnPage` posts a strictly typed provider region code and page
+number, and `decodeSaturnPage` rejects malformed geography, mismatched country,
+missing attribution or claims marked synthetic. Changing country or filter
+cancels prior reads and clears prior polygons. External notices never enter
+fictional investigation result state; the map renders their field polygons as
+a visually distinct unverified source layer. Empty/failed pages cannot establish
+complete coverage or site safety. The exact provider region codes remain
+unverified and are entered manually, not inferred from administrative IDs.

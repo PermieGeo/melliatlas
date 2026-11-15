@@ -22,10 +22,21 @@ def _source_provider_mode() -> SourceProviderMode:
         ) from error
 
 
+"""Only explicit opt-in enables experimental public Saturn requests."""
+
+
+def _saturn_enabled() -> bool:
+    raw = os.environ.get("MELLIATLAS_SATURN_LIVE_ENABLED", "false").lower()
+    if raw not in ("false", "true"):
+        raise ValueError("MELLIATLAS_SATURN_LIVE_ENABLED must be true or false")
+    return raw == "true"
+
+
 app = create_app(
     settings=AppSettings(
         reference_snapshot_path=_optional_path("MELLIATLAS_REFERENCE_SNAPSHOT"),
         reference_inventory_path=_optional_path("MELLIATLAS_REFERENCE_INVENTORY"),
         source_provider=_source_provider_mode(),
+        saturn_live_enabled=_saturn_enabled(),
     )
 )

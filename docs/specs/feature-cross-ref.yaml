@@ -68,8 +68,13 @@ features:
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
       - backend/src/melliatlas/sources/providers/saturn/legacy_treatment.py#parse_saturn_treatment_page
+      - backend/src/melliatlas/sources/providers/saturn/live.py#SaturnPublicTreatmentReader
+      - backend/src/melliatlas/api/routes_sources.py#create_source_router
+      - web/src/components/SaturnPanel.tsx
     test_files:
       - backend/tests/unit/test_saturn_treatment_screening.py
+      - backend/tests/contract/test_saturn_live_http.py
+      - web/tests/saturn.test.tsx
   - feature_id: AGRICULTURE.NOTICES
     implementation_status: partial
     stages: [MVP-01]

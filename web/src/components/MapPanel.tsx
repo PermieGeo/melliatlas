@@ -1,6 +1,11 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import type { Position, Stop, TerritoryGeometry } from "../api/types";
+import type {
+  Position,
+  SaturnNotice,
+  Stop,
+  TerritoryGeometry,
+} from "../api/types";
 import { t } from "../i18n";
 import type { Locale } from "../i18n";
 
@@ -12,6 +17,7 @@ interface Props {
   startingPoint: Position | null;
   showTiles: boolean;
   referenceGeometry: TerritoryGeometry | null;
+  saturnNotices: SaturnNotice[];
   onSelect: (siteId: string) => void;
   onPoint: (point: Position) => void;
 }
@@ -24,6 +30,7 @@ export function MapPanel({
   startingPoint,
   showTiles,
   referenceGeometry,
+  saturnNotices,
   onSelect,
   onPoint,
 }: Props) {
@@ -32,6 +39,7 @@ export function MapPanel({
   const overlays = useRef<L.LayerGroup | null>(null);
   const tiles = useRef<L.TileLayer | null>(null);
   const boundaryLayer = useRef<L.GeoJSON | null>(null);
+  const treatmentLayer = useRef<L.LayerGroup | null>(null);
   const pointCallback = useRef(onPoint);
   pointCallback.current = onPoint;
 
@@ -57,6 +65,7 @@ export function MapPanel({
       overlays.current = null;
       tiles.current = null;
       boundaryLayer.current = null;
+      treatmentLayer.current = null;
     };
   }, []);
 
@@ -148,6 +157,42 @@ export function MapPanel({
     }
   }, [referenceGeometry, stops.length, startingPoint]);
 
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance) return;
+    if (treatmentLayer.current) instance.removeLayer(treatmentLayer.current);
+    const group = L.layerGroup().addTo(instance);
+    treatmentLayer.current = group;
+    const geometries = saturnNotices.filter(
+      (notice) => notice.geometry !== null,
+    );
+    for (const notice of geometries) {
+      if (!notice.geometry) continue;
+      const polygon = L.geoJSON(notice.geometry, {
+        style: {
+          color: "#c57832",
+          fillColor: "#edaf75",
+          fillOpacity: 0.24,
+          weight: 2,
+        },
+      });
+      polygon.bindTooltip(`${notice.source_id} / ${notice.record_id}`);
+      group.addLayer(polygon);
+    }
+    if (
+      startingPoint === null &&
+      !referenceGeometry &&
+      group.getLayers().length
+    ) {
+      const bounds = L.featureGroup(group.getLayers()).getBounds();
+      if (bounds.isValid()) instance.fitBounds(bounds, { animate: false });
+    }
+    return () => {
+      instance.removeLayer(group);
+      if (treatmentLayer.current === group) treatmentLayer.current = null;
+    };
+  }, [saturnNotices, referenceGeometry, startingPoint, stops.length]);
+
   return (
     <div className="map-shell">
       <div
@@ -160,6 +205,9 @@ export function MapPanel({
         <span className="legend-dot" /> {t(locale, "mapProposed")}
         <span className="legend-dot legend-selected" />{" "}
         {t(locale, "mapSelected")}
+        {saturnNotices.some((notice) => notice.geometry !== null) && (
+          <> · {t(locale, "saturnTitle")}</>
+        )}
       </div>
       <p className="map-note">{t(locale, "mapNote")}</p>
     </div>
