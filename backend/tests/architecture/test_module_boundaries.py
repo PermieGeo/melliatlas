@@ -139,3 +139,23 @@ def test_relative_import_from_package_initializer_is_resolved(tmp_path: Path) ->
     path.parent.mkdir(parents=True)
     path.write_text("from ..engine.executor import run\n", encoding="utf-8")
     assert any("private module" in issue for issue in find_violations(tmp_path))
+
+
+def test_concrete_provider_import_is_only_allowed_in_composition_root(tmp_path: Path) -> None:
+    assert any(
+        "private module" in issue
+        for issue in _violations(
+            tmp_path,
+            "api",
+            "from melliatlas.sources.providers.synthetic.api import SyntheticFixtureProvider",
+        )
+    )
+    composition = tmp_path / "melliatlas" / "api" / "composition.py"
+    composition.parent.mkdir(parents=True, exist_ok=True)
+    composition.write_text(
+        "from melliatlas.sources.providers.synthetic.api import SyntheticFixtureProvider\n",
+        encoding="utf-8",
+    )
+    violations = find_violations(tmp_path)
+    assert any("api/api.py" in issue and "private module" in issue for issue in violations)
+    assert all("composition.py" not in issue for issue in violations)

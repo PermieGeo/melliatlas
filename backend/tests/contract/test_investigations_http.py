@@ -7,14 +7,18 @@ import httpx
 from pytest import MonkeyPatch
 
 from melliatlas.api.app import AppSettings, create_app
+from melliatlas.api.composition import SourceProviderMode
 from melliatlas.jobs.api import InMemoryInvestigationService
-from melliatlas.sources.api import SYNTHETIC_SCENARIO_ID, SyntheticFixtureProvider
+from melliatlas.sources.providers.synthetic.api import (
+    SYNTHETIC_SCENARIO_ID,
+    SyntheticFixtureProvider,
+)
 
 
 async def _http(
     method: str, path: str, *, payload: dict[str, object] | None = None
 ) -> httpx.Response:
-    app = create_app()
+    app = create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC))
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://testserver"
     ) as client:
@@ -34,7 +38,11 @@ def _request(*, start: str = "2026-05-01", end: str = "2026-08-15") -> dict[str,
 
 def test_successful_post_then_get_is_synthetic_and_deterministic() -> None:
     async def check() -> None:
-        app = create_app(settings=AppSettings(title="Synthetic V01"))
+        app = create_app(
+            settings=AppSettings(
+                title="Synthetic V01", source_provider=SourceProviderMode.SYNTHETIC
+            )
+        )
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://testserver"
         ) as client:
@@ -77,7 +85,7 @@ def test_successful_post_then_get_is_synthetic_and_deterministic() -> None:
 
 def test_evidence_limited_outcome_is_not_an_execution_failure() -> None:
     async def check() -> None:
-        app = create_app()
+        app = create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC))
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://testserver"
         ) as client:

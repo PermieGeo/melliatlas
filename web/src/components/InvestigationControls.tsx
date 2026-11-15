@@ -5,6 +5,8 @@ import type {
   ScenarioListing,
   Territory,
 } from "../api/types";
+import { ReferenceControls } from "./ReferenceControls";
+import type { TerritoryNavigation } from "../hooks/useTerritoryReference";
 import { countryName, t } from "../i18n";
 import type { Locale, TranslationKey } from "../i18n";
 
@@ -14,6 +16,7 @@ interface Props {
   countries: Country[];
   country: CountryCode;
   regions: Territory[];
+  referenceNavigation: TerritoryNavigation;
   scenarios: ScenarioListing[];
   territory: string;
   scenarioId: string;
@@ -108,20 +111,14 @@ export function InvestigationControls(props: Props) {
               {tr("syntheticMode")} · {name}
             </option>
           ))}
-          {regions
-            .filter(
-              (item) => !syntheticTerritories.some(([id]) => id === item.id),
-            )
-            .map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
         </select>
-        <p className="field-help" role="status">
-          {tr(props.referenceMessage)}
-        </p>
       </div>
+      <ReferenceControls
+        locale={locale}
+        regions={regions}
+        navigation={props.referenceNavigation}
+        catalogMessage={props.referenceMessage}
+      />
       <div className="form-group">
         <label htmlFor="scenario">{tr("scenario")}</label>
         <select

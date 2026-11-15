@@ -30,6 +30,24 @@ export interface Territory {
   geometry_status: "available" | "missing" | "invalid";
 }
 
+/** WGS84 GeoJSON boundary from a validated territory reference, not synthetic evidence. */
+export type GeoPosition = [number, number];
+export type ReferencePolygon = {
+  type: "Polygon";
+  coordinates: GeoPosition[][];
+};
+export type ReferenceMultiPolygon = {
+  type: "MultiPolygon";
+  coordinates: GeoPosition[][][];
+};
+export type ReferenceShape = ReferencePolygon | ReferenceMultiPolygon;
+export interface TerritoryGeometry {
+  territory_id: string;
+  reference_id: string;
+  coordinate_system: "EPSG:4326";
+  geometry: ReferenceShape;
+}
+
 /** An executable scenario advertised by the server, independently of validated territory references. */
 export interface ScenarioListing {
   id: string;

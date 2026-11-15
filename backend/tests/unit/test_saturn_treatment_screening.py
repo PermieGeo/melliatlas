@@ -12,7 +12,7 @@ import pytest
 
 from melliatlas.analyzers.api import TreatmentProximity, screen_treatment_notices
 from melliatlas.planning.api import CandidateSite, TimeWindow
-from melliatlas.sources.api import parse_saturn_treatment_page
+from melliatlas.sources.providers.saturn.api import parse_saturn_treatment_page
 
 CAPTURED_AT = datetime(2026, 5, 1, tzinfo=timezone.utc)
 START = 1780617600  # 2026-06-05 UTC
@@ -198,7 +198,7 @@ def test_screening_rejects_invalid_coordinates_or_radius() -> None:
 
 
 def test_pagination_validates_source_progress_without_fabricating_coverage() -> None:
-    from melliatlas.sources.api import next_saturn_treatment_page
+    from melliatlas.sources.providers.saturn.api import next_saturn_treatment_page
 
     first_raw = page(record(field_id=71), record(field_id=72))
     first_raw.update({"size": 2, "totalElements": 3, "totalPages": 2, "last": False})
@@ -255,10 +255,8 @@ def test_public_notice_contract_is_available_before_any_provider_import() -> Non
     from melliatlas.sources.notices import TreatmentNotice as NoticeImplementation
 
     assert sources_api.TreatmentNotice is NoticeImplementation
-    assert {"TreatmentNotice", "TreatmentProduct", "parse_saturn_treatment_page"} <= set(
-        sources_api.__all__
-    )
-    assert callable(sources_api.parse_saturn_treatment_page)
+    assert {"TreatmentNotice", "TreatmentProduct", "ScenarioProvider"} <= set(sources_api.__all__)
+    assert not hasattr(sources_api, "parse_saturn_treatment_page")
     assert callable(screen)
 
 
@@ -269,7 +267,8 @@ def test_imports_do_not_require_provider_initialization_order() -> None:
     env["PYTHONPATH"] = str(root)
     code = (
         "from melliatlas.analyzers.api import screen_treatment_notices; "
-        "from melliatlas.sources.api import TreatmentNotice, parse_saturn_treatment_page; "
+        "from melliatlas.sources.api import TreatmentNotice; "
+        "from melliatlas.sources.providers.saturn.api import parse_saturn_treatment_page; "
         "from melliatlas.api.app import create_app; "
         "assert TreatmentNotice and parse_saturn_treatment_page and create_app"
     )
@@ -285,7 +284,9 @@ def test_imports_do_not_require_provider_initialization_order() -> None:
 
 
 def test_provider_compatibility_module_preserves_existing_exports() -> None:
-    from melliatlas.sources.api import parse_saturn_treatment_page as public_parser
-    from melliatlas.sources.saturn import parse_saturn_treatment_page as legacy_parser
+    from melliatlas.sources.providers.saturn.api import parse_saturn_treatment_page as public_parser
+    from melliatlas.sources.providers.saturn.legacy_treatment import (
+        parse_saturn_treatment_page as legacy_parser,
+    )
 
     assert public_parser is legacy_parser

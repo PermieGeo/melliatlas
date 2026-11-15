@@ -13,7 +13,8 @@ import pytest
 
 from melliatlas.agent.api import DeterministicPlanner, TreatmentPlanner
 from melliatlas.analyzers.api import find_ecology_overlaps, screen_treatment_notices
-from melliatlas.api.app import create_app
+from melliatlas.api.app import AppSettings, create_app
+from melliatlas.api.composition import SourceProviderMode
 from melliatlas.jobs.api import (
     InMemoryInvestigationService,
     InvestigationOutcomeKind,
@@ -32,11 +33,11 @@ from melliatlas.planning.api import (
     TreatmentScreening,
     assess_ecology,
 )
-from melliatlas.sources.api import (
+from melliatlas.sources.providers.synthetic.api import (
     SYNTHETIC_COMBINED_SCENARIO_ID,
     SyntheticFixtureProvider,
-    treatment_fixture_notices,
 )
+from melliatlas.sources.providers.synthetic.treatments import treatment_fixture_notices
 from melliatlas.territories.api import CountryCode
 
 
@@ -80,7 +81,7 @@ def test_combined_http_retains_both_findings_and_selects_a_joint_alternative() -
         with patch.object(
             socket.socket, "connect", side_effect=AssertionError("Fixture must not use network")
         ):
-            app = create_app()
+            app = create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC))
             async with httpx.AsyncClient(
                 transport=httpx.ASGITransport(app=app), base_url="http://testserver"
             ) as client:

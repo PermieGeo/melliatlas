@@ -36,6 +36,10 @@ NETWORK_IMPORTS = frozenset(
     {"httpx", "requests", "aiohttp", "urllib3", "urllib.request", "http.client", "socket"}
 )
 
+# The application composition root is the sole cross-capability entry point
+# allowed to construct a concrete provider. Domain and route modules still use APIs.
+COMPOSITION_ROOT_PROVIDER_IMPORTS = frozenset({"melliatlas.sources.providers.synthetic.api"})
+
 
 def _python_module(source_root: Path, path: Path) -> tuple[str, tuple[str, ...]]:
     parts = path.relative_to(source_root).with_suffix("").parts
@@ -134,7 +138,12 @@ def find_violations(source_root: Path) -> list[str]:
             if target not in ALLOWED_DEPENDENCIES[owner]:
                 violations.append(f"{path}:{line}: forbidden dependency {owner} -> {target}")
             if len(imported_parts) > 2 and (imported_parts[2] != "api" or len(imported_parts) > 3):
-                violations.append(f"{path}:{line}: imports private module {imported}")
+                composition_import = (
+                    source_module == "melliatlas.api.composition"
+                    and imported in COMPOSITION_ROOT_PROVIDER_IMPORTS
+                )
+                if not composition_import:
+                    violations.append(f"{path}:{line}: imports private module {imported}")
             elif len(imported_parts) == 2 and (
                 (member is None and not facade_exports[target])
                 or (member is not None and member not in facade_exports[target] and member != "api")

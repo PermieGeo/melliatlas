@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from melliatlas.api.app import AppSettings, create_app
+from melliatlas.api.composition import SourceProviderMode
 
 
 def _optional_path(env_name: str) -> Path | None:
@@ -11,9 +12,20 @@ def _optional_path(env_name: str) -> Path | None:
     return Path(value) if value else None
 
 
+def _source_provider_mode() -> SourceProviderMode:
+    configured = os.environ.get("MELLIATLAS_SOURCE_PROVIDER", "disabled")
+    try:
+        return SourceProviderMode(configured)
+    except ValueError as error:
+        raise ValueError(
+            "Invalid MELLIATLAS_SOURCE_PROVIDER; expected disabled or synthetic"
+        ) from error
+
+
 app = create_app(
     settings=AppSettings(
         reference_snapshot_path=_optional_path("MELLIATLAS_REFERENCE_SNAPSHOT"),
         reference_inventory_path=_optional_path("MELLIATLAS_REFERENCE_INVENTORY"),
+        source_provider=_source_provider_mode(),
     )
 )

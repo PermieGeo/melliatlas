@@ -54,3 +54,12 @@ Frontend unit tests and browser checks are offline API-mocked. The backend fixtu
 The country preference is RU when the API advertises it, otherwise the first returned country. Country names are rendered using the selected locale and `Intl.DisplayNames`; selecting any future backend-supported country does not require browser-side `if (code === ...)` branches. RU and EN labels are available independently of the chosen country. The English source-report/evidence wording is preserved as received and is not presented as a translated provider claim.
 
 The client calls `GET /api/v1/investigations/scenarios?country=...` to list only executable fictional scenarios and their supported territory and season range. No synthetic territory IDs, scenario IDs or fixed fixture dates are compiled into the UI. A country without executable scenarios disables submission but still permits reopening a previously completed investigation. Validated region reference coverage remains a separate concern; a fictional scenario does not prove real boundaries.
+
+
+The backend must be started with `MELLIATLAS_SOURCE_PROVIDER=synthetic` for the
+fictional W01 investigation demo. Without this explicit choice, scenario discovery
+returns no executable entries and the workspace shows its unavailable state.
+
+## W01 reference navigation (partial R02)
+
+The reference region/district navigation is independent of synthetic scenario selection. It uses the existing territory catalog and WGS84 geometry API. Once a validated reference dataset is explicitly loaded on the backend, selecting a region displays its published geometry and only supported district options; selecting a district displays its own boundary. HTTP `409` means district depth is unsupported; `404` means geometry is missing; `503` means the catalog is unavailable. Older country/territory requests are cancelled and cannot draw a stale boundary. The map displays the reference ID and never invents boundaries when no references are installed. This does not establish full RU/BY inventory approval or W02 acceptance.

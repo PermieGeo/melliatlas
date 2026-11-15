@@ -6,14 +6,15 @@ from uuid import UUID
 
 import httpx
 
-from melliatlas.api.app import create_app
+from melliatlas.api.app import AppSettings, create_app
+from melliatlas.api.composition import SourceProviderMode
 from melliatlas.jobs.api import (
     InMemoryInvestigationService,
     InvestigationRequest,
     InvestigationStatus,
 )
 from melliatlas.planning.api import TimeWindow
-from melliatlas.sources.api import (
+from melliatlas.sources.providers.synthetic.api import (
     SYNTHETIC_ECOLOGY_SCENARIO_ID,
     SYNTHETIC_SCENARIO_ID,
     SyntheticFixtureProvider,
@@ -34,7 +35,7 @@ def _request(scenario_id: str) -> dict[str, object]:
 
 def test_fictional_ecology_scenario_replans_and_exposes_typed_evidence() -> None:
     async def scenario() -> None:
-        app = create_app()
+        app = create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC))
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://testserver"
         ) as client:
@@ -87,7 +88,7 @@ def test_fictional_ecology_scenario_replans_and_exposes_typed_evidence() -> None
 
 def test_original_v01_scenario_has_no_replanning_and_old_trace() -> None:
     async def scenario() -> None:
-        app = create_app()
+        app = create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC))
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://testserver"
         ) as client:

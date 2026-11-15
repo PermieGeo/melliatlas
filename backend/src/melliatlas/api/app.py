@@ -10,8 +10,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from melliatlas.agent.api import DeterministicPlanner, TreatmentPlanner
-from melliatlas.analyzers.api import find_ecology_overlaps, screen_treatment_notices
+from melliatlas.api.composition import SourceProviderMode, compose_sources
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse, HealthResponse
 from melliatlas.api.reference_loader import read_reference_documents
 from melliatlas.api.routes_investigations import create_investigation_router
@@ -20,36 +19,8 @@ from melliatlas.jobs.api import (
     InMemoryInvestigationService,
     InvestigationService,
 )
-from melliatlas.planning.api import (
-    CandidateSite,
-    SiteAssessment,
-    SyntheticScenario,
-    TreatmentScreening,
-    assess_ecology,
-)
-from melliatlas.sources.api import SyntheticFixtureProvider
 from melliatlas.territories import InMemoryTerritoryCatalog
 from melliatlas.territories.api import TerritoryCatalog
-
-
-def _fictional_planner(scenario: SyntheticScenario) -> DeterministicPlanner:
-    def inspect(site: CandidateSite) -> SiteAssessment:
-        return assess_ecology(site.id, find_ecology_overlaps(site, scenario.ecology_zones))
-
-    return DeterministicPlanner(inspect)
-
-
-def _fictional_treatment_planner(
-    provider: SyntheticFixtureProvider, scenario: SyntheticScenario
-) -> TreatmentPlanner:
-    notices = provider.load_treatment_notices(scenario.id)
-    if not notices:
-        raise ValueError("Required fictional treatment claims are unavailable")
-
-    def inspect(site: CandidateSite) -> tuple[TreatmentScreening, ...]:
-        return screen_treatment_notices(site, notices)
-
-    return TreatmentPlanner(inspect)
 
 
 @dataclass(frozen=True)
@@ -58,6 +29,7 @@ class AppSettings:
     version: str = "0.1.0"
     reference_snapshot_path: Path | None = None
     reference_inventory_path: Path | None = None
+    source_provider: SourceProviderMode = SourceProviderMode.DISABLED
 
 
 def create_app(
@@ -107,21 +79,20 @@ def create_app(
 
     active_catalog = territories if territories is not None else loaded_catalog
     app.include_router(create_territory_router(active_catalog))
-    fixture_provider = SyntheticFixtureProvider()
+    source_runtime = compose_sources(config.source_provider)
     job_service = (
         investigations
         if investigations is not None
         else InMemoryInvestigationService(
-            fixture_provider,
-            replan_factory=_fictional_planner,
-            treatment_planner_factory=lambda scenario: _fictional_treatment_planner(
-                fixture_provider, scenario
-            ),
+            source_runtime.provider,
+            replan_factory=source_runtime.ecology_factory,
+            treatment_planner_factory=source_runtime.treatment_factory,
         )
     )
     app.include_router(
         create_investigation_router(
-            job_service, fixture_provider.list_scenarios if investigations is None else None
+            job_service,
+            source_runtime.provider.list_scenarios if investigations is None else None,
         )
     )
     return app
