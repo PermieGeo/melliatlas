@@ -38,4 +38,5 @@ No candidate above is approved for crawling, storing source attachments or publi
 
 ## Current Python increment
 
-`backend/src/melliatlas/sources/saturn.py` implements only bounded **offline fixture** normalization of the historical treatment-page shape. `backend/src/melliatlas/analyzers/api.py` screens candidate site/time windows against that normalized evidence with conservative uncertainty. There is **no live connector, scheduled poller, PostGIS treatment store, weather drift model, or public hazard warning** in this increment. The earlier snapshot's actual provider response samples and technical test cases remain historical reference material; do not copy any real/private captured payload into project fixtures.
+`backend/src/melliatlas/sources/providers/saturn/api.py` exposes bounded **offline fixture** normalization of the historical treatment-page shape. `backend/src/melliatlas/analyzers/api.py` screens candidate site/time windows against that normalized evidence with conservative uncertainty. There is **no live connector, scheduled poller, PostGIS treatment store, weather drift model, or public hazard warning** in this increment. The earlier snapshot's actual provider response samples and technical test cases remain historical reference material; do not copy any real/private captured payload into project fixtures.
+

@@ -51,3 +51,19 @@ Full versioned investigation/source endpoints, source provenance DTOs, PostGIS r
 `GET /api/v1/investigations/scenarios?country=RU|BY` returns a typed list of executable source-declared fictional scenarios, with an opaque `id`, display `name`, `country`, source-owned `territory_id` and `territory_name`, `source_mode=SYNTHETIC`, inclusive `season_start`/`season_end`, and an optional `is_default` preference. Values derive from `SyntheticFixtureProvider.list_scenarios` and actual provider-supported seasons, not client configuration. A supported country with no scenario returns `200 []`; an invalid country returns the normal `422/INVALID_REQUEST` envelope. With a custom investigation service injected, the default application advertises no fictional scenarios instead of implying execution support.
 
 This is **not** a full source registry, an approval of any territory reference, live treatment data, a safe-site guarantee or a provider discovery endpoint. Current country support is RU/BY; future country support requires backend catalog and fixture/provider implementation, but no browser-side country cases. The existing POST/GET DTOs remain unchanged.
+
+
+## Explicit source-provider composition (W01 follow-up)
+
+`AppSettings.source_provider` is a typed `SourceProviderMode` defaulting to
+`DISABLED`, not the synthetic provider. `create_app()` composes providers only at
+`api.composition.compose_sources` and injects their typed collaborators into
+`InMemoryInvestigationService`. The `DISABLED` configuration returns an empty
+scenario discovery list and rejects synthetic investigation POSTs as unsupported
+rather than silently loading fixture evidence. `SYNTHETIC` explicitly activates
+the offline, bounded provider and its ecology/treatment evaluation callbacks.
+The ASGI entry point reads `MELLIATLAS_SOURCE_PROVIDER` (`disabled` or `synthetic`),
+rejecting unknown values during startup. External service injection remains explicit,
+and custom investigation services do not implicitly expose fixture discovery.
+This composition is deliberately small and does not add a service locator, global
+registry, runtime dependency or provider auto-discovery.

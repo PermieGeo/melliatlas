@@ -51,3 +51,14 @@ npm run dev
 Open `http://127.0.0.1:5173`. Vite proxies `/api` to the local backend. The first successful npm installation must generate and commit `web/package-lock.json` for reproducible installs. Do not claim `npm ci` or a reproducible build until that lockfile is present. The optional external map tile layer is disabled by default; enable it explicitly if you accept sharing map viewport requests with OpenStreetMap.
 
 See [Web README](../web/README.md) for the synthetic scenario and client-specific verification commands.
+
+
+
+### Source-provider selection
+
+The backend defaults to `MELLIATLAS_SOURCE_PROVIDER=disabled`: the public API has no
+synthetic scenario enabled, and investigation creation fails closed. To run the
+explicit offline demonstration, start the backend with
+`MELLIATLAS_SOURCE_PROVIDER=synthetic` in its environment. This is a fixture-only
+mode and does not activate real Saturn/network data. An unsupported mode causes
+startup to fail instead of silently choosing a provider.

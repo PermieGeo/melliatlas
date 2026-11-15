@@ -12,7 +12,10 @@ from melliatlas.jobs.api import (
     InvestigationSnapshot,
     InvestigationStorageError,
 )
-from melliatlas.sources.api import SYNTHETIC_SCENARIO_ID, SyntheticFixtureProvider
+from melliatlas.sources.providers.synthetic.api import (
+    SYNTHETIC_SCENARIO_ID,
+    SyntheticFixtureProvider,
+)
 
 
 class StubCompletedStore:

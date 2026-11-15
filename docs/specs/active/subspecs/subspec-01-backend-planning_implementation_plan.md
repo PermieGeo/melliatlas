@@ -99,7 +99,7 @@ TDD/contract-first evidence in `backend/src/melliatlas/api/routes_investigations
 
 ### 4.2 V04-06 public contracts and integration design
 
-- **Source boundary:** `sources.api.SYNTHETIC_COMBINED_SCENARIO_ID` selects a RU-only fixture derived from existing ecology and treatment evidence; `SyntheticFixtureProvider.load_treatment_notices` returns only synthetic claims. No new provider I/O.
+- **Source boundary:** `sources.providers.synthetic.api.SYNTHETIC_COMBINED_SCENARIO_ID` selects a RU-only fixture derived from existing ecology and treatment evidence; `SyntheticFixtureProvider.load_treatment_notices` returns only synthetic claims. No new provider I/O.
 - **Agent boundary:** `agent.api.CombinedPlanner(ecology: DeterministicPlanner, treatment: TreatmentPlanner).plan(candidates, season) -> CombinedPlanningResult`. The result exposes a final `ReplanResult` plus independently attributed `TreatmentReview`; no `analyzers` or concrete `sources` imports in `agent`. Add `ReplanDecisionKind.TREATMENT_CHECK` for source record-linked typed trace. Both per-inspector budgets and validation contracts apply.
 - **Jobs/API boundary:** `InMemoryInvestigationService.process` composes both injected factories only for a fixture requiring both checks. Existing `InvestigationSnapshot.replanning` and `treatment_review` are both populated, and the top-level `plan` equals the final combined `replanning.plan`. `api.routes_investigations` keeps the existing nullable DTO fields and URLs; no new HTTP surface.
 - **Storage:** Preserve historical optional fields, validate exact joint coverage for supported plans, conservative no-plan coverage, treatment source-evidence and trace links, no unqualified/avoided final stops, and consistency between final outcome and plan. Missing collaborator or incomplete evidence is `FAILED`; no two jointly qualified stops is a completed no-alternative outcome.
@@ -207,3 +207,4 @@ Apply the shared [SDD convergence rules](../../AGENTS.md) to the selected task; 
 3. For V03, record the exact normalized reference and independent inventory identities, the failed-startup tests, runtime HTTP results and remaining external source/license approvals. Synthetic inventory success does not establish real RU/BY completeness.
 4. Keep V02 PostGIS acceptance pending until `BE-T040`–`BE-T044` run against a real approved database. Update feature traceability only after implementation review, with separate human acceptance decisions.
 5. If an actual reference validation or database check fails, record the offending input/migration, failing assertion and recovery before claiming any acceptance evidence.
+

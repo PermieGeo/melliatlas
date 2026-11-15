@@ -8,12 +8,15 @@ from uuid import UUID
 import httpx
 import pytest
 
-from melliatlas.api.app import create_app
-from melliatlas.sources.api import SYNTHETIC_COMBINED_SCENARIO_ID
+from melliatlas.api.app import AppSettings, create_app
+from melliatlas.api.composition import SourceProviderMode
+from melliatlas.sources.providers.synthetic.api import SYNTHETIC_COMBINED_SCENARIO_ID
 
 
 def test_browser_handoff_openapi_exposes_existing_typed_operations() -> None:
-    schema = create_app().openapi()
+    schema = create_app(
+        settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC)
+    ).openapi()
     paths = schema["paths"]
     for path, method in (
         ("/api/v1/territories/countries", "get"),
@@ -49,7 +52,7 @@ def test_browser_handoff_openapi_exposes_existing_typed_operations() -> None:
 
 def test_browser_handoff_joint_fixture_is_source_attributed_and_private() -> None:
     async def check() -> None:
-        app = create_app()
+        app = create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC))
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://testserver"
         ) as client:
@@ -86,7 +89,7 @@ def test_browser_handoff_joint_fixture_is_source_attributed_and_private() -> Non
 
 def test_browser_handoff_unavailable_reference_and_unknown_result_are_explicit() -> None:
     async def check() -> None:
-        app = create_app()
+        app = create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC))
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://testserver"
         ) as client:
@@ -113,7 +116,7 @@ def test_web_w01_fixture_tracks_the_real_combined_http_contract() -> None:
     expected = json.loads(fixture_path.read_text(encoding="utf-8"))
 
     async def check() -> None:
-        app = create_app()
+        app = create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC))
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://testserver"
         ) as client:

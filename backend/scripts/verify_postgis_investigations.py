@@ -26,7 +26,10 @@ from melliatlas.jobs.api import (
 )
 from melliatlas.persistence.api import PostgisCompletedInvestigationStore
 from melliatlas.planning.api import TimeWindow
-from melliatlas.sources.api import SYNTHETIC_SCENARIO_ID, SyntheticFixtureProvider
+from melliatlas.sources.providers.synthetic.api import (
+    SYNTHETIC_SCENARIO_ID,
+    SyntheticFixtureProvider,
+)
 from melliatlas.territories.api import CountryCode
 
 

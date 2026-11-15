@@ -1,6 +1,6 @@
-"""Compatibility exports for the earlier Saturn parser module.
+"""Public offline Saturn decoder and pagination exports.
 
-New implementation belongs to sources.providers.saturn; peers use sources.api.
+This module performs no network I/O; source transport requires separate approval.
 """
 
 from melliatlas.sources.notices import TreatmentNotice, TreatmentProduct

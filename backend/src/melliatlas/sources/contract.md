@@ -1,29 +1,29 @@
-# Synthetic Source Contract — V01 and opt-in V04-03
+# Source Provider Contract
 
-`SyntheticFixtureProvider.load` performs no I/O and returns a recognized, explicitly fictional `RU` scenario or `None` for unsupported `(country, territory_id, scenario_id)` combinations. It does not invent general-purpose catalog completeness or provide live weather, Saturn or publication access.
+The public capability boundary is `melliatlas.sources.api`: `ScenarioProvider` is a
+structural Python `Protocol`, and `ScenarioListing` advertises the identity, country,
+territory, source mode, inclusive supported season and default status of an executable
+scenario. `ScenarioProvider.load(country=..., territory_id=..., scenario_id=...)`
+returns a typed scenario or `None` for an unsupported combination;
+`list_scenarios(country)` returns only scenarios the provider can actually load.
+No source is implicitly activated by importing the module or constructing an app.
 
-The fixture contains three fictional candidate sites, three dated forage windows, stable evidence IDs, the `FIXTURE` source mode, a synthetic reference marker and explicit uncertainty/limitations. Data is recalculated from static values for each load and is not a substitute for a versioned reference import or a persisted source cache.
+The initial protocol intentionally returns the existing MVP `SyntheticScenario`
+planning DTO and advertises `SYNTHETIC` mode; this is a **current wire-contract
+limitation**, not a requirement that all future sources be synthetic. A later
+non-fixture execution path needs its own approved planning/evidence type expansion,
+not an assertion that an external provider is already implemented.
 
-The opt-in `synthetic-ru-2026-v04-ecology` scenario preserves the V01 scenario unchanged and adds one fictional alternative plus two separately identified, explicitly fictional ecology polygons. Each ecology zone's evidence ID is backed by a `FIXTURE` `EvidenceSummary` with an uncertainty note; neither zone establishes real legal prohibitions or environmental coverage. The additively optional `SyntheticScenario.ecology_zones` field is empty for V01.
+Generic source-attributed, unverified `TreatmentNotice` and `TreatmentProduct` types
+are owned by `sources/notices.py` and exported from the public API. Their timestamps,
+nullable geometry and reported chemical attributes are observations, not evidence of
+confirmed treatment, safe apiary placement or legal compliance. Planning and analysis
+are owned by their existing capabilities; source acquisition must not make policy decisions.
 
-
-## Offline Saturn treatment-page adapter — V04-04 (partial)
-
-`melliatlas.sources.api.parse_saturn_treatment_page` is a **pure decoder** for the historically observed Russia-only `/planapplybees` shape. It takes a pre-supplied bounded JSON page and a timezone-aware capture timestamp; it never contacts Saturn, reads files, or assumes that any historical endpoint or access permission is current. Returned `TreatmentNotice` objects are explicitly `FIXTURE` and synthetic, with a field/acreage ID distinct from shared `planId`, explicit parser version and optional unverified source URI, provider-reported treatment products and bee hazard classes, separate publication, capture and effective application times, and nullable source-linked geometry. It does not certify treatment occurrence, legal use, toxicity, geographic coverage or source publication rights.
-
-An `isUpdated=true` record uses revised dates exclusively; missing or contradictory revised times remain unknown. Missing/invalid geometry is not replaced by a center point; malformed page envelopes, conflicting metadata and map-index records fail explicitly. Unidentifiable source records are counted without assigning fabricated IDs. `next_saturn_treatment_page` validates the requested pagination and terminal progress before a future cursor can be advanced. Raw-page retention, provenance attestation, PostGIS import, approved live source transport, and BY public-web adapters are **not implemented**. Historic `bee-saturn.ru` payloads are compatibility references, not approved current network contracts.
-
-The generic `TreatmentNotice` and `TreatmentProduct` types are owned by `sources/notices.py` and re-exported from `sources.api`. The historical provider implementation is divided into `sources/providers/saturn/legacy_treatment.py` (payload normalization), `geometry.py` (WGS84 polygon validation) and `pagination.py` (page/cursor checks), with a private package initializer; no provider-specific `contract.md` or separate capability is introduced. Consumers use `sources.api`, never the provider implementation. A `sources/saturn.py` compatibility facade remains for existing imports; its removal requires a separate compatibility review. Explicit `__all__` lists protect intentional public re-exports from `ruff check --fix` removing imports that are not otherwise referenced inside the defining module. This keeps API imports stable after FMT and leaves room for independently approved Saturn transport and capture logic.
-
-## V04-05 investigation fixture (partial)
-
-`SYNTHETIC_TREATMENT_SCENARIO_ID` explicitly selects a Russia-only, fixed offline treatment-study scenario. The `SyntheticFixtureProvider.load` result contains four fictional forage candidates, including one alternative, and a source-linked fictional treatment evidence summary. `SyntheticFixtureProvider.load_treatment_notices(scenario_id)` returns an independently decoded, single-page fictional notice only for that scenario, or `None` otherwise. Its legacy-shaped source data is internal to `synthetic_treatments.py`; there is no new Saturn provider `contract.md`, HTTP client, upstream query, or live-access setting. Field identity, historical parser version, claimed product/hazard fields and proposed dates remain attributable. No record is presented as a real spraying event or site clearance.
-
-## V04-06 combined fixture
-
-`SYNTHETIC_COMBINED_SCENARIO_ID` composes existing offline ecology and treatment fixtures, retaining each source-linked evidence record and adding an alternative candidate whose fictional coordinates are outside the configured treatment screening radius but still within the fictional ecology precaution zone. `load_treatment_notices` accepts this explicit scenario in addition to the treatment-only scenario. No new Saturn transport, source type or local administrative interface is introduced.
-
-
-## Executable synthetic scenario listing (W01 follow-up)
-
-`SyntheticFixtureProvider.list_scenarios(country)` returns immutable `ScenarioListing` records for scenarios that `load(country, territory_id, scenario_id)` actually supports. Each advertises a source-owned fictional scope and the same supported inclusive season used by request validation. The joint fictional scenario is marked as the default of the current RU fixture collection; countries without supported fixtures return an empty tuple. This is not a public geographic reference catalog, live source registry or evidence-coverage assertion.
+Concrete providers are private to `sources/providers/`. The application composition
+root may choose a provider explicitly and inject its collaborators into jobs; ordinary
+peer capabilities must depend on `sources.api` contracts rather than concrete adapters.
+The current `disabled` provider mode returns no scenarios and never silently falls back
+to synthetic evidence. See `providers/synthetic/README.md` and
+`providers/saturn/README.md` for implementation-specific constraints. No network or
+PostGIS source ingestion is enabled by this refactoring.

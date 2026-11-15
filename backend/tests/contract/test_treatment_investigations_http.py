@@ -12,7 +12,8 @@ import pytest
 
 from melliatlas.agent.api import TreatmentInspector, TreatmentPlanner
 from melliatlas.analyzers.api import screen_treatment_notices
-from melliatlas.api.app import create_app
+from melliatlas.api.app import AppSettings, create_app
+from melliatlas.api.composition import SourceProviderMode
 from melliatlas.jobs.api import (
     InMemoryInvestigationService,
     InvestigationOutcomeKind,
@@ -33,11 +34,13 @@ from melliatlas.planning.api import (
     TreatmentProximity,
     TreatmentScreening,
 )
-from melliatlas.sources.api import (
+from melliatlas.sources.providers.synthetic.api import (
     SYNTHETIC_TREATMENT_SCENARIO_ID,
+    SyntheticFixtureProvider,
+)
+from melliatlas.sources.providers.synthetic.treatments import (
     TREATMENT_FIXTURE_RECORD_ID,
     TREATMENT_FIXTURE_SOURCE_ID,
-    SyntheticFixtureProvider,
     treatment_fixture_notices,
 )
 from melliatlas.territories.api import CountryCode, PolygonWgs84
@@ -89,7 +92,7 @@ def _single_observation(
 def test_offline_http_investigation_replaces_treatment_intersection_with_alternative() -> None:
     async def scenario() -> None:
         with patch.object(socket, "connect", side_effect=AssertionError("No network for fixtures")):
-            app = create_app()
+            app = create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC))
             async with httpx.AsyncClient(
                 transport=httpx.ASGITransport(app=app), base_url="http://testserver"
             ) as client:

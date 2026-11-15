@@ -4,14 +4,18 @@ import asyncio
 
 import httpx
 
-from melliatlas.api.app import create_app
-from melliatlas.sources.api import SYNTHETIC_COMBINED_SCENARIO_ID
+from melliatlas.api.app import AppSettings, create_app
+from melliatlas.api.composition import SourceProviderMode
+from melliatlas.sources.providers.synthetic.api import SYNTHETIC_COMBINED_SCENARIO_ID
 
 
 def test_scenarios_are_server_defined_and_country_scoped() -> None:
     async def check() -> None:
         async with httpx.AsyncClient(
-            transport=httpx.ASGITransport(app=create_app()), base_url="http://testserver"
+            transport=httpx.ASGITransport(
+                app=create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC))
+            ),
+            base_url="http://testserver",
         ) as client:
             ru = await client.get("/api/v1/investigations/scenarios?country=RU")
             assert ru.status_code == 200
@@ -50,6 +54,6 @@ def test_scenarios_are_server_defined_and_country_scoped() -> None:
 
 
 def test_scenario_discovery_is_documented_in_openapi() -> None:
-    spec = create_app().openapi()
+    spec = create_app(settings=AppSettings(source_provider=SourceProviderMode.SYNTHETIC)).openapi()
     op = spec["paths"]["/api/v1/investigations/scenarios"]["get"]
     assert op["responses"]["200"]["content"]["application/json"]["schema"]
