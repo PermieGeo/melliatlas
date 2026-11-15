@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.concurrency import run_in_threadpool
 
+from melliatlas.agent.api import ReplanDecisionKind, ReplanOutcome
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse
 from melliatlas.jobs.api import (
     InvalidInvestigationRequest,
@@ -19,7 +20,7 @@ from melliatlas.jobs.api import (
     InvestigationStatus,
     InvestigationStorageError,
 )
-from melliatlas.planning.api import TimeWindow
+from melliatlas.planning.api import EcologyStatus, TimeWindow
 from melliatlas.territories.api import CountryCode
 
 
@@ -75,6 +76,34 @@ class EvidenceSummaryDto(BaseModel):
     uncertainty: str
 
 
+class SiteAssessmentDto(BaseModel):
+    site_id: str
+    status: EcologyStatus
+    evidence_ids: tuple[str, ...]
+    rule_ids: tuple[str, ...]
+    reasons: tuple[str, ...]
+    unknowns: tuple[str, ...]
+    synthetic: Literal[True]
+
+
+class ReplanDecisionDto(BaseModel):
+    kind: ReplanDecisionKind
+    site_ids: tuple[str, ...]
+    evidence_ids: tuple[str, ...]
+    rule_ids: tuple[str, ...]
+    note: str
+
+
+class ReplanSummaryDto(BaseModel):
+    outcome: ReplanOutcome
+    assessments: tuple[SiteAssessmentDto, ...]
+    excluded_site_ids: tuple[str, ...]
+    unknown_site_ids: tuple[str, ...]
+    decisions: tuple[ReplanDecisionDto, ...]
+    checks_used: int
+    warnings: tuple[str, ...]
+
+
 class InvestigationResponse(BaseModel):
     id: UUID
     status: InvestigationStatus
@@ -83,6 +112,7 @@ class InvestigationResponse(BaseModel):
     updated_at: datetime
     outcome: InvestigationOutcomeKind | None
     plan: SeasonPlanDto | None
+    replanning: ReplanSummaryDto | None
     evidence: tuple[EvidenceSummaryDto, ...]
     decision_trace: tuple[str, ...]
     diagnostics: tuple[str, ...]
@@ -110,6 +140,38 @@ def _present(snapshot: InvestigationSnapshot) -> InvestigationResponse:
             relocations=snapshot.plan.relocations,
             rationale=snapshot.plan.rationale,
         )
+    replanning: ReplanSummaryDto | None = None
+    if snapshot.replanning is not None:
+        result = snapshot.replanning
+        replanning = ReplanSummaryDto(
+            outcome=result.outcome,
+            assessments=tuple(
+                SiteAssessmentDto(
+                    site_id=item.site_id,
+                    status=item.status,
+                    evidence_ids=item.evidence_ids,
+                    rule_ids=item.rule_ids,
+                    reasons=item.reasons,
+                    unknowns=item.unknowns,
+                    synthetic=True,
+                )
+                for item in result.assessments
+            ),
+            excluded_site_ids=result.excluded_site_ids,
+            unknown_site_ids=result.unknown_site_ids,
+            decisions=tuple(
+                ReplanDecisionDto(
+                    kind=event.kind,
+                    site_ids=event.site_ids,
+                    evidence_ids=event.evidence_ids,
+                    rule_ids=event.rule_ids,
+                    note=event.note,
+                )
+                for event in result.trace
+            ),
+            checks_used=result.checks_used,
+            warnings=result.warnings,
+        )
     return InvestigationResponse(
         id=snapshot.id,
         status=snapshot.status,
@@ -124,6 +186,7 @@ def _present(snapshot: InvestigationSnapshot) -> InvestigationResponse:
         updated_at=snapshot.updated_at,
         outcome=snapshot.outcome,
         plan=plan,
+        replanning=replanning,
         evidence=tuple(
             EvidenceSummaryDto(
                 id=item.id,

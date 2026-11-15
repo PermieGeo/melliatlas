@@ -1,7 +1,8 @@
-"""Public non-durable investigation lifecycle for the V01 synthetic slice."""
+"""Public non-durable investigation lifecycle for synthetic V01/V04 slices."""
 
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, replace
 from datetime import date, datetime, timezone
 from enum import StrEnum
@@ -10,10 +11,19 @@ from threading import Lock
 from typing import Literal, Protocol, TypeGuard
 from uuid import UUID, uuid4
 
+from melliatlas.agent.api import (
+    DeterministicPlanner,
+    ReplanDecision,
+    ReplanDecisionKind,
+    ReplanOutcome,
+    ReplanResult,
+)
 from melliatlas.planning.api import (
+    EcologyStatus,
     EvidenceSummary,
     SeasonPlan,
     SeasonStop,
+    SiteAssessment,
     SyntheticScenario,
     TimeWindow,
     build_season_plan,
@@ -59,6 +69,7 @@ class InvestigationSnapshot:
     evidence: tuple[EvidenceSummary, ...] = ()
     decision_trace: tuple[str, ...] = ()
     diagnostics: tuple[str, ...] = ()
+    replanning: ReplanResult | None = None
 
 
 class InvalidInvestigationRequest(ValueError):
@@ -81,6 +92,9 @@ class InvestigationStorageError(RuntimeError):
     """Persistence failed; the public HTTP error must not expose database details."""
 
 
+EcologyPlannerFactory = Callable[[SyntheticScenario], DeterministicPlanner]
+
+
 class CompletedInvestigationStore(Protocol):
     """Durable completed snapshots; in-flight jobs are intentionally not persisted."""
 
@@ -98,7 +112,10 @@ def serialize_completed_snapshot(snapshot: InvestigationSnapshot) -> str:
             return str(value) if isinstance(value, UUID) else value.isoformat()
         raise TypeError(f"Unsupported snapshot field: {type(value).__name__}")
 
-    return json.dumps(asdict(snapshot), default=encode_temporal, sort_keys=True, allow_nan=False)
+    encoded = asdict(snapshot)
+    if snapshot.replanning is None:
+        del encoded["replanning"]
+    return json.dumps(encoded, default=encode_temporal, sort_keys=True, allow_nan=False)
 
 
 def _is_object_dict(value: object) -> TypeGuard[dict[object, object]]:
@@ -182,6 +199,67 @@ def _stored_stop(value: object) -> SeasonStop:
     )
 
 
+def _stored_plan(value: object) -> SeasonPlan:
+    item = _stored_object(value, "plan")
+    return SeasonPlan(
+        stops=tuple(_stored_stop(stop) for stop in _stored_list(item["stops"], "stops")),
+        relocations=_stored_integer(item["relocations"], "relocations"),
+        rationale=_stored_text(item["rationale"], "rationale"),
+    )
+
+
+def _stored_assessment(value: object) -> SiteAssessment:
+    item = _stored_object(value, "replanning assessment")
+    if item["synthetic"] is not True:
+        raise ValueError("Stored ecology assessment must be explicitly synthetic")
+    return SiteAssessment(
+        site_id=_stored_text(item["site_id"], "assessment site_id"),
+        status=EcologyStatus(_stored_text(item["status"], "ecology status")),
+        evidence_ids=_stored_texts(item["evidence_ids"], "assessment evidence IDs"),
+        rule_ids=_stored_texts(item["rule_ids"], "assessment rule IDs"),
+        reasons=_stored_texts(item["reasons"], "assessment reasons"),
+        unknowns=_stored_texts(item["unknowns"], "assessment unknowns"),
+        synthetic=True,
+    )
+
+
+def _stored_decision(value: object) -> ReplanDecision:
+    item = _stored_object(value, "replanning decision")
+    return ReplanDecision(
+        kind=ReplanDecisionKind(_stored_text(item["kind"], "decision kind")),
+        site_ids=_stored_texts(item["site_ids"], "decision sites"),
+        evidence_ids=_stored_texts(item["evidence_ids"], "decision evidence"),
+        rule_ids=_stored_texts(item["rule_ids"], "decision rules"),
+        note=_stored_text(item["note"], "decision note"),
+    )
+
+
+def _stored_replanning(value: object) -> ReplanResult:
+    item = _stored_object(value, "replanning")
+    raw_plan = item["plan"]
+    count = _stored_integer(item["checks_used"], "checks_used")
+    if count < 0:
+        raise ValueError("Stored replanning check count must not be negative")
+    assessments = tuple(
+        _stored_assessment(entry) for entry in _stored_list(item["assessments"], "assessments")
+    )
+    if len(assessments) != count:
+        raise ValueError("Stored replanning check count disagrees with assessments")
+    result = ReplanResult(
+        outcome=ReplanOutcome(_stored_text(item["outcome"], "replanning outcome")),
+        plan=_stored_plan(raw_plan) if raw_plan is not None else None,
+        assessments=assessments,
+        excluded_site_ids=_stored_texts(item["excluded_site_ids"], "excluded_site_ids"),
+        unknown_site_ids=_stored_texts(item["unknown_site_ids"], "unknown_site_ids"),
+        trace=tuple(_stored_decision(event) for event in _stored_list(item["trace"], "trace")),
+        checks_used=count,
+        warnings=_stored_texts(item["warnings"], "warnings"),
+    )
+    if (result.outcome is ReplanOutcome.PLAN_FOUND) != (result.plan is not None):
+        raise ValueError("Stored replanning plan and outcome are inconsistent")
+    return result
+
+
 def _stored_evidence(value: object) -> EvidenceSummary:
     item = _stored_object(value, "evidence")
     mode = item["source_mode"]
@@ -216,14 +294,9 @@ def deserialize_completed_snapshot(payload: str) -> InvestigationSnapshot:
         )
 
     raw_plan = data["plan"]
-    plan: SeasonPlan | None = None
-    if raw_plan is not None:
-        plan_data = _stored_object(raw_plan, "plan")
-        plan = SeasonPlan(
-            stops=tuple(_stored_stop(stop) for stop in _stored_list(plan_data["stops"], "stops")),
-            relocations=_stored_integer(plan_data["relocations"], "relocations"),
-            rationale=_stored_text(plan_data["rationale"], "rationale"),
-        )
+    plan = _stored_plan(raw_plan) if raw_plan is not None else None
+    raw_replanning = data.get("replanning")
+    replanning = _stored_replanning(raw_replanning) if raw_replanning is not None else None
 
     raw_outcome = data["outcome"]
     snapshot = InvestigationSnapshot(
@@ -251,9 +324,20 @@ def deserialize_completed_snapshot(payload: str) -> InvestigationSnapshot:
         ),
         decision_trace=_stored_texts(data["decision_trace"], "decision_trace"),
         diagnostics=_stored_texts(data["diagnostics"], "diagnostics"),
+        replanning=replanning,
     )
     if snapshot.status is not InvestigationStatus.COMPLETED or snapshot.outcome is None:
         raise ValueError("Stored investigation is not a completed snapshot")
+    if snapshot.replanning is not None:
+        if snapshot.replanning.plan != snapshot.plan:
+            raise ValueError("Stored replanning plan disagrees with investigation plan")
+        expected_outcome = {
+            ReplanOutcome.PLAN_FOUND: InvestigationOutcomeKind.PLAN_FOUND,
+            ReplanOutcome.NO_FEASIBLE_ALTERNATIVE: InvestigationOutcomeKind.NO_FEASIBLE_ALTERNATIVE,
+            ReplanOutcome.CHECK_LIMIT_REACHED: InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE,
+        }[snapshot.replanning.outcome]
+        if snapshot.outcome is not expected_outcome:
+            raise ValueError("Stored replanning outcome disagrees with investigation outcome")
     if snapshot.created_at.tzinfo is None or snapshot.updated_at.tzinfo is None:
         raise ValueError("Stored investigation timestamps must contain timezone offsets")
     return snapshot
@@ -266,9 +350,12 @@ class InMemoryInvestigationService:
         self,
         provider: ScenarioProvider,
         completed_store: CompletedInvestigationStore | None = None,
+        *,
+        replan_factory: EcologyPlannerFactory | None = None,
     ) -> None:
         self._provider = provider
         self._completed_store = completed_store
+        self._replan_factory = replan_factory
         self._records: dict[UUID, InvestigationSnapshot] = {}
         self._pending: dict[UUID, SyntheticScenario] = {}
         self._lock = Lock()
@@ -325,25 +412,47 @@ class InMemoryInvestigationService:
                 updated_at=datetime.now(timezone.utc),
             )
         try:
-            plan = build_season_plan(scenario.candidates, current.request.season)
-            outcome = (
-                InvestigationOutcomeKind.PLAN_FOUND
-                if plan is not None
-                else InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE
-            )
-            trace = (
-                "Sorted synthetic forage windows by date and stable candidate ID",
-                "Selected at least two non-overlapping fixture stops"
-                if plan is not None
-                else "Fewer than two fixture stops intersect the requested season",
-            )
-            diagnostics = (
-                ()
-                if plan is not None
-                else (
-                    "Synthetic forage evidence cannot support a two-stop proposal for this window",
+            replanning: ReplanResult | None = None
+            if scenario.ecology_zones:
+                if self._replan_factory is None:
+                    raise RuntimeError("Fictional ecology evaluator has not been configured")
+                replanning = self._replan_factory(scenario).plan(
+                    scenario.candidates, current.request.season
                 )
-            )
+                plan = replanning.plan
+                outcome = {
+                    ReplanOutcome.PLAN_FOUND: InvestigationOutcomeKind.PLAN_FOUND,
+                    ReplanOutcome.NO_FEASIBLE_ALTERNATIVE: InvestigationOutcomeKind.NO_FEASIBLE_ALTERNATIVE,
+                    ReplanOutcome.CHECK_LIMIT_REACHED: InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE,
+                }[replanning.outcome]
+                trace = tuple(f"{event.kind.value}: {event.note}" for event in replanning.trace)
+                diagnostics = (
+                    ()
+                    if plan is not None
+                    else ("Fictional ecology evidence cannot support a qualified plan",)
+                )
+                limitations = current.limitations + replanning.warnings
+            else:
+                plan = build_season_plan(scenario.candidates, current.request.season)
+                outcome = (
+                    InvestigationOutcomeKind.PLAN_FOUND
+                    if plan is not None
+                    else InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE
+                )
+                trace = (
+                    "Sorted synthetic forage windows by date and stable candidate ID",
+                    "Selected at least two non-overlapping fixture stops"
+                    if plan is not None
+                    else "Fewer than two fixture stops intersect the requested season",
+                )
+                diagnostics = (
+                    ()
+                    if plan is not None
+                    else (
+                        "Synthetic forage evidence cannot support a two-stop proposal for this window",
+                    )
+                )
+                limitations = current.limitations
             finished = replace(
                 current,
                 status=InvestigationStatus.COMPLETED,
@@ -353,6 +462,8 @@ class InMemoryInvestigationService:
                 evidence=scenario.evidence,
                 decision_trace=trace,
                 diagnostics=diagnostics,
+                limitations=limitations,
+                replanning=replanning,
             )
         except Exception:
             _LOGGER.exception("Synthetic investigation processing failed")
