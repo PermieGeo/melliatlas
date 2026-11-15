@@ -1,7 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="780" height="585" viewBox="0 0 1448 1086" role="img" aria-labelledby="title">
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="390" viewBox="0 0 1448 1086" role="img" aria-labelledby="title">
   <title id="title">Bees, a forest, a field, crop spraying, wind and satellite mapping signals</title>
   <rect width="1448" height="1086" fill="#fff"/>
-  <path fill="#858585" fill-rule="evenodd" d="
+  <defs>
+    <path id="illustration-lines" fill-rule="evenodd" d="
     M315,1018 L314,1020 316,1024 317,1043 314,1055 308,1042 294,1025 294,1027 305,1040 313,1058 315,1057 318,1045 318,1029Z
     M900,1015 L898,1015 886,1025 878,1035 875,1043 882,1032Z
     M629,1011 L616,1021 608,1031 605,1039 617,1022Z
@@ -253,5 +254,25 @@
     M760,48 L762,44 767,40 780,40 787,43 793,48 793,55 791,56 772,51 761,50Z
     M626,36 L657,44 651,65 623,60 620,58Z
     M596,29 L622,35 624,37 619,56 617,58 599,55 607,58 616,59 618,61 614,73 614,78 611,83 605,81 586,79 583,77Z
-  "/>
+    "/>
+    <clipPath id="forest"><path d="M0 195 H508 V690 H0Z"/></clipPath>
+    <clipPath id="hive"><path d="M0 704 H341 V997 H0Z"/></clipPath>
+    <clipPath id="field"><path d="M749 708 H1448 V1060 H749Z"/></clipPath>
+    <clipPath id="aircraft"><path d="M980 330 H1425 V562 H980Z"/></clipPath>
+    <clipPath id="satellite"><path d="M543 0 H954 V194 H543Z"/></clipPath>
+    <clipPath id="wind"><path d="M490 540 H978 V704 H490Z"/></clipPath>
+    <clipPath id="bees">
+      <ellipse cx="555" cy="860" rx="149" ry="104"/>
+      <ellipse cx="407" cy="753" rx="72" ry="70"/>
+      <ellipse cx="738" cy="926" rx="80" ry="72"/>
+    </clipPath>
+  </defs>
+  <use href="#illustration-lines" fill="#929292"/>
+  <use href="#illustration-lines" fill="#779d80" clip-path="url(#forest)"/>
+  <use href="#illustration-lines" fill="#a18d72" clip-path="url(#hive)"/>
+  <use href="#illustration-lines" fill="#91a87b" clip-path="url(#field)"/>
+  <use href="#illustration-lines" fill="#859aaf" clip-path="url(#aircraft)"/>
+  <use href="#illustration-lines" fill="#819eb2" clip-path="url(#satellite)"/>
+  <use href="#illustration-lines" fill="#a3b5c1" clip-path="url(#wind)"/>
+  <use href="#illustration-lines" fill="#c59b4e" clip-path="url(#bees)"/>
 </svg>

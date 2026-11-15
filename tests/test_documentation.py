@@ -6,6 +6,7 @@ import json
 import re
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -152,6 +153,11 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn('<path ', image)
         self.assertNotIn('data:image/', image)
         self.assertNotIn('<image ', image)
+        artwork = ET.fromstring(image)
+        self.assertEqual(('520', '390'), (artwork.get('width'), artwork.get('height')))
+        palette = {element.attrib['fill'] for element in artwork.iter() if 'fill' in element.attrib}
+        self.assertGreaterEqual(len(palette - {'#fff', '#929292'}), 3)
+        self.assertNotIn('Gradient', image)
 
         lowered = readme.casefold()
         self.assertIn('request-and-result interactions', lowered)
