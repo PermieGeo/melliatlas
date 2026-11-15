@@ -170,17 +170,18 @@ class FeatureTraceabilityTests(unittest.TestCase):
     def test_every_record_links_real_owners_and_tests(self) -> None:
         self.assertEqual([], traceability_errors(self._source(), ROOT))
 
-    def test_scaffold_is_not_investigation_or_map_implementation(self) -> None:
+    def test_web_slice_is_partial_without_fabricating_validated_basemap(self) -> None:
         records = {entry["feature_id"]: entry for entry in parse_feature_entries(self._source())}
-        for feature_id in ("WEB.INVESTIGATIONS", "MAP.BASEMAP"):
+        for feature_id in ("WEB.INVESTIGATIONS", "WEB.MAP_TIMELINE"):
             with self.subTest(feature_id=feature_id):
-                self.assertEqual("planned", records[feature_id]["implementation_status"])
-                self.assertEqual([], records[feature_id]["owners"])
+                self.assertEqual("partial", records[feature_id]["implementation_status"])
+                self.assertTrue(records[feature_id]["owners"])
+                self.assertTrue(records[feature_id]["test_files"])
+        self.assertEqual("planned", records["MAP.BASEMAP"]["implementation_status"])
+        self.assertEqual([], records["MAP.BASEMAP"]["owners"])
         for feature_id in (
-            "GEOGRAPHY.RU_REGIONS",
-            "GEOGRAPHY.BY_REGIONS",
-            "GEOGRAPHY.PILOT_DISTRICTS",
-            "DATA.PROVENANCE",
+            "GEOGRAPHY.RU_REGIONS", "GEOGRAPHY.BY_REGIONS",
+            "GEOGRAPHY.PILOT_DISTRICTS", "DATA.PROVENANCE",
         ):
             with self.subTest(feature_id=feature_id):
                 self.assertEqual("partial", records[feature_id]["implementation_status"])
@@ -197,8 +198,8 @@ class FeatureTraceabilityTests(unittest.TestCase):
 
     def test_premature_implementation_claim_is_rejected(self) -> None:
         source = self._source().replace(
-            "  - feature_id: WEB.INVESTIGATIONS\n    implementation_status: planned",
-            "  - feature_id: WEB.INVESTIGATIONS\n    implementation_status: partial",
+            "  - feature_id: MAP.BASEMAP\n    implementation_status: planned",
+            "  - feature_id: MAP.BASEMAP\n    implementation_status: partial",
             1,
         )
         self.assertTrue(
@@ -207,10 +208,10 @@ class FeatureTraceabilityTests(unittest.TestCase):
 
     def test_planned_feature_cannot_claim_health_as_owner(self) -> None:
         source = self._source().replace(
-            "  - feature_id: WEB.INVESTIGATIONS\n    implementation_status: planned\n    stages: [MVP-01]\n"
+            "  - feature_id: MAP.BASEMAP\n    implementation_status: planned\n    stages: [MVP-01]\n"
             "    spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]\n"
             "    owners: []\n    test_files: []",
-            "  - feature_id: WEB.INVESTIGATIONS\n    implementation_status: planned\n    stages: [MVP-01]\n"
+            "  - feature_id: MAP.BASEMAP\n    implementation_status: planned\n    stages: [MVP-01]\n"
             "    spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]\n"
             "    owners:\n      - backend/src/melliatlas/api/app.py#create_app\n"
             "    test_files:\n      - backend/tests/contract/test_api_smoke.py",

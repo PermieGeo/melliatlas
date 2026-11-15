@@ -2,12 +2,12 @@
 
 **Version:** 0.5 (geographic coverage and early live sources draft)
 **Status:** Working roadmap; future workstreams remain proposals, not automatically authorized
-**Active authorization:** AUTHORIZED — `MVP-01` backend sub-spec only; its external approval gates remain open
+**Active authorization:** AUTHORIZED — selected `MVP-01` Web W01 slice; the approved backend workstream is paused and its external approval gates remain open
 **Acceptance:** PENDING — no `MVP-01` stage acceptance has been granted
 **Product:** Sustainable migratory beekeeping, pollinator conservation, and ecological research
 **Delivery approach:** A functioning vertical-slice MVP in stage `MVP-01`; every later stage incrementally improves the working application.
 
-> **Specification boundary.** This document defines intended product outcomes, cross-cutting constraints, and the ordered stage roadmap. It does **not** assert that planned features are implemented or authorize any workstream by itself; authorization for the active `MVP-01` backend comes from the separately approved sub-specification and developer decision. Technical details marked *to be decided in sub-spec* are deliberately unresolved, not tacit requirements.
+> **Specification boundary.** This document defines intended product outcomes, cross-cutting constraints, and the ordered stage roadmap. It does **not** assert that planned features are implemented or authorize any workstream by itself; authorization for the selected `MVP-01` Web W01 slice and the approved backend workstream comes from their separately scoped sub-specifications and developer direction. Technical details marked *to be decided in sub-spec* are deliberately unresolved, not tacit requirements.
 
 ## 1. Mission and decision framework
 

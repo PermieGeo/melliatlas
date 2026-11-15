@@ -1,11 +1,12 @@
-# MVP-01 Web — Proposed Browser Workflow Sub-specification
+# MVP-01 Web — Browser Workflow Sub-specification
 
-- **Status:** PROPOSED — requirements not yet approved
-- **Implementation authorization:** NOT GRANTED by this proposal
+- **Status:** ACTIVE — W01 in implementation; acceptance pending
+- **Requirements approval:** APPROVED — initial W01 user journey
+- **Implementation authorization:** AUTHORIZED — selected Web workstream
 - **Acceptance:** PENDING
-- **Parent stage:** [`MVP-01`](../umbrella_spec_melliatlas.md#mvp-01--working-sustainable-beekeeping-mvp)
-- **Related active workstream:** [Backend sub-spec](../active/subspecs/subspec-01-backend-planning.md)
-- **Proposed implementation plan:** [MVP-01 Web plan](subspec-01-web-mvp_implementation_plan.md)
+- **Parent stage:** [`MVP-01`](../../umbrella_spec_melliatlas.md#mvp-01--working-sustainable-beekeeping-mvp)
+- **Related active workstream:** [Backend sub-spec](subspec-01-backend-planning.md)
+- **Implementation plan:** [MVP-01 Web plan](subspec-01-web-mvp_implementation_plan.md)
 
 ## 1. User journey and scope
 
@@ -15,7 +16,7 @@ Pesticide-treatment information is the primary practical focus; forage and ecolo
 
 This workstream does **not** port the former administration interface, map components or navigation from the historical repository. There is no separate Admin client, provider-configuration screen, login, live source collection, alerts or new public API in this sub-spec. The only MVP UI is `web/`.
 
-## 2. Proposed requirements
+## 2. Requirements
 
 | ID | Observable browser requirement | Umbrella anchor |
 | --- | --- | --- |
@@ -28,7 +29,7 @@ This workstream does **not** port the former administration interface, map compo
 | `MVP01-WEB-R07` | Present evidence IDs, source mode, synthetic marker, decision history and limitations in a legible details view. Never describe a fixture as a live Saturn or public-web observation. | `MVP-01.R05`, `R08`, `R13` |
 | `MVP01-WEB-R08` | Preserve predictable empty/loading/error states, mobile/touch usability, visible focus and basic screen-reader semantics; do not expose protected source contents or private apiary coordinates in logs, query strings or telemetry. | `MVP-01.R01`, `R09`; `SYS-14` |
 
-## 3. Provisional UX composition
+## 3. UX composition
 
 The default view is a **map-first workspace**, not a list of provider operations. A compact territory/season control region frames a map and synchronized horizontal timeline. Choosing a stop highlights its map position, time interval and explanation. A contextual evidence panel distinguishes (a) a source-reported planned treatment, (b) synthetic spatial screening, (c) ecology rules, and (d) unanswered questions such as wind and data coverage. On narrow screens these elements form a coherent vertical sequence; no hover-only action is essential.
 
@@ -36,7 +37,7 @@ Use restrained, distinct encodings for *reported notice*, *demonstration exclusi
 
 The country selector is independent of source applicability. Country/region/district navigation and **validated real geography** must be distinguished from **synthetic planning evidence**. When a reference is unavailable (`503`), the UI displays a bounded explanation rather than fictional boundaries. A clearly labeled development demonstration can still be run through the existing fixture API when its parameters are explicitly selected.
 
-## 4. Proposed acceptance scenarios
+## 4. Acceptance scenarios
 
 | ID | Browser-observable oracle |
 | --- | --- |
@@ -50,7 +51,7 @@ The country selector is independent of source applicability. Country/region/dist
 
 ## 5. Dependencies, gaps and explicit gates
 
-- **Implemented API:** `GET /api/v1/territories/countries`, `/regions`, `/districts`, `/geometry/{territory_id}` and `POST/GET /api/v1/investigations`. Contract details are owned by [`backend/src/melliatlas/api/contract.md`](../../../backend/src/melliatlas/api/contract.md), the Python DTOs and OpenAPI, not this proposal.
+- **Implemented API:** `GET /api/v1/territories/countries`, `/regions`, `/districts`, `/geometry/{territory_id}` and `POST/GET /api/v1/investigations`. Contract details are owned by [`backend/src/melliatlas/api/contract.md`](../../../../backend/src/melliatlas/api/contract.md), the Python DTOs and OpenAPI, not this proposal.
 - **Known gaps:** there is no `GET /api/v1/scenarios`, `GET /api/v1/sources`, paginated investigation history or verified complete RU/BY reference dataset. Only documented fixture IDs may be offered as development options until a discovery API exists. Completed snapshots are durable only with an explicitly configured and independently verified PostGIS store.
-- **Web authorization:** this is a proposed specification. Before implementing the Web workstream, review/approve its normative scope, record a deliberate workstream checkpoint, and approve any new runtime dependencies. Do not mark backend or umbrella acceptance complete as part of this handoff.
+- **Web authorization:** this workstream authorizes only the W01 fictional-browser slice and its standard React/Leaflet tooling. Backend acceptance and umbrella MVP-01 acceptance are still pending. Runtime credentials, live sources and third-party data reuse remain separately gated.
 - **Environmental evidence:** no approved live Saturn/web ingestion, validated pesticide drift or weather-based exposure model is delivered by MVP-01. No synthetic treatment result provides a permission or safety conclusion.

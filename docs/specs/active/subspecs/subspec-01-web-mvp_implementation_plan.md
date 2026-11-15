@@ -1,11 +1,13 @@
-# MVP-01 Web — Proposed Implementation Plan
+# MVP-01 Web — Implementation Plan
 
-- **Status:** PROPOSED — preparatory contract handoff, not implementation acceptance
-- **Normative source if approved:** [Web sub-spec](subspec-01-web-mvp.md)
-- **Parent:** [Umbrella MVP-01](../umbrella_spec_melliatlas.md#mvp-01--working-sustainable-beekeeping-mvp)
-- **Implementation authorization:** PENDING developer approval and state selection
+- **Status:** IN PROGRESS — W01 first runnable browser slice, acceptance pending
+- **Normative source:** [Web sub-spec](subspec-01-web-mvp.md)
+- **Parent:** [Umbrella MVP-01](../../umbrella_spec_melliatlas.md#mvp-01--working-sustainable-beekeeping-mvp)
+- **Requirements approval:** APPROVED — first browser workflow scope
+- **Implementation authorization:** AUTHORIZED — W01 following developer direction to proceed
+- **Acceptance:** PENDING
 
-The next task is a **first runnable browser vertical slice**, not a wholesale frontend or historical Admin port. Only interfaces consumed by that slice are designed here; later evidence filters, routes and generic UI frameworks are not predesigned.
+The selected task is a **first runnable browser vertical slice**, not a wholesale frontend or historical Admin port. Only interfaces consumed by that slice are designed here; later evidence filters, routes and generic UI frameworks are not predesigned.
 
 ## 1. Verified backend boundary (current implementation)
 
@@ -22,9 +24,9 @@ The next task is a **first runnable browser vertical slice**, not a wholesale fr
 
 **Concrete consumer fixture for the first slice:** `country=RU`, `territory_id=ru:region:smolensk`, `scenario_id=synthetic-ru-2026-v04-ecology-treatment`, season `2026-05-01` through `2026-08-15`. This is an explicitly synthetic RU demonstration, **not** a substitute for the unfinished RU/BY reference catalogs or source discovery API. These identifiers and dates are for the fixture selector, not hardcoded domain decisions.
 
-Source declarations: [`api/routes_investigations.py`](../../../backend/src/melliatlas/api/routes_investigations.py), [`api/routes_territories.py`](../../../backend/src/melliatlas/api/routes_territories.py), [`api/contract.md`](../../../backend/src/melliatlas/api/contract.md), [`sources/api.py`](../../../backend/src/melliatlas/sources/api.py). Existing OpenAPI is the wire-schema source of truth. No duplicated handwritten HTTP schema may silently diverge from it.
+Source declarations: [`api/routes_investigations.py`](../../../../backend/src/melliatlas/api/routes_investigations.py), [`api/routes_territories.py`](../../../../backend/src/melliatlas/api/routes_territories.py), [`api/contract.md`](../../../../backend/src/melliatlas/api/contract.md), [`sources/api.py`](../../../../backend/src/melliatlas/sources/api.py). Existing OpenAPI is the wire-schema source of truth. No duplicated handwritten HTTP schema may silently diverge from it.
 
-## 2. W01 — first Web implementation slice (next, pending approval)
+## 2. W01 — first Web implementation slice (in progress)
 
 **Goal:** render a single accessible browser page that calls the existing API, runs the joint fictional scenario, and synchronizes the returned selected stops between a map, season timeline and evidence/limitations panel. The map/timeline visual design must be newly designed around beekeeper decisions rather than copied from the historical application.
 
@@ -58,9 +60,13 @@ The first slice uses only existing POST/GET operations and additive nullable res
 4. `WEB-T004`: mobile, keyboard and privacy checks cover touch controls, source labels and no private point in URL/logs (`R01`, `R07`, `R08`).
 5. `WEB-T005`: RU/BY and unsupported geometry cases are driven by API responses, never fabricated catalogs (`R02`).
 
-**Exit evidence:** runnable `web/` client with strict TS typechecks, component tests, browser E2E for the fixture scenario and preserved backend regressions. This preparation alone produces no UI and meets none of these acceptance scenarios.
+**TDD evidence:** `web/tests/client.test.ts`, `web/tests/workflow.test.tsx` and `web/e2e/workspace.spec.ts` encode the W01 behaviors. The HTTP fixture is generated from the actual FastAPI combined synthetic response.
 
-**Approval gates:** developer approval of the Web sub-spec and workstream state, approved runtime/dev dependencies for React/Leaflet/Vite/test tooling, and explicit local browser test setup. Do not switch `STATE.json`, claim acceptance, or publish live source data during preparation.
+**Implementation paths:** `web/src/api/contract.md`, `web/src/api/types.ts`, `web/src/api/validation.ts`, `web/src/api/client.ts`, `web/src/App.tsx`, `web/src/components/{MapPanel,Timeline,EvidencePanel}.tsx` and the W01 test sources. The backend Pydantic DTOs remain authoritative.
+
+**Exit evidence:** frontend dependencies resolved, strict TypeScript and lint checks passed, component tests passed, browser E2E passed, and preserved backend regressions. Code presence alone does not meet these criteria; the current delivery remains partial until local dependency installation and browser checks are confirmed.
+
+**Approval gates:** W01 is selected for implementation. React, Leaflet, Vite, TypeScript and task-scoped test tooling are limited to the user-requested browser MVP. No feature acceptance or live-data permission is implied by implementation. Browser execution and dependency installation still require local verification.
 
 ## 3. Follow-on work (do not predesign)
 

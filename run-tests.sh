@@ -21,9 +21,11 @@ if [[ -f web/package.json ]]; then
     printf '%s\n' '==> React frontend checks'
     (
         cd web
+        npm run format:check
         npm run lint
         npm run typecheck
         npm run test:ci
+        npm run build
     )
 else
     printf '%s\n' '==> React frontend: manifest not yet present'

@@ -1,9 +1,12 @@
-"""Protect existing HTTP wire contracts needed for the proposed browser MVP."""
+"""Protect existing HTTP wire contracts needed for the selected browser MVP."""
 
 import asyncio
+import json
+from pathlib import Path
 from uuid import UUID
 
 import httpx
+import pytest
 
 from melliatlas.api.app import create_app
 from melliatlas.sources.api import SYNTHETIC_COMBINED_SCENARIO_ID
@@ -100,5 +103,52 @@ def test_browser_handoff_unavailable_reference_and_unknown_result_are_explicit()
             )
             assert missing.status_code == 404
             assert missing.json()["error"]["code"] == "INVESTIGATION_NOT_FOUND"
+
+    asyncio.run(check())
+
+
+def test_web_w01_fixture_tracks_the_real_combined_http_contract() -> None:
+    """Fail if the client fixture drifts from the actual synthetic API response."""
+    fixture_path = Path(__file__).parents[3] / "web/tests/fixtures/combined.json"
+    expected = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+    async def check() -> None:
+        app = create_app()
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+        ) as client:
+            posted = await client.post(
+                "/api/v1/investigations",
+                json={
+                    "country": "RU",
+                    "territory_id": "ru:region:smolensk",
+                    "scenario_id": SYNTHETIC_COMBINED_SCENARIO_ID,
+                    "season_start": "2026-05-01",
+                    "season_end": "2026-08-15",
+                },
+            )
+            assert posted.status_code == 202
+            actual_response = await client.get(f"/api/v1/investigations/{posted.json()['id']}")
+            assert actual_response.status_code == 200
+            actual = actual_response.json()
+            actual["id"] = expected["id"]
+            actual["created_at"] = expected["created_at"]
+            actual["updated_at"] = expected["updated_at"]
+            actual_screenings = actual["treatment_review"]["screenings"]
+            expected_screenings = expected["treatment_review"]["screenings"]
+            assert len(actual_screenings) == len(expected_screenings)
+            for actual_item, expected_item in zip(
+                actual_screenings, expected_screenings, strict=True
+            ):
+                actual_distance = actual_item["approximate_distance_km"]
+                expected_distance = expected_item["approximate_distance_km"]
+                if expected_distance is None:
+                    assert actual_distance is None
+                else:
+                    # GEOS can produce slightly different floating-point distances across platforms.
+                    assert actual_distance == pytest.approx(expected_distance, rel=1e-7, abs=1e-6)
+                    actual_item["approximate_distance_km"] = expected_distance
+                assert actual_item == expected_item
+            assert actual == expected
 
     asyncio.run(check())

@@ -36,3 +36,18 @@ python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000
 ```
 
 The values above are illustrative paths, not shipped data. Startup reads only those two local files, verifies the reference against the independent inventory and refuses to start on missing, malformed or inconsistent input. It does not fetch sources, select a reference automatically, write to PostGIS, or approve any reference data. Existing applications that pass `territories=` to `create_app()` must not also configure reference file paths. Synthetic unit-test fixtures are incomplete and must not be used as geographic coverage evidence.
+
+
+## Beekeeper Web client (W01 partial)
+
+The only browser client lives in `web/`. Node.js 22+ and npm are required. Install backend dependencies first; the API must be started separately at `127.0.0.1:8000`. The FastAPI project does not currently pin a production ASGI runner. An approved local `uvicorn` installation can be used for development.
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Open `http://127.0.0.1:5173`. Vite proxies `/api` to the local backend. The first successful npm installation must generate and commit `web/package-lock.json` for reproducible installs. Do not claim `npm ci` or a reproducible build until that lockfile is present. The optional external map tile layer is disabled by default; enable it explicitly if you accept sharing map viewport requests with OpenStreetMap.
+
+See [Web README](../web/README.md) for the synthetic scenario and client-specific verification commands.

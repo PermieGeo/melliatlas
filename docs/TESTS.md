@@ -19,7 +19,7 @@ python -m ruff format --check backend
 python -m pyright --project backend
 ```
 
-Current tests cover FastAPI health/OpenAPI, versioned territory endpoints, the synthetic V01 investigation POST/GET path with successful and insufficient-evidence results, rejected malformed and unsupported requests, independent fixture determinism, process-local store isolation and network-free execution, offline territory-reference validation, independent inventory comparisons, WGS84 coordinate checks and Shapely/GEOS polygon topology, idempotent in-memory loading, and architecture import boundaries. These tests use synthetic administrative snapshots; **they do not establish complete real RU/BY coverage or PostGIS topology correctness**. No approved full reference, real provider adapter, PostGIS import, complete source/engine pipeline, or browser acceptance test exists yet. V01 tests establish only the provisional, non-durable synthetic backend slice.
+Current tests cover FastAPI health/OpenAPI, versioned territory endpoints, the synthetic V01 investigation POST/GET path with successful and insufficient-evidence results, rejected malformed and unsupported requests, independent fixture determinism, process-local store isolation and network-free execution, offline territory-reference validation, independent inventory comparisons, WGS84 coordinate checks and Shapely/GEOS polygon topology, idempotent in-memory loading, and architecture import boundaries. These tests use synthetic administrative snapshots; **they do not establish complete real RU/BY coverage or PostGIS topology correctness**. No approved full reference, live provider adapter, PostGIS import or complete source/engine pipeline exists yet. The W01 client now includes source-level component and browser tests, but browser acceptance remains unconfirmed until dependencies and Chromium are installed and those tests pass locally. V01 tests establish only the provisional, non-durable synthetic backend slice.
 
 To validate externally obtained normalized reference files after verifying permission, provenance, and independent inventories, run from an installed backend environment:
 
@@ -103,3 +103,20 @@ The agent imports `planning` public interfaces only; the test harness injects th
 `backend/tests/contract/test_ecology_investigations_http.py` runs the distinct `synthetic-ru-2026-v04-ecology` scenario through real in-process FastAPI `POST`/`GET`: an initial fictional candidate is excluded by actual polygon overlap, an alternative is selected, the typed response retains checked assessments, evidence/rule IDs, bounded decisions, warnings, and the private starting point is not exposed. Additional tests preserve the original V01 response, reject wrong-country requests before creation, fail closed without the injected planner, distinguish check-limit completion from execution failure, and sanitize unexpected inspector errors.
 
 `backend/tests/unit/test_completed_snapshot_codec.py` verifies both new structured replanning JSON roundtrips and historical V01 payloads without the new field. It rejects malformed nested kinds/counts and divergent stored plans; a serializing fake store verifies new-service reopening. These tests **do not** assert PostGIS migration, actual storage durability, legal safety, or complete RU/BY ecological data. Real PostGIS and source approvals remain separate acceptance gates.
+
+
+## W01 frontend checks (selected Web workstream)
+
+After `cd web && npm install`, run:
+
+```bash
+npm run format:check
+npm run lint
+npm run typecheck
+npm run test:ci
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+The canonical root `run-tests.sh` runs formatter check, ESLint, strict TypeScript, Vitest and build when `web/package.json` is present. Playwright browser tests are deliberately a separate explicit command because they require an installed browser and a local Vite server. No live source or backend database is needed for browser-mocked W01 checks. Without `npm install` these commands will fail, rather than silently skip checks.

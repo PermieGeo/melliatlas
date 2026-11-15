@@ -51,13 +51,12 @@ def authorization_errors(
 class SddAuthorizationTests(unittest.TestCase):
     def _inputs(self) -> tuple[str, str, str, str, str]:
         state = json.loads((SPEC_ROOT / "STATE.json").read_text(encoding="utf-8"))
-        selected = next(
-            item for item in state["workstreams"] if item["id"] == state["selectedWorkstreamId"]
-        )
-        self.assertEqual("mvp-01-backend", selected["id"])
-        self.assertEqual(str(ACTIVE_SPEC.relative_to(ROOT)), selected["specPath"])
+        backend = next(item for item in state["workstreams"] if item["id"] == "mvp-01-backend")
+        self.assertEqual(str(ACTIVE_SPEC.relative_to(ROOT)), backend["specPath"])
+        self.assertEqual("PAUSED", backend["phase"])
+        self.assertEqual("mvp-01-web", state["selectedWorkstreamId"])
         return (
-            selected["phase"],
+            "READY_FOR_IMPLEMENTATION",
             (SPEC_ROOT / "umbrella_spec_melliatlas.md").read_text(encoding="utf-8"),
             ACTIVE_SPEC.read_text(encoding="utf-8"),
             ACTIVE_PLAN.read_text(encoding="utf-8"),

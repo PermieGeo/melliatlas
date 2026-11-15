@@ -1,0 +1,483 @@
+{
+  "id": "11111111-2222-4333-8444-555555555555",
+  "status": "COMPLETED",
+  "request": {
+    "country": "RU",
+    "territory_id": "ru:region:smolensk",
+    "scenario_id": "synthetic-ru-2026-v04-ecology-treatment",
+    "season_start": "2026-05-01",
+    "season_end": "2026-08-15"
+  },
+  "created_at": "2026-05-01T00:00:00Z",
+  "updated_at": "2026-05-01T00:01:00Z",
+  "outcome": "PLAN_FOUND",
+  "plan": {
+    "stops": [
+      {
+        "site_id": "fixture-site-alpha-treatment-alternative",
+        "longitude": 32.16,
+        "latitude": 54.0,
+        "start": "2026-05-01",
+        "end": "2026-06-14",
+        "forage_level": "MEDIUM",
+        "evidence_ids": ["fixture-evidence-alpha-treatment-alternative"]
+      },
+      {
+        "site_id": "fixture-site-beta",
+        "longitude": 32.2,
+        "latitude": 54.1,
+        "start": "2026-06-15",
+        "end": "2026-07-15",
+        "forage_level": "MEDIUM",
+        "evidence_ids": ["fixture-evidence-beta"]
+      },
+      {
+        "site_id": "fixture-site-gamma",
+        "longitude": 32.4,
+        "latitude": 54.2,
+        "start": "2026-07-16",
+        "end": "2026-08-15",
+        "forage_level": "MEDIUM",
+        "evidence_ids": ["fixture-evidence-gamma"]
+      }
+    ],
+    "relocations": 2,
+    "rationale": "Illustrative chronological forage windows only; no verified exclusion screening"
+  },
+  "replanning": {
+    "outcome": "PLAN_FOUND",
+    "assessments": [
+      {
+        "site_id": "fixture-site-alpha",
+        "status": "EXCLUDED",
+        "evidence_ids": [
+          "fixture-ecology-exclusion",
+          "fixture-ecology-precaution"
+        ],
+        "rule_ids": ["demo-rule-exclusion", "demo-rule-precaution"],
+        "reasons": [
+          "An explicit fictional exclusion geometry intersects this site"
+        ],
+        "unknowns": [
+          "Complete ecological coverage and legal restrictions are not verified"
+        ],
+        "synthetic": true
+      },
+      {
+        "site_id": "fixture-site-alpha-alternative",
+        "status": "CAUTION",
+        "evidence_ids": ["fixture-ecology-precaution"],
+        "rule_ids": ["demo-rule-precaution"],
+        "reasons": ["A fictional precautionary geometry intersects this site"],
+        "unknowns": [
+          "Complete ecological coverage and legal restrictions are not verified"
+        ],
+        "synthetic": true
+      },
+      {
+        "site_id": "fixture-site-alpha-treatment-alternative",
+        "status": "CAUTION",
+        "evidence_ids": ["fixture-ecology-precaution"],
+        "rule_ids": ["demo-rule-precaution"],
+        "reasons": ["A fictional precautionary geometry intersects this site"],
+        "unknowns": [
+          "Complete ecological coverage and legal restrictions are not verified"
+        ],
+        "synthetic": true
+      },
+      {
+        "site_id": "fixture-site-beta",
+        "status": "CAUTION",
+        "evidence_ids": ["fixture-ecology-precaution"],
+        "rule_ids": ["demo-rule-precaution"],
+        "reasons": ["A fictional precautionary geometry intersects this site"],
+        "unknowns": [
+          "Complete ecological coverage and legal restrictions are not verified"
+        ],
+        "synthetic": true
+      },
+      {
+        "site_id": "fixture-site-gamma",
+        "status": "CAUTION",
+        "evidence_ids": ["fixture-ecology-precaution"],
+        "rule_ids": ["demo-rule-precaution"],
+        "reasons": ["A fictional precautionary geometry intersects this site"],
+        "unknowns": [
+          "Complete ecological coverage and legal restrictions are not verified"
+        ],
+        "synthetic": true
+      }
+    ],
+    "excluded_site_ids": ["fixture-site-alpha"],
+    "unknown_site_ids": [],
+    "decisions": [
+      {
+        "kind": "INITIAL",
+        "site_ids": [
+          "fixture-site-alpha",
+          "fixture-site-beta",
+          "fixture-site-gamma"
+        ],
+        "evidence_ids": [],
+        "rule_ids": [],
+        "note": "Initial deterministic fictional forage proposal"
+      },
+      {
+        "kind": "ECOLOGY_CHECK",
+        "site_ids": ["fixture-site-alpha"],
+        "evidence_ids": [
+          "fixture-ecology-exclusion",
+          "fixture-ecology-precaution"
+        ],
+        "rule_ids": ["demo-rule-exclusion", "demo-rule-precaution"],
+        "note": "Observed fictional ecology status EXCLUDED"
+      },
+      {
+        "kind": "ECOLOGY_CHECK",
+        "site_ids": ["fixture-site-alpha-alternative"],
+        "evidence_ids": ["fixture-ecology-precaution"],
+        "rule_ids": ["demo-rule-precaution"],
+        "note": "Observed fictional ecology status CAUTION"
+      },
+      {
+        "kind": "ECOLOGY_CHECK",
+        "site_ids": ["fixture-site-alpha-treatment-alternative"],
+        "evidence_ids": ["fixture-ecology-precaution"],
+        "rule_ids": ["demo-rule-precaution"],
+        "note": "Observed fictional ecology status CAUTION"
+      },
+      {
+        "kind": "ECOLOGY_CHECK",
+        "site_ids": ["fixture-site-beta"],
+        "evidence_ids": ["fixture-ecology-precaution"],
+        "rule_ids": ["demo-rule-precaution"],
+        "note": "Observed fictional ecology status CAUTION"
+      },
+      {
+        "kind": "ECOLOGY_CHECK",
+        "site_ids": ["fixture-site-gamma"],
+        "evidence_ids": ["fixture-ecology-precaution"],
+        "rule_ids": ["demo-rule-precaution"],
+        "note": "Observed fictional ecology status CAUTION"
+      },
+      {
+        "kind": "REVISION",
+        "site_ids": [
+          "fixture-site-alpha-alternative",
+          "fixture-site-beta",
+          "fixture-site-gamma"
+        ],
+        "evidence_ids": [
+          "fixture-ecology-exclusion",
+          "fixture-ecology-precaution"
+        ],
+        "rule_ids": ["demo-rule-exclusion", "demo-rule-precaution"],
+        "note": "Revised fictional forage proposal after observed ecology findings"
+      },
+      {
+        "kind": "TREATMENT_CHECK",
+        "site_ids": ["fixture-site-alpha"],
+        "evidence_ids": ["fixture-treatment-field-71"],
+        "rule_ids": [],
+        "note": "Fictional field-treatment finding: FIELD_INTERSECTION"
+      },
+      {
+        "kind": "TREATMENT_CHECK",
+        "site_ids": ["fixture-site-alpha-alternative"],
+        "evidence_ids": ["fixture-treatment-field-71"],
+        "rule_ids": [],
+        "note": "Fictional field-treatment finding: NEAR_REPORTED_FIELD"
+      },
+      {
+        "kind": "TREATMENT_CHECK",
+        "site_ids": ["fixture-site-alpha-treatment-alternative"],
+        "evidence_ids": ["fixture-treatment-field-71"],
+        "rule_ids": [],
+        "note": "Fictional field-treatment finding: OUTSIDE_SCREEN_RADIUS"
+      },
+      {
+        "kind": "TREATMENT_CHECK",
+        "site_ids": ["fixture-site-beta"],
+        "evidence_ids": ["fixture-treatment-field-71"],
+        "rule_ids": [],
+        "note": "Fictional field-treatment finding: OUTSIDE_STATED_PERIOD"
+      },
+      {
+        "kind": "TREATMENT_CHECK",
+        "site_ids": ["fixture-site-gamma"],
+        "evidence_ids": ["fixture-treatment-field-71"],
+        "rule_ids": [],
+        "note": "Fictional field-treatment finding: OUTSIDE_STATED_PERIOD"
+      },
+      {
+        "kind": "REVISION",
+        "site_ids": [
+          "fixture-site-alpha-treatment-alternative",
+          "fixture-site-beta",
+          "fixture-site-gamma"
+        ],
+        "evidence_ids": ["fixture-treatment-field-71"],
+        "rule_ids": [],
+        "note": "Revised fictional proposal after considering both screening results"
+      },
+      {
+        "kind": "TERMINAL",
+        "site_ids": [
+          "fixture-site-alpha-treatment-alternative",
+          "fixture-site-beta",
+          "fixture-site-gamma"
+        ],
+        "evidence_ids": [],
+        "rule_ids": [],
+        "note": "Provisional joint plan with unverified ecological and chemical coverage"
+      }
+    ],
+    "checks_used": 5,
+    "warnings": [
+      "Fictional ecology checks do not establish real-world site eligibility",
+      "CAUTION is non-binding and requires ecological review",
+      "Synthetic treatment claims are not verified application events",
+      "Missing or distant reports do not establish complete coverage or safety",
+      "Wind, weather, drift and bee flight are not evaluated",
+      "Avoidance is a demonstration preference, not a legal exclusion or safe-distance rule"
+    ]
+  },
+  "treatment_review": {
+    "screenings": [
+      {
+        "site_id": "fixture-site-alpha",
+        "source_record_id": "fixture-treatment-field-71",
+        "source_id": "fixture:fictional-treatment-notices",
+        "proximity": "FIELD_INTERSECTION",
+        "approximate_distance_km": 0.0,
+        "warnings": [
+          "Source claim is not a verified spraying event",
+          "Wind, weather and bee flight have not been evaluated",
+          "Stated UTC dates have a one-day uncertainty margin for local planning"
+        ],
+        "captured_at": "2026-05-31T00:00:00Z",
+        "scheduled_start": "2026-06-05T00:00:00Z",
+        "scheduled_end": "2026-06-06T00:00:00Z",
+        "source_uri": null,
+        "products": [
+          {
+            "name": "FICTIONAL demonstration product",
+            "crop": "FICTIONAL demonstration crop",
+            "bee_hazard_class": 2
+          }
+        ]
+      },
+      {
+        "site_id": "fixture-site-alpha-alternative",
+        "source_record_id": "fixture-treatment-field-71",
+        "source_id": "fixture:fictional-treatment-notices",
+        "proximity": "NEAR_REPORTED_FIELD",
+        "approximate_distance_km": 5.228706263099803,
+        "warnings": [
+          "Source claim is not a verified spraying event",
+          "Wind, weather and bee flight have not been evaluated",
+          "Stated UTC dates have a one-day uncertainty margin for local planning"
+        ],
+        "captured_at": "2026-05-31T00:00:00Z",
+        "scheduled_start": "2026-06-05T00:00:00Z",
+        "scheduled_end": "2026-06-06T00:00:00Z",
+        "source_uri": null,
+        "products": [
+          {
+            "name": "FICTIONAL demonstration product",
+            "crop": "FICTIONAL demonstration crop",
+            "bee_hazard_class": 2
+          }
+        ]
+      },
+      {
+        "site_id": "fixture-site-alpha-treatment-alternative",
+        "source_record_id": "fixture-treatment-field-71",
+        "source_id": "fixture:fictional-treatment-notices",
+        "proximity": "OUTSIDE_SCREEN_RADIUS",
+        "approximate_distance_km": 9.150235960424421,
+        "warnings": [
+          "Source claim is not a verified spraying event",
+          "Wind, weather and bee flight have not been evaluated",
+          "Stated UTC dates have a one-day uncertainty margin for local planning"
+        ],
+        "captured_at": "2026-05-31T00:00:00Z",
+        "scheduled_start": "2026-06-05T00:00:00Z",
+        "scheduled_end": "2026-06-06T00:00:00Z",
+        "source_uri": null,
+        "products": [
+          {
+            "name": "FICTIONAL demonstration product",
+            "crop": "FICTIONAL demonstration crop",
+            "bee_hazard_class": 2
+          }
+        ]
+      },
+      {
+        "site_id": "fixture-site-beta",
+        "source_record_id": "fixture-treatment-field-71",
+        "source_id": "fixture:fictional-treatment-notices",
+        "proximity": "OUTSIDE_STATED_PERIOD",
+        "approximate_distance_km": null,
+        "warnings": [
+          "Source claim is not a verified spraying event",
+          "Wind, weather and bee flight have not been evaluated",
+          "Stated UTC dates have a one-day uncertainty margin for local planning"
+        ],
+        "captured_at": "2026-05-31T00:00:00Z",
+        "scheduled_start": "2026-06-05T00:00:00Z",
+        "scheduled_end": "2026-06-06T00:00:00Z",
+        "source_uri": null,
+        "products": [
+          {
+            "name": "FICTIONAL demonstration product",
+            "crop": "FICTIONAL demonstration crop",
+            "bee_hazard_class": 2
+          }
+        ]
+      },
+      {
+        "site_id": "fixture-site-gamma",
+        "source_record_id": "fixture-treatment-field-71",
+        "source_id": "fixture:fictional-treatment-notices",
+        "proximity": "OUTSIDE_STATED_PERIOD",
+        "approximate_distance_km": null,
+        "warnings": [
+          "Source claim is not a verified spraying event",
+          "Wind, weather and bee flight have not been evaluated",
+          "Stated UTC dates have a one-day uncertainty margin for local planning"
+        ],
+        "captured_at": "2026-05-31T00:00:00Z",
+        "scheduled_start": "2026-06-05T00:00:00Z",
+        "scheduled_end": "2026-06-06T00:00:00Z",
+        "source_uri": null,
+        "products": [
+          {
+            "name": "FICTIONAL demonstration product",
+            "crop": "FICTIONAL demonstration crop",
+            "bee_hazard_class": 2
+          }
+        ]
+      }
+    ],
+    "avoided_site_ids": [
+      "fixture-site-alpha",
+      "fixture-site-alpha-alternative"
+    ],
+    "warnings": [
+      "Synthetic treatment claims are not verified application events",
+      "Missing or distant reports do not establish complete coverage or safety",
+      "Wind, weather, drift and bee flight are not evaluated",
+      "Avoidance is a demonstration preference, not a legal exclusion or safe-distance rule"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "fixture-evidence-alpha",
+      "source_id": "fixture:fictional-forage-windows",
+      "source_mode": "FIXTURE",
+      "synthetic": true,
+      "effective_start": "2026-05-01",
+      "effective_end": "2026-06-14",
+      "uncertainty": "No measured forage coverage or ecological clearance is available"
+    },
+    {
+      "id": "fixture-evidence-beta",
+      "source_id": "fixture:fictional-forage-windows",
+      "source_mode": "FIXTURE",
+      "synthetic": true,
+      "effective_start": "2026-06-15",
+      "effective_end": "2026-07-15",
+      "uncertainty": "No measured forage coverage or ecological clearance is available"
+    },
+    {
+      "id": "fixture-evidence-gamma",
+      "source_id": "fixture:fictional-forage-windows",
+      "source_mode": "FIXTURE",
+      "synthetic": true,
+      "effective_start": "2026-07-16",
+      "effective_end": "2026-08-15",
+      "uncertainty": "No measured forage coverage or ecological clearance is available"
+    },
+    {
+      "id": "fixture-evidence-alpha-alternative",
+      "source_id": "fixture:fictional-forage-windows",
+      "source_mode": "FIXTURE",
+      "synthetic": true,
+      "effective_start": "2026-05-01",
+      "effective_end": "2026-06-14",
+      "uncertainty": "Fictional alternative with no real geographical or forage validity"
+    },
+    {
+      "id": "fixture-ecology-exclusion",
+      "source_id": "fixture:fictional-ecology-zones",
+      "source_mode": "FIXTURE",
+      "synthetic": true,
+      "effective_start": "2026-05-01",
+      "effective_end": "2026-08-15",
+      "uncertainty": "Demonstration-only exclusion, not a legal restriction"
+    },
+    {
+      "id": "fixture-ecology-precaution",
+      "source_id": "fixture:fictional-ecology-zones",
+      "source_mode": "FIXTURE",
+      "synthetic": true,
+      "effective_start": "2026-05-01",
+      "effective_end": "2026-08-15",
+      "uncertainty": "Demonstration-only precaution, not verified ecology"
+    },
+    {
+      "id": "fixture-evidence-alpha-treatment-alternative",
+      "source_id": "fixture:fictional-forage-windows",
+      "source_mode": "FIXTURE",
+      "synthetic": true,
+      "effective_start": "2026-05-01",
+      "effective_end": "2026-06-14",
+      "uncertainty": "Illustrative alternative without verified field or forage data"
+    },
+    {
+      "id": "fixture-treatment-field-71",
+      "source_id": "fixture:fictional-treatment-notices",
+      "source_mode": "FIXTURE",
+      "synthetic": true,
+      "effective_start": "2026-06-05",
+      "effective_end": "2026-06-06",
+      "uncertainty": "Historical-shaped fictional treatment notice; no live spraying evidence"
+    }
+  ],
+  "decision_trace": [
+    "INITIAL: Initial deterministic fictional forage proposal",
+    "ECOLOGY_CHECK: Observed fictional ecology status EXCLUDED",
+    "ECOLOGY_CHECK: Observed fictional ecology status CAUTION",
+    "ECOLOGY_CHECK: Observed fictional ecology status CAUTION",
+    "ECOLOGY_CHECK: Observed fictional ecology status CAUTION",
+    "ECOLOGY_CHECK: Observed fictional ecology status CAUTION",
+    "REVISION: Revised fictional forage proposal after observed ecology findings",
+    "TREATMENT_CHECK: Fictional field-treatment finding: FIELD_INTERSECTION",
+    "TREATMENT_CHECK: Fictional field-treatment finding: NEAR_REPORTED_FIELD",
+    "TREATMENT_CHECK: Fictional field-treatment finding: OUTSIDE_SCREEN_RADIUS",
+    "TREATMENT_CHECK: Fictional field-treatment finding: OUTSIDE_STATED_PERIOD",
+    "TREATMENT_CHECK: Fictional field-treatment finding: OUTSIDE_STATED_PERIOD",
+    "REVISION: Revised fictional proposal after considering both screening results",
+    "TERMINAL: Provisional joint plan with unverified ecological and chemical coverage"
+  ],
+  "diagnostics": [],
+  "reference_version": "SYNTHETIC-V04-JOINT-NOT-REAL-APPLICATIONS",
+  "limitations": [
+    "All candidate coordinates and forage windows are synthetic and not verified",
+    "Real reference geography, legal exclusions and wild pollinator effects are unknown",
+    "Starting-point travel distance and weather are not evaluated in V01",
+    "Results exist in application memory only and disappear after restart",
+    "Fictional ecology polygons do not establish any legal or biological restrictions",
+    "CAUTION is non-binding; outside the demo zones ecological coverage is unknown",
+    "Treatment notice is a synthetic exercise, not a real agricultural warning",
+    "Absence of nearby notices does not establish coverage or site safety",
+    "Fictional ecology checks do not establish real-world site eligibility",
+    "CAUTION is non-binding and requires ecological review",
+    "Synthetic treatment claims are not verified application events",
+    "Missing or distant reports do not establish complete coverage or safety",
+    "Wind, weather, drift and bee flight are not evaluated",
+    "Avoidance is a demonstration preference, not a legal exclusion or safe-distance rule"
+  ],
+  "synthetic": true
+}

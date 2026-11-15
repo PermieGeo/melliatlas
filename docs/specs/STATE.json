@@ -1,11 +1,17 @@
 {
   "schemaVersion": 1,
   "mode": "SINGLE",
-  "selectedWorkstreamId": "mvp-01-backend",
+  "selectedWorkstreamId": "mvp-01-web",
   "workstreams": [
     {
       "id": "mvp-01-backend",
       "specPath": "docs/specs/active/subspecs/subspec-01-backend-planning.md",
+      "stageId": "MVP-01",
+      "phase": "PAUSED"
+    },
+    {
+      "id": "mvp-01-web",
+      "specPath": "docs/specs/active/subspecs/subspec-01-web-mvp.md",
       "stageId": "MVP-01",
       "phase": "READY_FOR_IMPLEMENTATION"
     }
