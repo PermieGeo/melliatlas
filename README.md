@@ -20,14 +20,17 @@ The first working product serves a beekeeper planning a seasonal relocation. Con
 
 ```mermaid
 flowchart LR
-    B["Beekeeper<br/>Location and season"] --> M["MelliAtlas<br/>Evidence-based analysis"]
+    B["Beekeeper<br/>Apiary location and season"] --> M["MelliAtlas<br/>Evidence-based analysis"]
+    S["Planned pesticide spraying<br/>Fields, chemicals and dates"] --> M
+    W["Wind and weather<br/>Potential drift"] --> M
     F["Forage availability<br/>and flowering periods"] --> M
     E["Wild pollinators<br/>and ecological constraints"] --> M
-    M --> P["Seasonal apiary plan<br/>Stops, dates and explanations"]
-    M --> R["Conservation and research<br/>Evidence and uncertainty"]
+    M --> H["Potential spraying exposure<br/>Warnings and uncertainty"]
+    M --> P["Seasonal apiary plan<br/>Alternative stops and dates"]
+    M --> R["Conservation and research<br/>Evidence and limitations"]
 ```
 
-The same territory may offer significant forage resources while also containing habitats where additional managed honey bees would be undesirable. MelliAtlas must evaluate these considerations together. A documented legal restriction, a possible ecological conflict, and a lack of information are **different findings** and must not be presented as interchangeable conclusions.
+A reported spraying plan is not proof that spraying occurred, but its location, timing and potential weather-dependent drift may warrant precautions or a different apiary stop. Missing treatment reports or weather evidence do not establish safety. The same territory may also offer valuable forage while containing sensitive habitats; documented restrictions, potential ecological conflicts and missing information must remain distinct findings.
 
 ## Investigation request lifecycle
 
@@ -38,11 +41,11 @@ The interactions have the following meaning:
 | Interaction | Expected behavior |
 | --- | --- |
 | **Request investigation** | The beekeeper submits point X and planning context. The server validates the request and returns an investigation identifier; it does not wait for every analysis step to finish. |
-| **Collect and cache evidence** | Registered adapters provide permitted source observations with provenance. The source cache/store is separate from saved analysis results. `MVP-01` uses synthetic/fixture planning evidence, not live news or Saturn ingestion. |
-| **Analyze and persist** | The engine evaluates geographic, forage and ecological evidence; the investigation service owns the result lifecycle and coordinates persistence. A completed investigation and its decision trace remain immutable. PostGIS-backed durability is planned but not yet implemented. |
+| **Collect and cache evidence** | Registered adapters collect permitted, attributed reports of planned field spraying (locations, application windows and chemicals), together with other relevant evidence. The source cache/store is separate from saved analysis results. `MVP-01` uses synthetic/fixture evidence, not live spraying reports. |
+| **Analyze and persist** | The intended analysis compares apiary locations and dates with reported spraying areas and schedules, forage and ecological constraints, and weather or wind evidence where available. The investigation service owns result lifecycle and persistence. A completed result and its decision trace remain immutable; real PostGIS acceptance is still pending. |
 | **Poll for the result** | Repeated requests can return a pending status, a completed assessment, or an explicit failure. A technically completed analysis may still report insufficient evidence or no feasible seasonal plan. |
-| **Assessment and recommendations** | Results distinguish exclusion, caution and unknown conditions near point X, propose nearby alternatives when supported by evidence, and support the product goal of a seasonal plan with at least two stops. They do not certify a site as safe or legally available. |
-| **Later-stage data updates** | Approved source or weather changes can lead to a new assessment and a new immutable investigation/version; they must not rewrite an earlier completed result. Scheduled forecast ingestion is outside `MVP-01`. |
+| **Assessment and recommendations** | Results distinguish potential exposure, precautionary conditions and unknown coverage, explain evidence limitations, and propose alternative stops or dates when supported. A spraying notice is not proof of actual application, and no recommendation certifies safety. |
+| **Later-stage data updates** | Corrected spraying notices or updated weather evidence may warrant a new immutable assessment, without rewriting earlier results. Automatic collection, forecast-driven reassessment and alerts are outside `MVP-01`. |
 
 These interactions describe a **request-and-result lifecycle**, not definitive job-state or persistence schemas. The active backend specification governs accepted MVP behavior; full durable execution, live source ingestion and forecast-based reassessment remain separate future deliverables.
 
