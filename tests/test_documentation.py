@@ -132,38 +132,29 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn('not evidence that the area is safe', readme)
         self.assertNotIn('beegeotrace', readme)
 
-    def test_readme_diagrams_are_fenced_and_request_flow_is_explained(self) -> None:
+    def test_readme_keeps_one_overview_diagram_and_line_art(self) -> None:
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')
         diagrams = MERMAID_BLOCK.findall(readme)
-        self.assertGreaterEqual(len(diagrams), 2, 'Expected overview and interaction diagrams')
+        self.assertEqual(1, len(diagrams), 'Keep the conceptual model, not the sequence diagram')
         self.assertEqual(readme.count('```mermaid'), len(diagrams))
-
-        overview = next((item for item in diagrams if 'flowchart LR' in item), None)
-        self.assertIsNotNone(overview)
+        overview = diagrams[0]
+        self.assertIn('flowchart LR', overview)
         self.assertIn('Beekeeper', overview)
         self.assertIn('Wild pollinators', overview)
+        self.assertNotIn('sequenceDiagram', readme)
 
-        interaction = next((item for item in diagrams if 'sequenceDiagram' in item), None)
-        self.assertIsNotNone(interaction)
-        for participant in ('Beekeeper', 'Jobs', 'Sources', 'Cache', 'Engine', 'Store'):
-            with self.subTest(participant=participant):
-                self.assertRegex(interaction, rf'(?:actor|participant) {participant}\b')
-        for statement in (
-            'Request investigation for point X',
-            'alt Result not ready yet',
-            'else Analysis completed',
-            'else Investigation failed',
-            'Jobs->>Store:',
-            'Store-->>Jobs:',
-            'Save a new immutable investigation/version',
-            'Completed historical results are never overwritten',
-        ):
-            with self.subTest(statement=statement):
-                self.assertIn(statement, interaction)
-        self.assertNotIn('Engine->>Store:', interaction)
+        image_link = '](docs/assets/apiary-landscape.svg)'
+        self.assertEqual(1, readme.count(image_link))
+        self.assertLess(readme.index(image_link), readme.index('## Purpose and users'))
+        image = (ROOT / 'docs/assets/apiary-landscape.svg').read_text(encoding='utf-8')
+        self.assertIn('<svg ', image)
+        self.assertIn('fill="#fff"', image)
+        self.assertIn('<path ', image)
+        self.assertNotIn('data:image/', image)
+        self.assertNotIn('<image ', image)
 
         lowered = readme.casefold()
-        self.assertIn('conceptual interaction flow', lowered)
+        self.assertIn('request-and-result interactions', lowered)
         self.assertIn('synthetic or fixture-based', lowered)
         self.assertIn('outside `mvp-01`', lowered)
         self.assertIn('immutable', lowered)

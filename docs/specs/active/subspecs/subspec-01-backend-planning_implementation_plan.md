@@ -8,7 +8,7 @@
 - **Normative sub-spec:** [MVP-01 Backend requirements](subspec-01-backend-planning.md)
 - **Parent:** [MelliAtlas umbrella](../../umbrella_spec_melliatlas.md)
 
-The [active backend sub-spec](subspec-01-backend-planning.md) owns normative behavior and acceptance; this plan records **current implementation choices, public-boundary design, task sequencing, and test oracles**. The [specification guidance](../../AGENTS.md) governs contract-first design and approval. Section 4.1 maps the already implemented V02 contracts to code and tests; it is not another source of normative requirements.
+The [active backend sub-spec](subspec-01-backend-planning.md) owns normative behavior and acceptance; this plan records **current implementation choices, public-boundary design, task sequencing, and test oracles**. The [specification guidance](../../AGENTS.md) governs contract-first design and approval. Section 4.1 records the V04-01 pure fictional ecology boundary; implemented code and contract tests, not this plan, remain authoritative.
 
 ## 1. Current implementation evidence
 
@@ -20,7 +20,7 @@ The [active backend sub-spec](subspec-01-backend-planning.md) owns normative beh
 | Synthetic planning, fixture source, and jobs | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py), [`sources/api.py`](../../../../backend/src/melliatlas/sources/api.py), [`jobs/api.py`](../../../../backend/src/melliatlas/jobs/api.py); synthetic V01 and optional completed-result store port | Real ecology, agent, typed DAG, durable in-flight jobs, Web and full acceptance remain pending |
 | Completed-snapshot persistence (partial) | [`persistence/api.py`](../../../../backend/src/melliatlas/persistence/api.py), [`persistence/contract.md`](../../../../backend/src/melliatlas/persistence/contract.md), [migration](../../../../backend/migrations/0001_completed_investigations.sql) | Real PostGIS migration, rollback, geometry and fresh-connection tests (`MVP01-BE-A09`) |
 
-Implemented APIs are defined by their linked Python source and `contract.md`, **not** by future design notes. `create_app(*, settings=..., territories=..., investigations=...)` retains its earlier `settings` and `territories` keyword arguments. Territory URLs include `/api/v1/territories/districts?region_id=...` and `/api/v1/territories/geometry/{territory_id}`. No real complete geography has been imported. No acceptance test may infer complete regional coverage from the synthetic fixtures.
+Implemented APIs are defined by their linked Python source and `contract.md`, **not** by future design notes. `create_app(*, settings=..., territories=..., investigations=...)` retains its earlier `settings`, `territories` and `investigations` keyword arguments. Opt-in reference-file paths are configured through `AppSettings` and validated on startup. Territory URLs include `/api/v1/territories/districts?region_id=...` and `/api/v1/territories/geometry/{territory_id}`. No real complete geography has been imported. No acceptance test may infer complete regional coverage from the synthetic fixtures.
 
 ## 2. Ownership and dependency constraints
 
@@ -46,85 +46,74 @@ The remaining **technical choices** should be reviewed at the task that first ne
 
 - **Execution (`V04`):** start with a bounded typed sequence; introduce a dependency DAG only if actual operations need it. If a DAG becomes necessary, distinguish `SourceStep(source_id)` from `AnalyzerStep(analyzer_kind)` and test artifact binding, ordering and cycle rejection instead of building a generic workflow platform.
 - **Ecology and replanning (`V04`):** place eligibility policy in `planning`, pure spatial evaluation in `analyzers`, and decisions about additional evidence in `agent`. Use the actual geometry evaluation output to trigger replanning; do not couple policy to candidate labels. Select exact typed contracts only when `V04` becomes current.
-- **Geographic import (`V03`):** choose the catalog-loading and reference-version selection boundary when approved datasets exist. The current [`import_reference.py`](../../../../backend/scripts/import_reference.py) validates normalized files offline; it is not a PostGIS import adapter.
+- **Geographic import (`V03`):** choose the catalog-loading and reference-version selection boundary when approved datasets exist. The existing [`import_reference.py`](../../../../backend/scripts/import_reference.py) validates normalized files offline. V03 now also supports explicit local-file loading at ASGI startup; neither path writes to PostGIS or verifies supplier approval.
 
 ## 4. Next bounded delivery task
 
-- **Task ID:** `MVP01-BE-V02`
+- **Task ID:** `MVP01-BE-V04`
 - **Status:** Implemented; acceptance pending
-- **Goal:** Verify the existing completed-result store and migration against an approved real PostgreSQL/PostGIS test database, including fresh-connection reopening, immutability, rollback and spatial geometry.
-- **Requirement IDs:** `MVP01-BE-R04`, `MVP01-BE-R11`, `MVP01-BE-R12`
-- **Test inventory IDs:** `BE-T040`, `BE-T041`, `BE-T042`, `BE-T043`, `BE-T044`
-- **Scope:** Validate the already implemented jobs-owned store port, injected PostGIS adapter and SQL migration on a real test database. Preserve V01 behavior, HTTP privacy, completed-snapshot immutability and failed-write rollback; make code adjustments only for test-confirmed defects against reviewed contracts.
-- **Not in scope:** Approved RU/BY reference ingestion, weather, durable queued/running worker state, background recovery, live providers, Web UI or declaring `MVP01-BE-A09` accepted without actual evidence.
-- **Existing interfaces:** `backend/src/melliatlas/jobs/api.py`, `backend/src/melliatlas/persistence/api.py`, `backend/src/melliatlas/api/app.py`, `backend/src/melliatlas/api/routes_investigations.py`.
-- **Already implemented files:** `backend/src/melliatlas/persistence/contract.md`, `backend/migrations/0001_completed_investigations.sql`, `backend/scripts/verify_postgis_investigations.py` and isolated codec, SQL adapter and HTTP tests.
-- **Approval gates:** Developer approval of PostgreSQL driver, a dedicated PostGIS test database, migration privileges and operational database access. Existing Shapely validation does not replace database acceptance; no unapproved runtime driver is declared.
-- **Exit evidence:** Real PostGIS checks prove completed result, evidence, trace and selected-site geometry survive a new connection; duplicate UUIDs cannot overwrite results; failed writes roll back; SRID and geometry constraints are verified. Until these run and pass, V02 remains **partial, not accepted**.
+- **Goal:** Provide a typed, offline and deterministic first ecology screening boundary: find explicit fictional zone overlaps for candidate points, then classify their significance in planning without granting real-world eligibility or changing the current V01 workflow.
+- **Requirement IDs:** `MVP01-BE-R09`, `MVP01-BE-R15`
+- **Test inventory IDs:** `BE-T023`, `BE-T024`, `BE-T025`
+- **Scope:** Pure WGS84 point-in-polygon calculations with GEOS, typed demonstration-only overlap evidence and policy results, stable evidence/rule identity, deterministic ordering, negative and boundary cases. No new dependency.
+- **Not in scope:** Agent replanning, exclusion filtering in the V01 plan, source registry/transport, provider ingestion, verified real habitat boundaries, real legal interpretation or declaring any site safe.
+- **Existing interfaces:** `backend/src/melliatlas/planning/api.py`, `backend/src/melliatlas/territories/api.py`, `backend/src/melliatlas/sources/api.py`.
+- **Implemented files:** `backend/src/melliatlas/analyzers/api.py`, `backend/src/melliatlas/analyzers/contract.md`, `backend/src/melliatlas/planning/api.py`, `backend/src/melliatlas/planning/contract.md`, `backend/tests/unit/test_ecology_screening.py`.
+- **Approval gates:** The authoritative demo zone choice, real-world datasets, license/source provenance and any legal interpretation remain developer-controlled under sub-spec section 7. No fictional geometry is approved as an actual protected area; real V03 geography and real V02 PostGIS acceptance remain open.
+- **Exit evidence:** Pure tests establish `DEMO_RESTRICTION` → `EXCLUDED`, `DEMO_PRECAUTION` → `CAUTION`, missing/non-overlapping evidence → `UNKNOWN`, geometric boundary matches, candidate-ID-independent decisions, precedence, deterministic ordering and invalid-input rejection. No end-to-end replanning or full `MVP01-BE-A06/A07` acceptance is claimed.
 
 ### 4.1 Public contracts and integration design
 
-This section covers **only the current V02 verification task**. The V01 and V02 public APIs already exist, so their source definitions and executable contracts are authoritative; the table below is an interface map, **not** a competing declaration to regenerate. No new public DTO, Protocol, method or error type is proposed for V02 verification. If a real-database test reveals a missing boundary, draft its exact typed declaration here, review its compatibility and obtain the required developer decision **before** generating implementation code. Do not predesign V03/V04 APIs.
+This completed first V04 increment introduces only the typed geometry-to-policy seam needed now. The normative obligations are owned by [sub-spec section 2.3](subspec-01-backend-planning.md#23-planning-domain). Reviewed code, module contracts and executable tests are authoritative; the signatures below describe the implemented boundary and are not a second source of truth.
 
 #### Public types and signatures
 
-| Layer / owner | Existing typed contract relevant to V02 | Authority |
+| Owner | Implemented typed declaration | Authoritative source |
 | --- | --- | --- |
-| HTTP boundary (`api`) | `InvestigationCreateDto` -> `InvestigationResponse` on `POST /api/v1/investigations` (202); `UUID` -> `InvestigationResponse` on `GET /api/v1/investigations/{id}` | [`api/routes_investigations.py`](../../../../backend/src/melliatlas/api/routes_investigations.py), [`api/contract.md`](../../../../backend/src/melliatlas/api/contract.md), generated OpenAPI |
-| Application factory (`api`) | `create_app(*, settings: AppSettings \| None = None, territories: TerritoryCatalog \| None = None, investigations: InvestigationService \| None = None) -> FastAPI` | [`api/app.py`](../../../../backend/src/melliatlas/api/app.py) |
-| Job lifecycle (`jobs`) | `InvestigationService.submit(request: InvestigationRequest) -> InvestigationSnapshot`, `get(identifier: UUID) -> InvestigationSnapshot \| None`, `process(identifier: UUID) -> None`; `InvestigationStatus` and `InvestigationOutcomeKind` remain separate | [`jobs/api.py`](../../../../backend/src/melliatlas/jobs/api.py), [`jobs/contract.md`](../../../../backend/src/melliatlas/jobs/contract.md) |
-| Jobs-owned persistence port | `CompletedInvestigationStore.save(snapshot: InvestigationSnapshot) -> None`, `load(identifier: UUID) -> InvestigationSnapshot \| None`; only completed snapshots persist | [`jobs/api.py`](../../../../backend/src/melliatlas/jobs/api.py) |
-| DB adapter (`persistence`) | `ConnectionFactory = Callable[[], DatabaseConnection]`, `PostgisCompletedInvestigationStore(connect: ConnectionFactory)` implements the jobs port; DB-API cursor/connection Protocols are already defined | [`persistence/api.py`](../../../../backend/src/melliatlas/persistence/api.py), [`persistence/contract.md`](../../../../backend/src/melliatlas/persistence/contract.md) |
-| Storage format | Typed `serialize_completed_snapshot(snapshot: InvestigationSnapshot) -> str` and `deserialize_completed_snapshot(payload: str) -> InvestigationSnapshot`; immutable JSONB snapshot plus SRID-4326 `MULTIPOINT` | [`jobs/api.py`](../../../../backend/src/melliatlas/jobs/api.py), [migration](../../../../backend/migrations/0001_completed_investigations.sql) |
+| `planning` | `EcologyEvidenceKind(StrEnum)` with `DEMO_RESTRICTION`, `DEMO_PRECAUTION`; `EcologyZone(evidence_id: str, rule_id: str, kind: EcologyEvidenceKind, geometry: GeometryWgs84)` | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py) |
+| `planning` | `EcologyOverlap(evidence_id: str, rule_id: str, kind: EcologyEvidenceKind)`; `EcologyStatus(StrEnum)`; `SiteAssessment(site_id: str, status: EcologyStatus, evidence_ids: tuple[str, ...], rule_ids: tuple[str, ...], reasons: tuple[str, ...], unknowns: tuple[str, ...], synthetic: Literal[True])` | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py) |
+| `analyzers` | `find_ecology_overlaps(site: CandidateSite, zones: tuple[EcologyZone, ...]) -> tuple[EcologyOverlap, ...]` | [`analyzers/api.py`](../../../../backend/src/melliatlas/analyzers/api.py) |
+| `planning` | `assess_ecology(site_id: str, overlaps: tuple[EcologyOverlap, ...]) -> SiteAssessment` | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py) |
 
 #### Module interactions
 
-1. Application composition explicitly injects an `InvestigationService` into the HTTP router. The default `melliatlas.main:app` uses synthetic in-memory storage; no DB is silently enabled.
-2. `POST` validates the DTO and calls `service.submit(...)`; an in-process background task invokes `service.process(id)`. A successful calculation is saved through `jobs.CompletedInvestigationStore` **before** the completed snapshot is published.
-3. `persistence.PostgisCompletedInvestigationStore` opens a DB connection through the injected factory, writes JSONB and selected-site geometry in a transaction, commits once and closes resources. It does not own planning rules.
-4. `GET` calls `service.get(UUID)`; a completed snapshot absent from process memory is loaded from persistence through a fresh connection. The HTTP boundary maps the domain snapshot to `InvestigationResponse`. Synchronous database access is offloaded from the event loop.
-5. No planned `agent` or `engine` API is introduced by this task; full evidence-driven replanning is outside V02.
+1. A caller passes an existing `planning.CandidateSite` and explicit demo-only `EcologyZone` inputs to the pure `analyzers.find_ecology_overlaps`. The analyzer validates coordinates/topology and uses `Shapely/GEOS` point coverage, returning sorted typed observations, not policy decisions.
+2. `planning.assess_ecology` consumes those observations and deterministically classifies the demo evidence. It cannot promote an absence of overlaps to `ELIGIBLE` because no complete independent ecological coverage has been verified. Its output records evidence IDs, rule IDs, reasons and unknowns.
+3. Existing `jobs.InMemoryInvestigationService`, `planning.build_season_plan`, source fixture data, HTTP DTOs and PostGIS snapshots are **unchanged**. Later V04 increments must review the agent/job integration contracts before connecting actual replanning.
 
 #### Failure contracts
 
-| Condition | Existing typed/observable outcome | Required real-DB assertion |
-| --- | --- | --- |
-| Unsupported request | `InvalidInvestigationRequest` / validation error -> sanitized HTTP `422` | No DB write or completed record |
-| Unknown investigation UUID | `InvestigationService.get(...)` returns `None` -> HTTP `404` | No synthetic success response |
-| DB connection/read failure | `InvestigationStorageError` -> sanitized HTTP `503` on GET | No SQL, credentials or traceback returned |
-| Insert/commit failure | `InvestigationStorageError`, rollback; service must not publish `COMPLETED` | Absent or unchanged stored record after failure |
-| Duplicate completed UUID | Save fails without `UPDATE`/overwrite | Original payload remains byte-equivalent on reopen |
-| Insufficient domain evidence | `COMPLETED` plus `INSUFFICIENT_EVIDENCE`, not `FAILED` | Historical outcome preserved after reopen |
+- Invalid/non-finite site WGS84 coordinates, invalid zone topology or out-of-range geometry coordinates → `ValueError` at the pure analyzer boundary; this is not an HTTP error contract.
+- Missing evidence/rule identifiers → explicit `ValueError`, never silent exclusion.
+- No matching zone or no ecological observations → `UNKNOWN` with an explicit coverage limitation. `CAUTION` is never a binding exclusion. An explicit `DEMO_RESTRICTION` match takes precedence over caution **only within the fictional demonstration**.
+- Real legal restrictions, real species impact, and external completeness are not inferred from synthetic polygons or absent evidence.
 
 #### Compatibility
 
-- Preserve existing `create_app` keyword arguments (`settings`, `territories`) and additive optional `investigations` injection; do not replace the running V01 HTTP DTOs, routes, statuses or error envelope.
-- Preserve the `jobs` -> port <- `persistence` dependency direction; `jobs` must not import DB drivers. Preserve synthetic source provenance, immutable historical IDs and completed-only persistence.
-- A proposed new cross-module interface requires exact import path, Python typed declarations (DTOs/enum/Protocol and method signatures), returned errors, dependency direction, contract test examples and an explicit design-review outcome **before implementation**. Remove the draft after implementation and link to its actual code/tests; do not repeat it in the future backlog.
+- No modifications to the V01 `CandidateSite`, `SeasonPlan`, `InvestigationService`, `create_app`, HTTP routes, PostGIS schema or persisted codec.
+- Dependency direction: `analyzers -> planning, territories` (via public types), `planning -> territories`. The analyzer does not import planning private modules or perform I/O.
+- Existing Shapely is reused; no new runtime package, registration framework or implicit source access.
 
 #### Contract-first tests
 
-- **Existing executable contract checks:** [`test_completed_snapshot_codec.py`](../../../../backend/tests/unit/test_completed_snapshot_codec.py) validates typed JSON round trips and corrupt payloads; [`test_postgis_store_unit.py`](../../../../backend/tests/unit/test_postgis_store_unit.py) checks adapter transaction intent; [`test_persistent_investigation_service.py`](../../../../backend/tests/unit/test_persistent_investigation_service.py) checks save-before-completion and failed save; [`test_investigation_reopen_http.py`](../../../../backend/tests/contract/test_investigation_reopen_http.py) checks HTTP reopened results using an injected fake store. These are **not** DB acceptance evidence.
-- **Pending independent real-DB contract verification:** run [`verify_postgis_investigations.py`](../../../../backend/scripts/verify_postgis_investigations.py) against a developer-approved test PostGIS after running the reviewed migration. Map `BE-T040` to fresh-connection JSON/evidence/trace/geometry reopen, `BE-T041` to rollback/no false completion, `BE-T042` to immutable duplicate UUID, `BE-T043` to migration/index creation, and `BE-T044` to SRID 4326 and metric-safe spatial operation.
-- If a new contract is needed, write failing **positive, negative and boundary** contract tests against its reviewed typed public declaration before implementing it. Confirm the result through actual HTTP/DB checks where relevant. Passing fake-store tests or a generated ZIP never accepts `MVP01-BE-A09`.
+- [`backend/tests/unit/test_ecology_screening.py`](../../../../backend/tests/unit/test_ecology_screening.py) proves explicit polygon overlap, boundary inclusion, caution/non-binding status, unknown coverage, precedence, ID rename independence, invalid geometry and missing evidence metadata (`BE-T023`–`BE-T025` partial).
+- The architecture suite continues to check allowed module dependencies. These are not evidence of agent replan behavior (`BE-T035`–`BE-T039`), approved datasets, real legal exclusions or full ecological acceptance.
 
 ### 4.2 Implementation sequence (TDD)
 
-1. Obtain developer approval for the runtime PostgreSQL driver, isolated `_test` database, migration privileges and verification process. Do not install a driver or start database I/O implicitly.
-2. Run the existing focused codec, SQL-adapter and HTTP tests; record their limits. Exercise real PostGIS with the migration and independent expected results for `BE-T040`–`BE-T044`.
-3. For a real test failure, identify the broken contract, propose a bounded change to the current-task typed design, obtain any required review, then implement against a failing regression test. Avoid speculative new abstractions.
-4. Run `sh ./run-format.sh`, `bash ./run-tests.sh`, and the approved real-DB test; record commands, environment, SQL migration identity, failures and recovery. Converge the contract docs and traceability without marking `verified` or advancing workstream acceptance without developer approval.
-
-The V01 investigation slice remains implemented but unaccepted. Its fixed fictional RU/Smolensk scenario, in-process task, typed HTTP contract and temporary default store are covered by `backend/tests/contract/test_investigations_http.py` and `backend/tests/unit/test_synthetic_investigation.py`. V02 adds an opt-in completed-only persistence bridge without changing the default `melliatlas.main:app` configuration. Its typed codec, adapter transaction intentions, and fake-backed HTTP reopen tests are executable, but **none** establishes real PostGIS acceptance. `backend/scripts/verify_postgis_investigations.py` is an explicit real-database check to run only after the open approvals and environment prerequisites have been satisfied.
+1. Identify the two public ownership boundaries in the current sub-spec and dependency matrix; first add precise positive/negative/boundary tests using only explicit fictional polygons.
+2. Implement a small pure GEOS point-overlap analyzer and domain-owned classification without data-provider access or automatic claims of site eligibility.
+3. Run selected ecological tests, existing V01 regression tests, architecture and SDD checks; use local `FMT,CHK` for Ruff and strict Pyright. Report any unavailable tools.
+4. Keep V04 behavior unconnected to V01 jobs until a further task selects the approved fictional scenario, validates the agent/investigation integration contract and includes deterministic end-to-end replan tests.
 
 ## 5. Upcoming vertical slices
 
-The active V02 verification task is in section 4; these later slices identify **implementation work**, not new requirements or approved designs. Their normative scope and external gates remain in [sub-spec sections 4–7](subspec-01-backend-planning.md#4-requirement-to-umbrella-mapping). Select and review public interfaces only when each slice becomes current.
+The V04-01 pure ecology screening task is in section 4; the V03 runtime loader is already implemented but real geographic coverage remains incomplete. V02 real PostGIS verification remains an **independent pending acceptance gate**; completion of startup wiring does not discharge `BE-T040`–`BE-T044`. These later slices identify **implementation work**, not new requirements or approved designs. Their normative scope and external gates remain in [sub-spec sections 4–7](subspec-01-backend-planning.md#4-requirement-to-umbrella-mapping). Select and review public interfaces only when each slice becomes current.
 
 | Slice | Implementation decision to make when selected | Planned test IDs |
 | --- | --- | --- |
-| `V03` — complete geography | Build and inject a versioned territory catalog from approved normalized references, replacing validation-only offline tooling where necessary; choose concrete importer and storage interfaces at task selection. | `BE-T001`–`BE-T012`, `BE-T058` |
-| `V04` — evidence-driven replanning | Connect source and analyzer adapters to a bounded execution loop; run geometry-derived eligibility checks and request targeted follow-up analysis. | `BE-T013`–`BE-T039`, `BE-T054`–`BE-T059` |
+| `V03` — approved real geography (remaining) | Finish independent RU/BY inventories, verify full real coverage, and decide whether persistent multi-version reference storage is needed. The opt-in local runtime loader is implemented but not accepted as complete geography. | `BE-T001`–`BE-T012`, `BE-T058` |
+| `V04` — evidence-driven replanning (remaining) | Connect the newly implemented pure overlap/policy boundary to an approved fictional scenario and a bounded decision loop; review agent/job interfaces first. | `BE-T013`–`BE-T039`, `BE-T054`–`BE-T059` |
 | `V05` — backend/Web contract handoff | Verify source/investigation response schemas and fixture examples before the separately scoped Web slice consumes them. | `BE-T048`–`BE-T053`, `BE-T060` |
 
 ## 6. Acceptance test inventory
@@ -203,6 +192,6 @@ Apply the shared [SDD convergence rules](../../AGENTS.md) to the selected task; 
 
 1. Link the task's requirement IDs, reviewed public boundaries and selected `BE-Txxx` cases to the actual changed paths, contract tests and results; report unrun integration checks explicitly.
 2. Compare changed public signatures, HTTP errors, module imports and storage behavior with the source-of-truth code, OpenAPI and approved requirements; record justified deviations and any required review.
-3. For V02, capture the test database/migration identity, executed `BE-T040`–`BE-T044` results, transaction/geometry oracles and open driver/environment approvals. Mock-backed tests do not substitute for real PostGIS evidence.
-4. Update feature traceability and draft-plan links only after implementation review. Keep V02 acceptance pending until the required independent evidence and developer decision exist.
-5. If a real-DB check fails, capture its migration identity, failing assertion and DB state; fix the bounded defect and rerun the affected integration case before claiming any acceptance evidence.
+3. For V03, record the exact normalized reference and independent inventory identities, the failed-startup tests, runtime HTTP results and remaining external source/license approvals. Synthetic inventory success does not establish real RU/BY completeness.
+4. Keep V02 PostGIS acceptance pending until `BE-T040`–`BE-T044` run against a real approved database. Update feature traceability only after implementation review, with separate human acceptance decisions.
+5. If an actual reference validation or database check fails, record the offending input/migration, failing assertion and recovery before claiming any acceptance evidence.

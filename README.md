@@ -4,6 +4,8 @@ MelliAtlas is a geospatial decision-support application for **seasonal apiary pl
 
 The intended result is an **explainable seasonal placement plan**: candidate stops, proposed dates, reasons for selection or rejection, alternative locations, and the limits of the available evidence. MelliAtlas does not guarantee honey yield or certify that a location is ecologically safe.
 
+![Pencil-line illustration of bees near a forest and field, with wind, crop spraying, and satellite mapping signals](docs/assets/apiary-landscape.svg)
+
 ## Purpose and users
 
 MelliAtlas is designed around three related uses:
@@ -29,60 +31,7 @@ The same territory may offer significant forage resources while also containing 
 
 ## Investigation request lifecycle
 
-A beekeeper selects a **country, region, supported district, planning season, and point X**, then requests an investigation. The diagram is a **conceptual interaction flow**: it combines the initial fixture-based `MVP-01` workflow with **explicitly marked later-stage** caching, weather refreshes and durable persistence. It is not an inventory of implemented API operations.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Beekeeper
-    participant API as MelliAtlas API
-    participant Jobs as Investigation service
-    participant Sources as Source adapters
-    participant Cache as Source cache / database
-    participant Engine as Analysis engine
-    participant Store as Investigation results database
-    participant Weather as Weather / forecast (later stage)
-
-    Beekeeper->>API: Request investigation for point X and season
-    API->>Jobs: Validate and start an investigation
-    Jobs-->>API: Investigation ID and initial status
-    API-->>Beekeeper: Investigation ID
-
-    Jobs->>Sources: Collect permitted geographic and synthetic evidence
-    Sources-->>Jobs: Source reads with provenance
-    Jobs->>Cache: Cache source data and metadata (planned)
-    Jobs->>Engine: Analyze critical factors and nearby alternatives
-    Engine-->>Jobs: Point assessment and seasonal planning outcome
-    Jobs->>Store: Persist completed result and decision trace (planned PostGIS)
-
-    loop Beekeeper polls for the investigation result
-        Beekeeper->>API: Request result by investigation ID
-        API->>Jobs: Look up status or completed result
-        alt Result not ready yet
-            Jobs-->>API: Queued or running
-            API-->>Beekeeper: Result not ready yet
-        else Analysis completed
-            Jobs->>Store: Read immutable completed result
-            Store-->>Jobs: Assessment, alternatives, trace, uncertainty
-            Jobs-->>API: Stored investigation result
-            API-->>Beekeeper: Point assessment, nearby points and seasonal stops
-        else Investigation failed
-            Jobs-->>API: Failed status with diagnostic
-            API-->>Beekeeper: Explicit failure, not a recommendation
-        end
-    end
-
-    opt Later stages: scheduled source and weather updates
-        Jobs->>Sources: Refresh authorized source evidence
-        Sources-->>Jobs: Updated data and provenance
-        Jobs->>Weather: Obtain new weather forecast
-        Weather-->>Jobs: Forecast update
-        Jobs->>Engine: Reassess point X and seasonal alternatives
-        Engine-->>Jobs: Updated assessment
-        Jobs->>Store: Save a new immutable investigation/version
-        Note over Jobs,Store: Completed historical results are never overwritten
-    end
-```
+A beekeeper selects a **country, region, supported district, planning season, and point X**, then requests an investigation. The following table describes the conceptual request-and-result interactions, distinguishing the synthetic or fixture-based `MVP-01` workflow from later-stage integrations. It is not an inventory of implemented API operations.
 
 The interactions have the following meaning:
 
@@ -95,7 +44,7 @@ The interactions have the following meaning:
 | **Assessment and recommendations** | Results distinguish exclusion, caution and unknown conditions near point X, propose nearby alternatives when supported by evidence, and support the product goal of a seasonal plan with at least two stops. They do not certify a site as safe or legally available. |
 | **Later-stage data updates** | Approved source or weather changes can lead to a new assessment and a new immutable investigation/version; they must not rewrite an earlier completed result. Scheduled forecast ingestion is outside `MVP-01`. |
 
-This diagram describes **request-and-result interactions**, not the definitive job-state or persistence schemas. The active backend specification governs accepted MVP behavior; full durable execution, live source ingestion and forecast-based reassessment remain separate future deliverables.
+These interactions describe a **request-and-result lifecycle**, not definitive job-state or persistence schemas. The active backend specification governs accepted MVP behavior; full durable execution, live source ingestion and forecast-based reassessment remain separate future deliverables.
 
 ## Evidence and analysis
 
@@ -111,7 +60,7 @@ Every significant conclusion should retain its source, relevant dates and geogra
 
 The product is developed in independently testable increments. **`MVP-01` must deliver an end-to-end browser workflow**, including a React/Leaflet map, a Python/FastAPI backend, a minimal deterministic agent, synthetic placement analysis with ecological screening, and reopening a completed result from PostgreSQL/PostGIS. Later stages add real data adapters, richer seasonality, stronger conservation and relocation analysis, optional LLM planning, research tools, and long-term ecological monitoring.
 
-**Current status:** the implemented backend provides a FastAPI application factory, a health endpoint, OpenAPI metadata, and initial tests. Typed territory contracts, an offline reference validator, and versioned territory reads are now implemented, but no complete approved RU/BY catalog or real geometry dataset is loaded. A development-only synthetic RU scenario now supports in-process investigation creation, deterministic forage-window selection and repeat reads by UUID; it has no real provider access or durable storage. PostGIS persistence, real source adapters, ecological replanning, the full engine/agent, and the React user interface are not yet implemented. Both diagrams describe the intended product behavior.
+**Current status:** the implemented backend provides a FastAPI application factory, a health endpoint, OpenAPI metadata, and initial tests. Typed territory contracts, an offline reference validator, and versioned territory reads are now implemented, but no complete approved RU/BY catalog or real geometry dataset is loaded. A development-only synthetic RU scenario now supports in-process investigation creation, deterministic forage-window selection and repeat reads by UUID; it has no real provider access or durable storage. An opt-in PostGIS completed-snapshot adapter exists but has not passed real-database acceptance. Pure fictional ecology geometry/policy and a bounded decision-only agent can now demonstrate evidence-driven alternative selection and explicit unknown/limit outcomes independently of HTTP. Neither is connected to the existing V01 investigation flow or verified against real-world ecology. Real source adapters, the full engine/integrated agent, and the React user interface are not yet implemented. Both diagrams describe the intended product behavior.
 
 ## Architecture and project documentation
 
@@ -125,4 +74,3 @@ The planned application is a **Python modular monolith** with FastAPI, PostgreSQ
 | `docs/specs/` | Umbrella specification, active sub-specifications, plans, and checkpoints |
 
 The [umbrella specification](docs/specs/umbrella_spec_melliatlas.md) defines the roadmap and acceptance criteria. The [specification index](docs/specs/README.md) identifies the active workstream and the documents governing implementation. See [installation](docs/INSTALLATION.md) and [testing](docs/TESTS.md) for the currently supported commands.
-

@@ -182,7 +182,7 @@ class SddConvergenceTests(unittest.TestCase):
 
     def test_task_tests_must_cover_a_relevant_requirement(self) -> None:
         plan, spec = self._current()
-        broken = self._set_task_field(plan, "Test inventory IDs", "`BE-T001`, `BE-T002`")
+        broken = self._set_task_field(plan, "Test inventory IDs", "`BE-T040`, `BE-T041`")
         self.assertIn(
             "Selected tests do not cover current task requirements",
             convergence_errors(broken, spec, ROOT),
@@ -190,9 +190,9 @@ class SddConvergenceTests(unittest.TestCase):
 
     def test_each_task_requirement_needs_a_selected_test(self) -> None:
         plan, spec = self._current()
-        broken = self._set_task_field(plan, "Test inventory IDs", "`BE-T040`")
+        broken = self._set_task_field(plan, "Test inventory IDs", "`BE-T001`")
         self.assertIn(
-            "Selected tests do not cover task requirement: MVP01-BE-R04",
+            "Selected tests do not cover task requirement: MVP01-BE-R09",
             convergence_errors(broken, spec, ROOT),
         )
 
