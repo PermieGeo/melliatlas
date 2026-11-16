@@ -413,3 +413,34 @@ complete coverage. The layout uses a full-width workspace with navigation
 sidebar rather than leaving unused right-hand space. New contract/unit tests
 cover restoration, weather auto-read, geometry/point safety and no-unmapped-
 district source calls. W01 and W02 acceptance statuses remain unchanged.
+
+
+### W01 follow-up — compact geospatial workspace and reviewed RU district labels
+
+**Scope and requirements:** Developer-authorized visual/interaction adjustment
+within `MVP01-WEB-R01/R02/R07/R08`. Keep the reviewed API territory IDs,
+partial source semantics and original provider labels. Show a compact
+honey-orange/charcoal map-first layout; move the optional ephemeral point
+explanation from the sidebar into a visible map-adjacent panel, enlarge the map
+height, keep only the first Open-Meteo hour visible initially and disclose the
+other 23 with a native accessible control. Remove redundant sidebar explanations
+and show the beekeeper headline/tagline in the header. Report a zero-notice
+Saturn response distinctly, with an explicit warning that no received records
+is not evidence of no spraying or verified completeness.
+
+**Public contracts:** `TerritoryResponse.name_ru` adds a nullable localized label
+without replacing `name` or changing identity. PostGIS migration `0006`
+introduces the optional column and conditionally seeds only known Smolensk
+source-name matches; other regions retain the original name. `web/src/api/types.ts`
+and `validation.ts` accept the optional field and reject invalid values.
+`web/src/components/ReferenceControls.tsx` chooses the Russian label only for
+`locale=ru`. No Saturn district-code mapping is inferred. The browser's
+`updateSourceDateRange` adjusts the other date when a manual edit would exceed
+31 days, preserving the existing backend bound rather than weakening it.
+
+**Tests/acceptance:** `backend/tests/contract/test_administrative_geometry.py`,
+`web/tests/territory-preference.test.ts`, `reference-navigation.test.tsx`,
+`weather.test.tsx`, and `live-area-analysis.test.tsx` cover localization,
+manual date edits, compact forecast and explicit empty responses. Full local
+frontend checks, a real migrated PostGIS schema, and browser behavior require
+operator verification. W01/W02 acceptance statuses remain unchanged.

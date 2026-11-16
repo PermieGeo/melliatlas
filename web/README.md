@@ -116,3 +116,18 @@ mapping; an unmapped district never silently triggers a region-wide read. The
 date filter defaults to today through one calendar month. All findings remain
 partial source claims, not confirmation of spraying, coverage or site safety.
 
+
+## Compact live-data workspace (W01 follow-up)
+
+The top header displays the beekeeper-oriented product title and tagline. The
+left sidebar keeps only geographic selection, Saturn date controls, and an
+explicitly enabled fictional-demo disclosure. The optional starting point is
+explained in a contrasting panel directly above the taller map. Open-Meteo
+renders its first UTC forecast hour immediately, with the other hours inside
+an accessible native details disclosure. Saturn zero-record responses receive
+an explicit partial/unknown-coverage message, never a statement of safety.
+The honey-orange/charcoal palette uses CSS styles, not map model constants.
+Manual Saturn dates auto-adjust their opposite bound if a change would exceed
+the backend's 31-day request limit. A limited Smolensk ADM2 localization uses
+an optional server-provided `name_ru` while English still uses the unchanged
+source `name`; apply migration `0006` before the localized DB-backed API runs.

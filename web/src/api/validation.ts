@@ -182,6 +182,10 @@ export function decodeTerritories(value: unknown): Territory[] {
       country: country(item.country, `${path}.country`),
       kind: oneOf(item.kind, `${path}.kind`, ["country", "region", "district"]),
       name: nonEmpty(item.name, `${path}.name`),
+      name_ru:
+        item.name_ru === undefined || item.name_ru === null
+          ? null
+          : nonEmpty(item.name_ru, `${path}.name_ru`),
       parent_id: maybe(item.parent_id, text, `${path}.parent_id`),
       reference_id: nonEmpty(item.reference_id, `${path}.reference_id`),
       valid_on: text(item.valid_on, `${path}.valid_on`),

@@ -43,6 +43,9 @@ features:
     owners:
       - backend/src/melliatlas/territories/api.py#TerritoryImport
       - backend/src/melliatlas/persistence/geography.py#PostgisTerritoryCatalog
+      - backend/migrations/0006_smolensk_district_names.sql
+      - web/src/components/ReferenceControls.tsx
+      - web/src/api/validation.ts
       - backend/scripts/prepare_geoboundaries.py#prepare
       - backend/scripts/prepare_all_geoboundaries.py#prepare_all
       - backend/scripts/import_admin_boundaries.py#import_boundaries
@@ -271,4 +274,3 @@ features:
       - web/tests/reference-geometry.test.ts
       - web/tests/reference-navigation.test.tsx
       - web/tests/territory-preference.test.ts
-

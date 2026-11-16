@@ -26,7 +26,6 @@ export function ReferenceControls({
       aria-label={tr("referenceHeading")}
     >
       <h3>{tr("referenceHeading")}</h3>
-      <p className="field-help">{tr("referenceHelp")}</p>
       {catalogMessage !== "availableRegions" && (
         <p className="field-help" role="status">
           {tr(catalogMessage)}
@@ -66,7 +65,9 @@ export function ReferenceControls({
             <option value="">{tr("referenceSelectDistrict")}</option>
             {navigation.districts.map((district) => (
               <option key={district.id} value={district.id}>
-                {district.name}
+                {locale === "ru" && district.name_ru
+                  ? district.name_ru
+                  : district.name}
               </option>
             ))}
           </select>
@@ -85,12 +86,6 @@ export function ReferenceControls({
       {navigation.geometryMessage !== "referenceGeometryAvailable" && (
         <p className="field-help" role="status">
           {tr(navigation.geometryMessage)}
-        </p>
-      )}
-      {navigation.geometry && (
-        <p className="reference-provenance">
-          {tr("referenceVersion")}: {navigation.geometry.reference_id} ·
-          EPSG:4326
         </p>
       )}
     </section>

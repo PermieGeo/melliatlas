@@ -69,3 +69,14 @@ parent presence, but does not certify present-day authoritative boundaries.
 is intentionally unseeded. The lookup joins existing canonical district
 geometry, its parent region and the separately verified Saturn subject ID;
 an absent mapping cannot turn into an unfiltered provider request.
+
+## Optional district display localization
+
+Migration `0006_smolensk_district_names.sql` adds a nullable `name_ru` column
+to the existing independent administrative geometry table and seeds only
+explicitly listed Smolensk district translations when English names match.
+The read-only `PostgisTerritoryCatalog` exposes the optional translation on
+`Territory` without changing the original `name`, canonical ID, province,
+geometry, reference version or source authority. API consumers choose a locale;
+missing translations fall back to source names. This is a UI display field,
+not a new verified administrative inventory or Saturn identity.

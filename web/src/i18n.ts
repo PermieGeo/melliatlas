@@ -11,7 +11,7 @@ const en = {
   analysisSaturnNoGeometry:
     "No usable field polygons in the fetched records; the map has nothing to draw.",
   analysisSaturnPageProgress:
-    "Fetched {pages} page(s); {records} unique notices; reported region total: {total}.",
+    "Fetched {pages} page(s); {records} unique notices; reported filter total: {total}.",
   analysisAction: "Analyze selected area",
   analysisSelectRegion: "Select a region first.",
   analysisSelectDistrict:
@@ -23,6 +23,10 @@ const en = {
   analysisDateEnd: "Saturn to date",
   analysisDateMeaning:
     "Today through one calendar month by default. Saturn's UpdateMap dates may not mean planned spray dates.",
+  analysisNoRecordsTitle: "No identified records in the fetched response",
+  analysisNoRecordsDetail:
+    "No identifiable notices were returned in loaded pages. This does not prove that no spraying is planned or that coverage is complete.",
+  weatherMoreHours: "Show / hide {count} additional hours",
   weatherSelectTerritory:
     "Select a territory with a validated boundary to load local weather automatically.",
   weatherSourceUnavailable: "The weather provider is disabled or unavailable.",
@@ -88,7 +92,7 @@ const en = {
   liveSourcesJump: "Open live data sources",
   liveSourcesAvailability:
     "Only providers enabled on the server will appear. Missing data cannot be interpreted as no risk.",
-  demoWorkflowHeading: "Optional fictional investigation",
+  demoWorkflowHeading: "Demo scenarios",
   demoWorkflowUnavailable:
     "Fictional planning is disabled. Live sources remain usable without a scenario, territory or season.",
   saturnTitle: "Saturn: public treatment notices",
@@ -268,7 +272,7 @@ const ru: Record<keyof typeof en, string> = {
   analysisSaturnNoGeometry:
     "Среди загруженных записей нет пригодных контуров. На карте пока нечего показывать.",
   analysisSaturnPageProgress:
-    "Загружено страниц: {pages}; уникальных сообщений: {records}; всего по области: {total}.",
+    "Загружено страниц: {pages}; уникальных сообщений: {records}; всего по фильтру: {total}.",
   analysisAction: "Проанализировать выбранную местность",
   analysisSelectRegion: "Сначала выберите область или регион.",
   analysisSelectDistrict:
@@ -279,6 +283,10 @@ const ru: Record<keyof typeof en, string> = {
   analysisDateEnd: "Сатурн: дата окончания",
   analysisDateMeaning:
     "По умолчанию — с сегодняшнего дня на календарный месяц. Даты UpdateMap могут не совпадать с датами обработок.",
+  analysisNoRecordsTitle: "Нет распознанных записей",
+  analysisNoRecordsDetail:
+    "В загруженных страницах нет распознанных сообщений. Это не означает отсутствия обработок или полноты данных Сатурна.",
+  weatherMoreHours: "Открыть / закрыть остальные {count} ч",
   weatherSelectTerritory:
     "Выберите территорию с подтверждёнными границами для автоматической загрузки погоды.",
   weatherSourceUnavailable: "Источник погоды отключён или недоступен.",
@@ -347,7 +355,7 @@ const ru: Record<keyof typeof en, string> = {
   liveSourcesJump: "Перейти к реальным источникам",
   liveSourcesAvailability:
     "Показываются только источники, включённые на сервере. Отсутствие данных не означает отсутствие риска.",
-  demoWorkflowHeading: "Необязательное демонстрационное исследование",
+  demoWorkflowHeading: "Демо-сценарии",
   demoWorkflowUnavailable:
     "Демонстрационный планировщик отключён. Для реальных источников сценарий, территория и сезон не требуются.",
   saturnTitle: "Сатурн: сообщения об обработках",

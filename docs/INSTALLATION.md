@@ -168,3 +168,24 @@ completeness require separate confirmation. Without approved mappings or
 provider permission, leave the district source read unavailable. The weather
 panel does not require a Saturn mapping: it auto-loads the 24-hour forecast
 for a validated territory point when live weather is enabled.
+
+## Optional Russian district display names (Smolensk pilot)
+
+After importing reviewed RU ADM2 geometry with migration `0003`, apply the
+additive display-name migration before starting a backend that selects
+`melliatlas_admin_geometry.name_ru`:
+
+```bash
+psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 \
+  -f backend/migrations/0006_smolensk_district_names.sql
+```
+
+The migration adds an optional `name_ru` column, then backfills a limited list
+of Smolensk district names where the original source name matches a reviewed
+English spelling. No provider/canonical IDs, original names, source provenance,
+geometry or existing non-null translations are rewritten. Unmatched districts
+remain in the original source language until independently reviewed; use the
+English UI for the original name. This is a temporary localization seed, not a
+claim about current administrative status or completeness. Apply `0005`
+separately to enable reviewed Saturn district-code mapping; no Saturn codes
+are inserted by this localization migration.

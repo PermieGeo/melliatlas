@@ -50,6 +50,7 @@ class Territory:
     reference_id: str
     valid_on: date
     geometry_status: GeometryStatus
+    name_ru: str | None = None
 
 
 @dataclass(frozen=True)

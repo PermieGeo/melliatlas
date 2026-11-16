@@ -73,3 +73,18 @@ default source date interval of today through one calendar month. If a provider
 mapping is absent, the read is unavailable rather than widened to the entire
 region. Source filter accuracy and rights are not established by the demo.
 The map and adjoining analysis panels occupy the available content width.
+
+
+## W01 follow-up — compact map-first interaction (partial)
+
+In the main live-source workspace, the beekeeper title and tagline belong in
+the masthead, not the navigation sidebar. The map is modestly taller and has a
+visible ephemeral starting-point explanation immediately above it. The weather
+panel shows one UTC hour by default; remaining hours are in a keyboard-operable
+disclosure, without suppressing model/provenance limitations. An empty Saturn
+response is clearly labeled as no returned identified records, not a guarantee
+of no spraying. Manually changing one date automatically keeps the other date
+inside the existing 31-day backend limit. Russian display labels for imported
+Smolensk districts may come from optional reviewed `name_ru`; missing labels
+fall back to the original imported name. A honey-orange, grey and charcoal
+palette changes only presentation, not source semantics or readiness.

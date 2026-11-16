@@ -81,3 +81,12 @@ before the client shows provider polygons or pages. A missing reviewed Saturn
 district mapping is 409 and must never fall back to whole-region data. The
 upstream `UpdateMap` filter keys have not been independently verified to
 represent actual treatment/application dates.
+
+## Additive territory name localization
+
+`TerritoryResponse.name_ru` is an optional nullable Russian display label for
+imported districts. A browser selecting Russian may prefer it, but must retain
+`name` as a source-language fallback and never use either label as a territory
+identifier. The canonical `id`, `parent_id`, reference version, geometry and
+source display name remain unchanged. The initial operator-curated seed is
+limited to the Smolensk district names shown in `0006_smolensk_district_names.sql`.

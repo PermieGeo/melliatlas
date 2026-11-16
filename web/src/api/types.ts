@@ -24,6 +24,7 @@ export interface Territory {
   country: CountryCode;
   kind: "country" | "region" | "district";
   name: string;
+  name_ru?: string | null;
   parent_id: string | null;
   reference_id: string;
   valid_on: string;

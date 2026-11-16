@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { WeatherPanel } from "../src/components/WeatherPanel";
 import {
   decodeSources,
@@ -116,6 +122,19 @@ describe("Weather forecast boundary", () => {
         .getAttribute("href"),
     ).toBe("https://open-meteo.com/en/docs");
     expect(screen.getByText("n/a")).toBeDefined();
+    const rest = screen
+      .getByText("Show / hide 23 additional hours")
+      .closest("details");
+    expect(rest).not.toBeNull();
+    expect(rest?.open).toBe(false);
+    expect(rest?.querySelectorAll("tbody tr")).toHaveLength(23);
+    expect(
+      document.querySelectorAll(
+        ".weather-panel > div[role='status'] > .weather-scroll tbody tr",
+      ),
+    ).toHaveLength(1);
+    fireEvent.click(screen.getByText("Show / hide 23 additional hours"));
+    expect(rest?.open).toBe(true);
     view.rerender(
       <WeatherPanel
         country="RU"

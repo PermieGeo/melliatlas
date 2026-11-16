@@ -39,3 +39,42 @@ export function validSourceDateRange(start: string, end: string): boolean {
   const diff = (last.valueOf() - first.valueOf()) / 86_400_000;
   return diff >= 0 && diff <= MAX_SOURCE_WINDOW_DAYS;
 }
+
+/** Keep a changed date editable while preserving the server's 31-day safety limit. */
+export function updateSourceDateRange(
+  current: CalendarDateRange,
+  changed: "start" | "end",
+  value: string,
+): CalendarDateRange {
+  const updated = { ...current, [changed]: value };
+  if (
+    !DATE_ONLY.test(value) ||
+    !Number.isFinite(Date.parse(`${value}T00:00:00Z`))
+  )
+    return updated;
+  if (validSourceDateRange(updated.start, updated.end)) return updated;
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value)
+    return updated;
+  if (changed === "start") {
+    const next = new Date(
+      Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth() + 1,
+        Math.min(
+          date.getUTCDate(),
+          new Date(
+            Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 2, 0),
+          ).getUTCDate(),
+        ),
+      ),
+    );
+    updated.end = next.toISOString().slice(0, 10);
+  } else {
+    const previous = new Date(
+      date.getTime() - MAX_SOURCE_WINDOW_DAYS * 86_400_000,
+    );
+    updated.start = previous.toISOString().slice(0, 10);
+  }
+  return updated;
+}

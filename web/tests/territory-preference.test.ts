@@ -7,6 +7,7 @@ import {
 } from "../src/geo/territoryPreference";
 import {
   defaultSourceDateRange,
+  updateSourceDateRange,
   validSourceDateRange,
 } from "../src/geo/dateRange";
 import { isInsideArea, representativePoint } from "../src/geo/selection";
@@ -77,4 +78,18 @@ it("takes a point inside a concave reference area, not outside its bounding box"
   const point = representativePoint(shape);
   expect(point).not.toBeNull();
   expect(isInsideArea(point!, shape)).toBe(true);
+});
+
+it("keeps manual source-date edits analyzable without widening the 31-day backend bound", () => {
+  const original = { start: "2026-11-16", end: "2026-12-16" };
+  const laterStart = updateSourceDateRange(original, "start", "2027-01-15");
+  expect(laterStart).toEqual({ start: "2027-01-15", end: "2027-02-15" });
+  expect(validSourceDateRange(laterStart.start, laterStart.end)).toBe(true);
+  const laterEnd = updateSourceDateRange(original, "end", "2027-03-01");
+  expect(laterEnd).toEqual({ start: "2027-01-29", end: "2027-03-01" });
+  expect(validSourceDateRange(laterEnd.start, laterEnd.end)).toBe(true);
+  const nearby = updateSourceDateRange(original, "start", "2026-11-20");
+  expect(nearby.end).toBe("2026-12-16");
+  expect(validSourceDateRange("2026-11-15", "2026-11-14")).toBe(false);
+  expect(validSourceDateRange("2026-11-01", "2027-01-01")).toBe(false);
 });

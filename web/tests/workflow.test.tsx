@@ -22,9 +22,7 @@ const jointScenario = {
 };
 
 async function waitForDemo() {
-  const summary = screen.getByText(
-    "Необязательное демонстрационное исследование",
-  );
+  const summary = await screen.findByText("Демо-сценарии");
   const details = summary.closest("details");
   if (details && !details.open) fireEvent.click(summary);
   await waitFor(() =>
@@ -193,11 +191,7 @@ it("disables an unsupported BY demonstration and ignores a stale result after co
   fireEvent.change(screen.getByLabelText("Страна"), {
     target: { value: "BY" },
   });
-  await waitFor(() =>
-    expect(
-      screen.getByText(/Демонстрационный планировщик отключён/),
-    ).toBeTruthy(),
-  );
+  await waitFor(() => expect(screen.queryByText("Демо-сценарии")).toBeNull());
   expect(screen.queryByLabelText("Территория")).toBeNull();
   expect(
     screen.queryByRole("button", { name: /Исследовать размещение/ }),

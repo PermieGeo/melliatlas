@@ -20,7 +20,11 @@ import { Timeline } from "./components/Timeline";
 import { LiveAreaAnalysis } from "./components/LiveAreaAnalysis";
 import type { AreaAnalysisRequest } from "./components/LiveAreaAnalysis";
 import { isInsideArea, representativePoint } from "./geo/selection";
-import { defaultSourceDateRange, validSourceDateRange } from "./geo/dateRange";
+import {
+  defaultSourceDateRange,
+  updateSourceDateRange,
+  validSourceDateRange,
+} from "./geo/dateRange";
 import {
   readTerritoryPreference,
   saveTerritoryPreference,
@@ -350,12 +354,8 @@ export default function App() {
           </span>
         </div>
         <div className="header-context">
-          <span className="status-dot" /> {tr("headerContext")}
-          {selectedScenario?.source_mode === "SYNTHETIC" && (
-            <>
-              <span className="header-separator">/</span> {tr("syntheticMode")}
-            </>
-          )}
+          <h1>{tr("heading")}</h1>
+          <p>{tr("introduction")}</p>
         </div>
         <div className="header-actions">
           <label htmlFor="language">{tr("language")}</label>
@@ -389,7 +389,6 @@ export default function App() {
           seasonStart={seasonStart}
           seasonEnd={seasonEnd}
           selectedScenario={selectedScenario}
-          point={point}
           busy={investigation.busy}
           canSubmit={canSubmit}
           countryMessage={countryMessage}
@@ -409,19 +408,22 @@ export default function App() {
             reset();
             setSeasonEnd(value);
           }}
-          onClearPoint={() => setPoint(null)}
           onSubmit={begin}
           canAnalyze={canAnalyze}
           onAnalyze={analyze}
           sourceDateStart={sourceRange.start}
           sourceDateEnd={sourceRange.end}
           onSourceDateStart={(value) => {
-            setSourceRange((current) => ({ ...current, start: value }));
+            setSourceRange((current) =>
+              updateSourceDateRange(current, "start", value),
+            );
             setAnalysisRequest(null);
             setSaturnNotices([]);
           }}
           onSourceDateEnd={(value) => {
-            setSourceRange((current) => ({ ...current, end: value }));
+            setSourceRange((current) =>
+              updateSourceDateRange(current, "end", value),
+            );
             setAnalysisRequest(null);
             setSaturnNotices([]);
           }}
@@ -439,6 +441,31 @@ export default function App() {
                 <span className="eyebrow">{tr("mapSpace")}</span>
                 <h2>{tr("mapHeading")}</h2>
               </div>
+            </div>
+            <div className="map-point-panel" role="note">
+              <div className="map-point-copy">
+                <strong>{tr("startingPoint")}</strong>
+                <span>
+                  {point
+                    ? tr("pointSelected", {
+                        lat: point.latitude.toFixed(3),
+                        lon: point.longitude.toFixed(3),
+                      })
+                    : tr("pointHelp")}
+                </span>
+              </div>
+              {point && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    pointLookup.current?.abort();
+                    setPoint(null);
+                    setMapPointMessage(null);
+                  }}
+                >
+                  {tr("clear")}
+                </button>
+              )}
             </div>
             <MapPanel
               locale={locale}

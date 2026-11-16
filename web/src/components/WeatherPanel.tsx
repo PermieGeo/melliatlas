@@ -116,30 +116,63 @@ export function WeatherPanel({ country, locale, point }: Props) {
             })}
           </p>
           <p className="warning-text">{tr("weatherWarning")}</p>
-          <div className="weather-scroll">
-            <table className="weather-table">
-              <thead>
-                <tr>
-                  <th>{tr("weatherTime")}</th>
-                  <th>{tr("weatherWind")}</th>
-                  <th>{tr("weatherDirection")}</th>
-                  <th>{tr("weatherGusts")}</th>
-                  <th>{tr("weatherRain")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {forecast.hours.map((hour) => (
-                  <tr key={hour.time}>
-                    <td>{hour.time.replace("T", " ").slice(0, 16)}</td>
-                    <td>{number(hour.wind_speed_kmh)}</td>
-                    <td>{number(hour.wind_direction_degrees)}</td>
-                    <td>{number(hour.wind_gusts_kmh)}</td>
-                    <td>{number(hour.precipitation_mm)}</td>
+          {forecast.hours.length > 0 && (
+            <div className="weather-scroll">
+              <table className="weather-table">
+                <thead>
+                  <tr>
+                    <th>{tr("weatherTime")}</th>
+                    <th>{tr("weatherWind")}</th>
+                    <th>{tr("weatherDirection")}</th>
+                    <th>{tr("weatherGusts")}</th>
+                    <th>{tr("weatherRain")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {forecast.hours.slice(0, 1).map((hour) => (
+                    <tr key={hour.time}>
+                      <td>{hour.time.replace("T", " ").slice(0, 16)}</td>
+                      <td>{number(hour.wind_speed_kmh)}</td>
+                      <td>{number(hour.wind_direction_degrees)}</td>
+                      <td>{number(hour.wind_gusts_kmh)}</td>
+                      <td>{number(hour.precipitation_mm)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {forecast.hours.length > 1 && (
+            <details className="weather-more">
+              <summary>
+                {tr("weatherMoreHours", { count: forecast.hours.length - 1 })}
+              </summary>
+              <div className="weather-scroll">
+                <table className="weather-table">
+                  <thead>
+                    <tr>
+                      <th>{tr("weatherTime")}</th>
+                      <th>{tr("weatherWind")}</th>
+                      <th>{tr("weatherDirection")}</th>
+                      <th>{tr("weatherGusts")}</th>
+                      <th>{tr("weatherRain")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {forecast.hours.slice(1).map((hour) => (
+                      <tr key={hour.time}>
+                        <td>{hour.time.replace("T", " ").slice(0, 16)}</td>
+                        <td>{number(hour.wind_speed_kmh)}</td>
+                        <td>{number(hour.wind_direction_degrees)}</td>
+                        <td>{number(hour.wind_gusts_kmh)}</td>
+                        <td>{number(hour.precipitation_mm)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          )}
           {forecast.uncertainties.map((note) => (
             <p className="warning-text" key={note}>
               {note}

@@ -70,3 +70,11 @@ failures do not silently downgrade to the bundled inventory.
 ## Optional map point resolution
 
 `TerritoryPointLocator` is a separate read-only capability. In PostGIS, `locate_point` returns a canonical imported ADM1 region and optional ADM2 district covering a valid WGS84 point. Ambiguous overlapping region/district matches fail explicitly rather than silently choosing one; outside imported boundaries returns `None`. The caller must not persist private point coordinates, and provider district identifiers never appear in this contract.
+
+
+## Optional territory display language
+
+`Territory.name_ru` is an optional reviewed Russian display label for imported
+ADM2 districts. `Territory.name` remains the original source/catalog label.
+No localization may change geographic identity, source version, hierarchy,
+completeness or authority. When `name_ru` is absent, clients display `name`.

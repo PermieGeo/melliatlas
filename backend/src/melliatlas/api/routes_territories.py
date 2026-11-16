@@ -33,6 +33,7 @@ class TerritoryResponse(BaseModel):
     country: CountryCode
     kind: TerritoryKind
     name: str
+    name_ru: str | None = None
     parent_id: str | None
     reference_id: str
     valid_on: str
@@ -64,6 +65,7 @@ def _territory_response(item: Territory) -> TerritoryResponse:
         country=item.country,
         kind=item.kind,
         name=item.name,
+        name_ru=item.name_ru,
         parent_id=item.parent_id,
         reference_id=item.reference_id,
         valid_on=item.valid_on.isoformat(),

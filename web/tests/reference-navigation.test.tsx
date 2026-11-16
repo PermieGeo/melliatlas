@@ -24,6 +24,7 @@ const referenceDistrict = {
   id: "ru:district:reference",
   kind: "district",
   name: "Reference district",
+  name_ru: "Тестовый район",
   parent_id: referenceRegion.id,
 };
 const referenceGeometry = {
@@ -217,7 +218,7 @@ it("loads inline local weather automatically and only enables district-scoped an
     name: "Проанализировать выбранную местность",
   });
   expect(analyze.hasAttribute("disabled")).toBe(true);
-  await screen.findByRole("option", { name: "Reference district" });
+  await screen.findByRole("option", { name: "Тестовый район" });
   fireEvent.change(screen.getByLabelText("Район"), {
     target: { value: referenceDistrict.id },
   });
@@ -232,7 +233,7 @@ it("restores previous country, region and district after remount without storing
   const paths = catalogMock({ districts: "available" });
   const view = render(<App />);
   await chooseRegion();
-  await screen.findByRole("option", { name: "Reference district" });
+  await screen.findByRole("option", { name: "Тестовый район" });
   fireEvent.change(screen.getByLabelText("Район"), {
     target: { value: referenceDistrict.id },
   });
@@ -268,7 +269,7 @@ it("shows API-backed geometry, supported districts, and a separate synthetic stu
   expect(screen.getByTestId("map-reference").textContent).toBe(
     referenceRegion.id,
   );
-  await screen.findByRole("option", { name: "Reference district" });
+  await screen.findByRole("option", { name: "Тестовый район" });
   fireEvent.change(screen.getByLabelText("Район"), {
     target: { value: referenceDistrict.id },
   });
@@ -381,6 +382,7 @@ it("loads districts for the selected region and hides stale results during a reg
     ...referenceDistrict,
     id: "ru:district:second",
     name: "Second district",
+    name_ru: null,
     parent_id: secondRegion.id,
   };
   let finishFirst: ((value: Response) => void) | undefined;
@@ -419,13 +421,9 @@ it("loads districts for the selected region and hides stale results during a reg
   finishFirst(new Response(JSON.stringify([referenceDistrict])));
   await waitFor(() => expect(districtRequests).toHaveLength(2));
   await waitFor(() =>
-    expect(
-      screen.queryByRole("option", { name: "Reference district" }),
-    ).toBeNull(),
+    expect(screen.queryByRole("option", { name: "Тестовый район" })).toBeNull(),
   );
-  expect(
-    screen.queryByRole("option", { name: "Reference district" }),
-  ).toBeNull();
+  expect(screen.queryByRole("option", { name: "Тестовый район" })).toBeNull();
   expect(screen.getByRole("option", { name: "Second district" })).toBeTruthy();
 });
 
@@ -441,6 +439,7 @@ it("reloads RU regions and districts after switching RU to BY and back", async (
     id: "by:district:vitebsk",
     country: "BY",
     name: "Vitebsk district",
+    name_ru: null,
     parent_id: byRegion.id,
   };
   const requestedCountries: string[] = [];
@@ -483,7 +482,7 @@ it("reloads RU regions and districts after switching RU to BY and back", async (
   );
   render(<App />);
   await chooseRegion();
-  await screen.findByRole("option", { name: "Reference district" });
+  await screen.findByRole("option", { name: "Тестовый район" });
 
   fireEvent.change(screen.getByLabelText("Страна"), {
     target: { value: "BY" },
@@ -508,7 +507,7 @@ it("reloads RU regions and districts after switching RU to BY and back", async (
   fireEvent.change(screen.getByLabelText("Область / регион"), {
     target: { value: referenceRegion.id },
   });
-  await screen.findByRole("option", { name: "Reference district" });
+  await screen.findByRole("option", { name: "Тестовый район" });
   expect(requestedCountries).toEqual(["RU", "BY", "RU"]);
 });
 
@@ -631,7 +630,7 @@ it("retries an unavailable district request for the selected RU region", async (
   fireEvent.click(
     await screen.findByRole("button", { name: "Повторить загрузку районов" }),
   );
-  await screen.findByRole("option", { name: "Reference district" });
+  await screen.findByRole("option", { name: "Тестовый район" });
   expect(districtAttempts).toBe(2);
   expect(
     screen.queryByRole("button", { name: "Повторить загрузку районов" }),
@@ -656,4 +655,49 @@ it("selects the containing district when the user clicks on the map", async () =
     referenceDistrict.id,
   );
   expect(paths).toContain("/api/v1/territories/resolve-point");
+});
+
+it("renders reviewed district translation in Russian and keeps source name in English", async () => {
+  catalogMock({ districts: "available" });
+  render(<App />);
+  await chooseRegion();
+  expect(
+    await screen.findByRole("option", { name: "Тестовый район" }),
+  ).toBeTruthy();
+  expect(
+    screen.queryByRole("option", { name: "Reference district" }),
+  ).toBeNull();
+  fireEvent.change(screen.getByLabelText("Язык"), { target: { value: "en" } });
+  expect(
+    screen.getByRole("option", { name: "Reference district" }),
+  ).toBeTruthy();
+});
+
+it("reconciles edited source interval and keeps Analyze available", async () => {
+  catalogMock({ districts: "available" });
+  render(<App />);
+  await chooseRegion();
+  await screen.findByRole("option", { name: "Тестовый район" });
+  fireEvent.change(screen.getByLabelText("Район"), {
+    target: { value: referenceDistrict.id },
+  });
+  const analyze = screen.getByRole("button", {
+    name: "Проанализировать выбранную местность",
+  });
+  await waitFor(() => expect(analyze.hasAttribute("disabled")).toBe(false));
+  fireEvent.change(screen.getByLabelText("Сатурн: дата начала"), {
+    target: { value: "2027-01-15" },
+  });
+  expect(
+    (screen.getByLabelText("Сатурн: дата окончания") as HTMLInputElement).value,
+  ).toBe("2027-02-15");
+  expect(analyze.hasAttribute("disabled")).toBe(false);
+  expect(screen.getByText("Исходная точка")).toBeTruthy();
+  expect(
+    screen.getByRole("heading", { name: "Поиск медоносных угодий" }),
+  ).toBeTruthy();
+  expect(screen.queryByText("Версия справочника:")).toBeNull();
+  expect(
+    screen.queryByText("Необязательное демонстрационное исследование"),
+  ).toBeNull();
 });

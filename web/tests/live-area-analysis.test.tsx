@@ -302,3 +302,39 @@ it("retrieves later pages only when requested and accumulates mapped field recor
     screen.queryByRole("button", { name: "Load next 10 records" }),
   ).toBeNull();
 });
+
+it("clearly reports zero identified notices without claiming pesticide safety", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (path: string) => {
+      if (path.startsWith("/api/v1/sources?"))
+        return new Response(
+          JSON.stringify([
+            {
+              id: "saturn",
+              country: "RU",
+              kind: "TREATMENT_NOTICE",
+              mode: "LIVE",
+              status: "EXPERIMENTAL",
+            },
+          ]),
+        );
+      if (path.endsWith("/saturn/treatments"))
+        return new Response(
+          JSON.stringify({ ...page, next_page: null, total_elements: 0 }),
+        );
+      return new Response(null, { status: 404 });
+    }),
+  );
+  render(
+    <LiveAreaAnalysis
+      locale="ru"
+      country="RU"
+      regionId={request.regionId}
+      request={request}
+      onNotices={vi.fn()}
+    />,
+  );
+  expect(await screen.findByText("Нет распознанных записей")).toBeTruthy();
+  expect(screen.getByText(/Это не означает отсутствия обработок/)).toBeTruthy();
+});

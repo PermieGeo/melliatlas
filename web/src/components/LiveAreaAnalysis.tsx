@@ -245,10 +245,16 @@ export function LiveAreaAnalysis({
                   total: page.total_elements ?? tr("saturnMissing"),
                 })}
               </p>
+              {uniqueNotices.length === 0 && (
+                <div className="analysis-empty" role="status">
+                  <strong>{tr("analysisNoRecordsTitle")}</strong>
+                  <p>{tr("analysisNoRecordsDetail")}</p>
+                </div>
+              )}
               <p className="field-help">
                 {tr("analysisSaturnGeometryCount", { count: geometryCount })}
               </p>
-              {geometryCount === 0 && (
+              {uniqueNotices.length > 0 && geometryCount === 0 && (
                 <p className="field-help">{tr("analysisSaturnNoGeometry")}</p>
               )}
               <p className="field-help">
