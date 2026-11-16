@@ -119,7 +119,7 @@ it("runs the joint fixture, shows attributed findings and synchronizes map/timel
   await waitForDemo();
   expect(screen.getByText(/Только вымышленные данные/)).toBeTruthy();
   expect(
-    await screen.findByText(/Справочник регионов ещё не загружен в PostgreSQL/),
+    await screen.findByText(/Справочник регионов недоступен/),
   ).toBeTruthy();
   await waitForDemo();
   fireEvent.click(

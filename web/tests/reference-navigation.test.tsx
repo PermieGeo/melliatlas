@@ -306,3 +306,61 @@ it("ignores geometry that resolves after a country change", async () => {
     expect(screen.getByTestId("map-reference").textContent).toBe("no-boundary"),
   );
 });
+
+it("loads districts for the selected region and hides stale results during a region switch", async () => {
+  const secondRegion = {
+    ...referenceRegion,
+    id: "ru:region:second",
+    name: "Second region",
+  };
+  const secondDistrict = {
+    ...referenceDistrict,
+    id: "ru:district:second",
+    name: "Second district",
+    parent_id: secondRegion.id,
+  };
+  let finishFirst: ((value: Response) => void) | undefined;
+  const districtRequests: string[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string) => {
+      if (input === "/api/v1/territories/countries")
+        return new Response(JSON.stringify([{ code: "RU", name: "Russia" }]));
+      if (input.startsWith("/api/v1/territories/regions?"))
+        return new Response(JSON.stringify([referenceRegion, secondRegion]));
+      if (input.startsWith("/api/v1/territories/districts?")) {
+        districtRequests.push(input);
+        if (input.endsWith(encodeURIComponent(referenceRegion.id))) {
+          return new Promise<Response>((resolve) => {
+            finishFirst = resolve;
+          });
+        }
+        return new Response(JSON.stringify([secondDistrict]));
+      }
+      if (input.startsWith("/api/v1/investigations/scenarios?"))
+        return new Response("[]");
+      if (input.startsWith("/api/v1/sources?")) return new Response("[]");
+      return new Response(null, { status: 404 });
+    }),
+  );
+  render(<App />);
+  await chooseRegion();
+  await waitFor(() => expect(finishFirst).toBeDefined());
+  fireEvent.change(screen.getByLabelText("Область / регион"), {
+    target: { value: secondRegion.id },
+  });
+  await screen.findByRole("option", { name: "Second district" });
+  if (!finishFirst)
+    throw new Error("Expected an unresolved first-region response");
+  finishFirst(new Response(JSON.stringify([referenceDistrict])));
+  await waitFor(() => expect(districtRequests).toHaveLength(2));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("option", { name: "Reference district" }),
+    ).toBeNull(),
+  );
+  expect(
+    screen.queryByRole("option", { name: "Reference district" }),
+  ).toBeNull();
+  expect(screen.getByRole("option", { name: "Second district" })).toBeTruthy();
+});

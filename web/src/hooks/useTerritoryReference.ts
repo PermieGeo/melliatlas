@@ -22,10 +22,11 @@ export function useTerritoryReference(
 ): TerritoryNavigation {
   const [regionId, setRegionId] = useState("");
   const [districtId, setDistrictId] = useState("");
-  const [districts, setDistricts] = useState<Territory[]>([]);
-  const [districtMessage, setDistrictMessage] = useState<TranslationKey>(
-    "referenceSelectRegion",
-  );
+  const [districtResult, setDistrictResult] = useState<{
+    regionId: string;
+    districts: Territory[];
+    message: TranslationKey;
+  }>({ regionId: "", districts: [], message: "referenceSelectRegion" });
   const [geometryMessage, setGeometryMessage] = useState<TranslationKey>(
     "referenceSelectRegion",
   );
@@ -38,11 +39,20 @@ export function useTerritoryReference(
       item.country === country &&
       item.kind === "region",
   );
+  const regionIdForRequest = region?.id ?? "";
+  const districts =
+    districtResult.regionId === regionIdForRequest
+      ? districtResult.districts
+      : [];
+  const districtMessage: TranslationKey = !regionIdForRequest
+    ? "referenceSelectRegion"
+    : districtResult.regionId === regionIdForRequest
+      ? districtResult.message
+      : "referenceDistrictLoading";
   const district = districts.find(
-    (item) => item.id === districtId && item.parent_id === region?.id,
+    (item) => item.id === districtId && item.parent_id === regionIdForRequest,
   );
   const selected = district ?? region;
-  const regionIdForRequest = region?.id ?? "";
   const territoryIdForRequest = selected?.id ?? "";
   const referenceIdForRequest = selected?.reference_id ?? "";
   const geometryStatusForRequest = selected?.geometry_status ?? null;
@@ -50,20 +60,26 @@ export function useTerritoryReference(
   useEffect(() => {
     const controller = new AbortController();
     setDistrictId("");
-    setDistricts([]);
-    setDistrictMessage(
-      regionIdForRequest ? "referenceDistrictLoading" : "referenceSelectRegion",
-    );
+    setDistrictResult({
+      regionId: regionIdForRequest,
+      districts: [],
+      message: regionIdForRequest
+        ? "referenceDistrictLoading"
+        : "referenceSelectRegion",
+    });
     if (!regionIdForRequest) return () => controller.abort();
     void listDistricts(regionIdForRequest, controller.signal).then(
       (response) => {
         if (controller.signal.aborted) return;
         if (response.kind === "error") {
-          setDistrictMessage(
-            response.status === 409
-              ? "referenceDistrictUnsupported"
-              : "referenceDistrictUnavailable",
-          );
+          setDistrictResult({
+            regionId: regionIdForRequest,
+            districts: [],
+            message:
+              response.status === 409
+                ? "referenceDistrictUnsupported"
+                : "referenceDistrictUnavailable",
+          });
           return;
         }
         if (
@@ -74,15 +90,20 @@ export function useTerritoryReference(
               item.kind !== "district",
           )
         ) {
-          setDistrictMessage("referenceDistrictUnavailable");
+          setDistrictResult({
+            regionId: regionIdForRequest,
+            districts: [],
+            message: "referenceDistrictUnavailable",
+          });
           return;
         }
-        setDistricts(response.data);
-        setDistrictMessage(
-          response.data.length
+        setDistrictResult({
+          regionId: regionIdForRequest,
+          districts: response.data,
+          message: response.data.length
             ? "referenceDistrictAvailable"
             : "referenceDistrictEmpty",
-        );
+        });
       },
     );
     return () => controller.abort();

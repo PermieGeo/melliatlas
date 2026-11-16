@@ -92,7 +92,7 @@ test("works as a readable narrow-screen workflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /Изучение данных вокруг пасеки/ }),
+    page.getByRole("heading", { name: /Поиск медоносных угодий/ }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Проанализировать выбранную местность" }),

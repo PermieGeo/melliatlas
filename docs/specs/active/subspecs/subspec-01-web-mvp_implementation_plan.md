@@ -287,3 +287,33 @@ checks one trigger, country gating and area selection. Existing W01 tests must
 remain green. PostgreSQL/PostGIS migrations, real ADM1/ADM2 loads, full
 React/Vitest/browser checks, actual Saturn compatibility and geography
 completeness are **not yet accepted**. W02 and W03 remain distinct future stages.
+
+
+
+### W01 R02 follow-up — visible ISO regions and automatic district navigation
+
+**Scope:** A developer-requested repair to region selection readiness and the
+country → region → district workflow, within `MVP01-WEB-R02` / `A06`; no
+change to approved geographic coverage or W02 acceptance. The default ASGI
+entry point loads the already-pinned ISO region names without requiring a
+configured database. The independent API reference loader validates dataset
+version, identities, uniqueness and country counts; the territory module
+provides the read-only `TerritoryCatalog` with missing geometry and unsupported
+district depth. When PostgreSQL is configured, the existing PostGIS catalog
+remains authoritative; schema errors cannot silently fall back.
+
+**Public contracts and integration design:** Existing `GET /regions`,
+`GET /districts` and `GET /geometry/{territory_id}` response contracts are
+unchanged. `RegionDirectoryCatalog` is a provider-independent name-only
+implementation; `read_iso_region_directory` lives at the file-I/O boundary.
+The browser already requests `/districts` on region selection; region-scoped
+state now prevents obsolete district options from being displayed on rapid
+switches. Actual district entries and polygons still require reviewed ADM1/
+ADM2 PostGIS imports, with no silent remote collection or synthetic geography.
+
+**Regression inventory:** `backend/tests/contract/test_bundled_region_directory.py`
+checks 83/7 names and malformed datasets, explicit 409/404, and independence
+from a database. `web/tests/reference-navigation.test.tsx` checks automatic
+district loading, region switching and obsolete responses. The localized main
+heading and subtitle are updated; no route, wire DTO or runtime dependency is
+added. Acceptance remains pending verified local checks and real ADM2 import.
