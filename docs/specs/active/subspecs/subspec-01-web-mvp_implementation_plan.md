@@ -405,7 +405,7 @@ validated geometry, choose a point strictly inside its polygon and fetch one
 24-hour Open-Meteo preview directly into the above-map panel. No automatic
 Saturn harvesting or polling is authorized. The manual selected-area action
 requires a reviewed district and a default date-only interval from local
-today through one calendar month (maximum 31 days). The server resolves the
+today through one calendar month (a user-chosen range may span one calendar year). The server resolves the
 source-owned district ID from a new, deliberately unseeded migration `0005`
 table; 409 is preferred to region-scope fallback. Provider `UpdateMap` filter
 semantics and permission require independent verification before asserting
@@ -436,7 +436,9 @@ and `validation.ts` accept the optional field and reject invalid values.
 `web/src/components/ReferenceControls.tsx` chooses the Russian label only for
 `locale=ru`. No Saturn district-code mapping is inferred. The browser's
 `updateSourceDateRange` adjusts the other date when a manual edit would exceed
-31 days, preserving the existing backend bound rather than weakening it.
+one calendar year, matching the backend bound. The Saturn reader is limited
+to at most 100 source records across 10 manually requested pages and explicitly
+reports when the source provides more. No automatic harvesting is authorized.
 
 **Tests/acceptance:** `backend/tests/contract/test_administrative_geometry.py`,
 `web/tests/territory-preference.test.ts`, `reference-navigation.test.tsx`,

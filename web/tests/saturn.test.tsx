@@ -34,6 +34,7 @@ const livePage = {
   total_elements: 1,
   unidentified_records: 0,
   coverage_complete: false,
+  record_limit_exceeded: false,
   notices: [
     {
       record_id: "71",
@@ -69,6 +70,15 @@ describe("Saturn live capability boundary", () => {
   it("strictly rejects synthetic or cross-country claims in a live payload", () => {
     expect(decodeSources(liveSource)[0]?.country).toBe("RU");
     expect(decodeSaturnPage(livePage).notices[0]?.synthetic).toBe(false);
+    expect(() =>
+      decodeSaturnPage({ ...livePage, record_limit_exceeded: "yes" }),
+    ).toThrow(WireError);
+    expect(() => decodeSaturnPage({ ...livePage, page_number: 10 })).toThrow(
+      WireError,
+    );
+    expect(() => decodeSaturnPage({ ...livePage, next_page: 10 })).toThrow(
+      WireError,
+    );
     expect(() =>
       decodeSaturnPage({
         ...livePage,

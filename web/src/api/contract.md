@@ -75,10 +75,16 @@ point forecast is automatically requested. This read does not trigger Saturn.
 
 `geo/dateRange.ts` defaults to local today through one calendar month (with a
 clamped day for short months). A user-chosen source interval must be ordered
-and no longer than 31 days. The manual Saturn action submits canonical
+and no longer than one calendar year. The manual Saturn action submits canonical
 `district_id`, `date_start`, and `date_end`; the response must echo all three
 before the client shows provider polygons or pages. A missing reviewed Saturn
 district mapping is 409 and must never fall back to whole-region data. The
+Up to 100 source records can be read in 10 explicit requests of 10 records
+(pages 0–9). The response field `record_limit_exceeded` shows when the source
+reports more than 100 records or indicates another page beyond the cap.
+No automatic pagination occurs; the UI stops manual pagination at page 9 and
+warns that a truncated result is incomplete. `total_elements` remains the
+upstream total, not a count of actually loaded or deduplicated records. The
 upstream `UpdateMap` filter keys have not been independently verified to
 represent actual treatment/application dates.
 

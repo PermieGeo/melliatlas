@@ -161,12 +161,13 @@ application lifespan and cleared on shutdown. Direct `create_app` injection of
 
 `POST /api/v1/sources/saturn/treatments` accepts optional canonical
 `district_id` and date-only `date_start` and `date_end`, both present, ordered
-and at most 31 days apart. A district requires a canonical region. The
+and at most one calendar year apart (Feb 29 clamps to Feb 28). A district requires a canonical region. The
 server resolves its provider code with `SourceDistrictCodeLookup`; it never
 trusts a client-supplied Saturn district code. Missing mapping yields
 `409/SOURCE_REGION_UNMAPPED`, unavailable configured storage yields
 `503/TERRITORY_REFERENCE_UNAVAILABLE`, and malformed requests yield 422.
 The response echoes the selected district and dates for client validation.
 Legacy region requests are retained for controlled clients but must never
-serve as a fallback for a requested district. The provider `UpdateMap`
+serve as a fallback for a requested district. Each read requests exactly 10 records; only pages 0–9 are permitted (100 source records at most). The result exposes `record_limit_exceeded` when the source reports more than 100 or a further page exists after the tenth page. A capped response has `next_page=null` and is never reported as complete.
+The provider `UpdateMap`
 filter semantics and rights to read remain unverified.

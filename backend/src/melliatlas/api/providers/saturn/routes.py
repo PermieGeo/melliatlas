@@ -15,7 +15,13 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from melliatlas.api.public import ApiErrorCode, ErrorResponse
 from melliatlas.api.routes_sources import SourceCapability, SourceListingDto, source_failure
 from melliatlas.sources.api import SourceReadError, TreatmentNoticeReader
-from melliatlas.sources.providers.saturn import MAX_PAGE_RECORDS
+from melliatlas.sources.providers.saturn import (
+    MAX_PAGE_RECORDS,
+    MAX_SOURCE_PAGE,
+    MAX_SOURCE_RECORDS,
+    SOURCE_PAGE_SIZE,
+    valid_source_date_window,
+)
 from melliatlas.territories.api import (
     CountryCode,
     GeometryWgs84,
@@ -30,7 +36,7 @@ class SaturnPageRequestDto(BaseModel):
     country: CountryCode
     region_code: int | None = Field(default=None, strict=True, ge=1, le=999999)
     region_id: str | None = Field(default=None, min_length=1, max_length=128)
-    page_number: int = Field(default=0, strict=True, ge=0, le=50)
+    page_number: int = Field(default=0, strict=True, ge=0, le=MAX_SOURCE_PAGE)
     district_id: str | None = Field(default=None, min_length=1, max_length=128)
     date_start: date | None = None
     date_end: date | None = None
@@ -44,8 +50,8 @@ class SaturnPageRequestDto(BaseModel):
         if (self.date_start is None) != (self.date_end is None):
             raise ValueError("Both source date limits must be supplied")
         if self.date_start is not None and self.date_end is not None:
-            if self.date_end < self.date_start or (self.date_end - self.date_start).days > 31:
-                raise ValueError("Source date interval must not exceed 31 days")
+            if not valid_source_date_window(self.date_start, self.date_end):
+                raise ValueError("Source date interval must be ordered and at most one year")
         return self
 
 
@@ -82,6 +88,7 @@ class SaturnPageDto(BaseModel):
     page_number: int
     next_page: int | None
     total_elements: int | None
+    record_limit_exceeded: bool
     unidentified_records: int
     notices: tuple[SaturnNoticeDto, ...]
     coverage_complete: Literal[False] = False
@@ -210,6 +217,8 @@ def create_saturn_router(
             or page.region_code != region_code
             or page.page_number != body.page_number
             or len(page.notices) > MAX_PAGE_RECORDS
+            or len(page.notices) + page.unidentified_records > SOURCE_PAGE_SIZE
+            or (page.next_page is not None and page.next_page <= body.page_number)
             or any(
                 notice.country is not CountryCode.RU
                 or notice.source_id != page.source_id
@@ -233,8 +242,16 @@ def create_saturn_router(
             date_end=body.date_end,
             captured_at=page.captured_at,
             page_number=page.page_number,
-            next_page=page.next_page,
+            next_page=(
+                page.next_page
+                if page.next_page is not None and page.next_page <= MAX_SOURCE_PAGE
+                else None
+            ),
             total_elements=page.total_elements,
+            record_limit_exceeded=(
+                (page.total_elements is not None and page.total_elements > MAX_SOURCE_RECORDS)
+                or (page.next_page is not None and page.next_page > MAX_SOURCE_PAGE)
+            ),
             unidentified_records=page.unidentified_records,
             notices=tuple(
                 SaturnNoticeDto(

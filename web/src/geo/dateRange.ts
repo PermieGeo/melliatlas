@@ -3,7 +3,7 @@ export interface CalendarDateRange {
   start: string;
   end: string;
 }
-const MAX_SOURCE_WINDOW_DAYS = 31;
+const MAX_SOURCE_WINDOW_YEARS = 1;
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 function localDate(value: Date): string {
@@ -25,56 +25,69 @@ export function defaultSourceDateRange(
   return { start: localDate(start), end: localDate(end) };
 }
 
-export function validSourceDateRange(start: string, end: string): boolean {
-  if (!DATE_ONLY.test(start) || !DATE_ONLY.test(end)) return false;
-  const first = new Date(`${start}T00:00:00.000Z`);
-  const last = new Date(`${end}T00:00:00.000Z`);
-  if (
-    Number.isNaN(first.valueOf()) ||
-    Number.isNaN(last.valueOf()) ||
-    first.toISOString().slice(0, 10) !== start ||
-    last.toISOString().slice(0, 10) !== end
-  )
-    return false;
-  const diff = (last.valueOf() - first.valueOf()) / 86_400_000;
-  return diff >= 0 && diff <= MAX_SOURCE_WINDOW_DAYS;
+function parseSourceDate(value: string): Date | null {
+  if (!DATE_ONLY.test(value)) return null;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value
+    ? date
+    : null;
 }
 
-/** Keep a changed date editable while preserving the server's 31-day safety limit. */
+function shiftSourceYear(date: Date, years: number): Date {
+  const year = date.getUTCFullYear() + years * MAX_SOURCE_WINDOW_YEARS;
+  const month = date.getUTCMonth();
+  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(year, month, Math.min(date.getUTCDate(), lastDay)));
+}
+
+export function validSourceDateRange(start: string, end: string): boolean {
+  const first = parseSourceDate(start);
+  const last = parseSourceDate(end);
+  if (!first || !last || first > last) return false;
+  return last <= shiftSourceYear(first, MAX_SOURCE_WINDOW_YEARS);
+}
+
+/** Keep manually edited dates within the server's one-calendar-year source limit. */
 export function updateSourceDateRange(
   current: CalendarDateRange,
   changed: "start" | "end",
   value: string,
 ): CalendarDateRange {
   const updated = { ...current, [changed]: value };
-  if (
-    !DATE_ONLY.test(value) ||
-    !Number.isFinite(Date.parse(`${value}T00:00:00Z`))
-  )
-    return updated;
-  if (validSourceDateRange(updated.start, updated.end)) return updated;
-  const date = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value)
-    return updated;
+  const date = parseSourceDate(value);
+  if (!date || validSourceDateRange(updated.start, updated.end)) return updated;
   if (changed === "start") {
-    const next = new Date(
-      Date.UTC(
-        date.getUTCFullYear(),
-        date.getUTCMonth() + 1,
-        Math.min(
-          date.getUTCDate(),
-          new Date(
-            Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 2, 0),
-          ).getUTCDate(),
+    const previousEnd = parseSourceDate(current.end);
+    if (previousEnd && previousEnd < date) {
+      const lastNextMonthDay = new Date(
+        Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 2, 0),
+      ).getUTCDate();
+      const nextMonth = new Date(
+        Date.UTC(
+          date.getUTCFullYear(),
+          date.getUTCMonth() + 1,
+          Math.min(date.getUTCDate(), lastNextMonthDay),
         ),
-      ),
-    );
-    updated.end = next.toISOString().slice(0, 10);
+      );
+      updated.end = nextMonth.toISOString().slice(0, 10);
+    } else {
+      updated.end = shiftSourceYear(date, MAX_SOURCE_WINDOW_YEARS)
+        .toISOString()
+        .slice(0, 10);
+    }
   } else {
-    const previous = new Date(
-      date.getTime() - MAX_SOURCE_WINDOW_DAYS * 86_400_000,
-    );
-    updated.start = previous.toISOString().slice(0, 10);
+    const previousStart = parseSourceDate(current.start);
+    if (previousStart && previousStart > date) {
+      updated.start = value;
+    } else {
+      const earliest = shiftSourceYear(date, -MAX_SOURCE_WINDOW_YEARS);
+      if (!validSourceDateRange(earliest.toISOString().slice(0, 10), value)) {
+        // An end date of February 29 needs March 1 in the previous year.
+        earliest.setUTCDate(earliest.getUTCDate() + 1);
+      }
+      updated.start = earliest.toISOString().slice(0, 10);
+    }
   }
   return updated;
 }

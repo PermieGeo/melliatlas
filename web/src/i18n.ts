@@ -17,7 +17,7 @@ const en = {
   analysisSelectDistrict:
     "Select a district for a district-scoped Saturn query.",
   analysisInvalidDateRange:
-    "Choose an ordered source interval no longer than 31 days.",
+    "Choose an ordered source interval no longer than one calendar year.",
   analysisDateRange: "Saturn source date range",
   analysisDateStart: "Saturn from date",
   analysisDateEnd: "Saturn to date",
@@ -47,6 +47,8 @@ const en = {
     "{count} notices in the sampled response; {skipped} unrecognized entries.",
   analysisSaturnPartial:
     "Source reports {total} records for the requested filter; completeness is unverified.",
+  analysisSaturnRecordLimit:
+    "The source reports more than {limit} records (or additional pages beyond the limit). At most the first {limit} source records can be fetched, in 10 manual pages. Results are incomplete and do not establish safety.",
   analysisForecastHours: "Hourly weather forecast ({count} h)",
   analysisSaturnRegionUnmapped:
     "The region or district has no reviewed Saturn mapping. No region-wide request was made.",
@@ -277,7 +279,8 @@ const ru: Record<keyof typeof en, string> = {
   analysisSelectRegion: "Сначала выберите область или регион.",
   analysisSelectDistrict:
     "Выберите район: запрос ко всей области не выполняется.",
-  analysisInvalidDateRange: "Укажите даты по возрастанию в пределах 31 дня.",
+  analysisInvalidDateRange:
+    "Укажите даты по возрастанию в пределах одного календарного года.",
   analysisDateRange: "Период запроса к Сатурну",
   analysisDateStart: "Сатурн: дата начала",
   analysisDateEnd: "Сатурн: дата окончания",
@@ -308,6 +311,8 @@ const ru: Record<keyof typeof en, string> = {
     "В полученной выборке {count} сообщений, не распознано: {skipped}.",
   analysisSaturnPartial:
     "Источник сообщает {total} записей по выбранному фильтру; полнота не подтверждена.",
+  analysisSaturnRecordLimit:
+    "В источнике более {limit} записей (или есть страницы сверх лимита). Можно загрузить не более первых {limit} записей за 10 ручных запросов. Результат неполный и не подтверждает безопасность.",
   analysisForecastHours: "Почасовой прогноз ({count} ч)",
   analysisSaturnRegionUnmapped:
     "Для области или района нет проверенного кода Сатурна. Запрос на всю область не выполнялся.",

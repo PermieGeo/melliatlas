@@ -32,6 +32,7 @@ const page = {
   total_elements: 230,
   unidentified_records: 0,
   coverage_complete: false,
+  record_limit_exceeded: true,
   notices: [],
 };
 
@@ -273,6 +274,7 @@ it("retrieves later pages only when requested and accumulates mapped field recor
             page_number: requestBody.page_number,
             next_page: requestBody.page_number === 0 ? 1 : null,
             total_elements: 11,
+            record_limit_exceeded: false,
             notices: requestBody.page_number === 0 ? [] : [field],
           }),
         );
@@ -321,7 +323,12 @@ it("clearly reports zero identified notices without claiming pesticide safety", 
         );
       if (path.endsWith("/saturn/treatments"))
         return new Response(
-          JSON.stringify({ ...page, next_page: null, total_elements: 0 }),
+          JSON.stringify({
+            ...page,
+            next_page: null,
+            total_elements: 0,
+            record_limit_exceeded: false,
+          }),
         );
       return new Response(null, { status: 404 });
     }),
@@ -337,4 +344,60 @@ it("clearly reports zero identified notices without claiming pesticide safety", 
   );
   expect(await screen.findByText("Нет распознанных записей")).toBeTruthy();
   expect(screen.getByText(/Это не означает отсутствия обработок/)).toBeTruthy();
+});
+
+it("warns about more than 100 source records and never requests an eleventh page", async () => {
+  const requestedPages: number[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (path: string, init?: RequestInit) => {
+      if (path.startsWith("/api/v1/sources?"))
+        return new Response(
+          JSON.stringify([
+            {
+              id: "saturn",
+              country: "RU",
+              kind: "TREATMENT_NOTICE",
+              mode: "LIVE",
+              status: "EXPERIMENTAL",
+            },
+          ]),
+        );
+      if (path.endsWith("/saturn/treatments")) {
+        const body = JSON.parse(String(init?.body)) as { page_number: number };
+        requestedPages.push(body.page_number);
+        return new Response(
+          JSON.stringify({
+            ...page,
+            page_number: body.page_number,
+            next_page: body.page_number < 9 ? body.page_number + 1 : null,
+            record_limit_exceeded: true,
+            total_elements: 230,
+          }),
+        );
+      }
+      return new Response(null, { status: 404 });
+    }),
+  );
+  render(
+    <LiveAreaAnalysis
+      locale="ru"
+      country="RU"
+      regionId={request.regionId}
+      request={request}
+      onNotices={vi.fn()}
+    />,
+  );
+  expect(await screen.findByText(/В источнике более 100 записей/)).toBeTruthy();
+  for (let index = 1; index < 10; index++) {
+    fireEvent.click(
+      screen.getByRole("button", { name: "Загрузить следующие 10 записей" }),
+    );
+    await waitFor(() => expect(requestedPages).toHaveLength(index + 1));
+    await screen.findByText(new RegExp(`Загружено страниц: ${index + 1}`));
+  }
+  expect(requestedPages).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  expect(
+    screen.queryByRole("button", { name: "Загрузить следующие 10 записей" }),
+  ).toBeNull();
 });

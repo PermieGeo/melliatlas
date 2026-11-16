@@ -84,7 +84,7 @@ panel shows one UTC hour by default; remaining hours are in a keyboard-operable
 disclosure, without suppressing model/provenance limitations. An empty Saturn
 response is clearly labeled as no returned identified records, not a guarantee
 of no spraying. Manually changing one date automatically keeps the other date
-inside the existing 31-day backend limit. Russian display labels for imported
+inside the one-calendar-year backend limit. Russian display labels for imported
 Smolensk districts may come from optional reviewed `name_ru`; missing labels
 fall back to the original imported name. A honey-orange, grey and charcoal
 palette changes only presentation, not source semantics or readiness.

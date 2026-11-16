@@ -73,3 +73,9 @@ in upstream `beekeperSearchFilter.district` and date-only bounds in
 `startDateUpdateMap` and `endDateUpdateMap`. It never infers source IDs from
 canonical district or region codes. A filtered page is partial evidence and
 its actual upstream filtering semantics have not been independently verified.
+For the experimental Saturn reader, a date range can span at most one calendar
+year (inclusive endpoints, Feb 29 clamps to Feb 28). One request asks for 10
+source records; at most pages 0 through 9 can be read, giving a maximum of 100
+source records per explicit filter. The HTTP result signals a provider count
+above the cap or an additional page past the cap. It never claims complete
+coverage from a capped response or deduplicated notice count.

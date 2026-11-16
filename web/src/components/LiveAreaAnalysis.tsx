@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { listExternalSources, readSaturnPage } from "../api/client";
+import { SATURN_PAGE_COUNT, SATURN_RECORD_LIMIT } from "../api/types";
 import type {
   CountryCode,
   ExternalSource,
@@ -34,7 +35,6 @@ interface Report {
 }
 
 /** Never treat missing upstream data as evidence that treatments or risks are absent. */
-const MAX_VISIBLE_SATURN_RECORDS = 20;
 
 export function LiveAreaAnalysis({
   country,
@@ -155,6 +155,9 @@ export function LiveAreaAnalysis({
     ).values(),
   ];
   const lastPage = pages[pages.length - 1] ?? null;
+  const recordLimitExceeded = pages.some(
+    (entry) => entry.record_limit_exceeded,
+  );
   const geometryCount = uniqueNotices.filter(
     (notice) => notice.geometry !== null,
   ).length;
@@ -163,6 +166,8 @@ export function LiveAreaAnalysis({
       !page ||
       !lastPage ||
       lastPage.next_page === null ||
+      lastPage.next_page >= SATURN_PAGE_COUNT ||
+      pages.length >= SATURN_PAGE_COUNT ||
       pagingBusy ||
       !request
     )
@@ -193,6 +198,7 @@ export function LiveAreaAnalysis({
         response.data.page_number !== nextNumber ||
         response.data.total_elements !== page.total_elements ||
         response.data.source_id !== page.source_id ||
+        response.data.page_number >= SATURN_PAGE_COUNT ||
         (response.data.next_page !== null &&
           response.data.next_page <= nextNumber)
       ) {
@@ -245,6 +251,13 @@ export function LiveAreaAnalysis({
                   total: page.total_elements ?? tr("saturnMissing"),
                 })}
               </p>
+              {recordLimitExceeded && (
+                <p role="alert" className="analysis-empty">
+                  {tr("analysisSaturnRecordLimit", {
+                    limit: SATURN_RECORD_LIMIT,
+                  })}
+                </p>
+              )}
               {uniqueNotices.length === 0 && (
                 <div className="analysis-empty" role="status">
                   <strong>{tr("analysisNoRecordsTitle")}</strong>
@@ -262,36 +275,34 @@ export function LiveAreaAnalysis({
                   total: page.total_elements ?? tr("saturnMissing"),
                 })}
               </p>
-              {uniqueNotices
-                .slice(0, MAX_VISIBLE_SATURN_RECORDS)
-                .map((notice) => (
-                  <details key={notice.record_id} className="saturn-record">
-                    <summary>
-                      {tr("saturnField", {
-                        record: notice.record_id,
-                        plan: notice.plan_id ?? tr("saturnMissing"),
-                      })}
-                    </summary>
-                    <p>
-                      {tr("saturnDates", {
-                        start: notice.scheduled_start ?? tr("saturnMissing"),
-                        end: notice.scheduled_end ?? tr("saturnMissing"),
+              {uniqueNotices.slice(0, SATURN_RECORD_LIMIT).map((notice) => (
+                <details key={notice.record_id} className="saturn-record">
+                  <summary>
+                    {tr("saturnField", {
+                      record: notice.record_id,
+                      plan: notice.plan_id ?? tr("saturnMissing"),
+                    })}
+                  </summary>
+                  <p>
+                    {tr("saturnDates", {
+                      start: notice.scheduled_start ?? tr("saturnMissing"),
+                      end: notice.scheduled_end ?? tr("saturnMissing"),
+                    })}
+                  </p>
+                  {notice.products.map((product, index) => (
+                    <p key={index}>
+                      {tr("saturnProduct", {
+                        name: product.name ?? tr("saturnMissing"),
+                        crop: product.crop ?? tr("saturnMissing"),
+                        hazard:
+                          product.reported_bee_hazard_class ??
+                          tr("saturnMissing"),
                       })}
                     </p>
-                    {notice.products.map((product, index) => (
-                      <p key={index}>
-                        {tr("saturnProduct", {
-                          name: product.name ?? tr("saturnMissing"),
-                          crop: product.crop ?? tr("saturnMissing"),
-                          hazard:
-                            product.reported_bee_hazard_class ??
-                            tr("saturnMissing"),
-                        })}
-                      </p>
-                    ))}
-                  </details>
-                ))}
-              {uniqueNotices.length > MAX_VISIBLE_SATURN_RECORDS && (
+                  ))}
+                </details>
+              ))}
+              {uniqueNotices.length > SATURN_RECORD_LIMIT && (
                 <p className="field-help">
                   {tr("analysisSaturnCount", {
                     count: uniqueNotices.length,
@@ -306,7 +317,9 @@ export function LiveAreaAnalysis({
                 <p role="alert">{tr("saturnError", { reason: pagingError })}</p>
               )}
               {lastPage?.next_page !== null &&
-                lastPage?.next_page !== undefined && (
+                lastPage?.next_page !== undefined &&
+                lastPage.next_page < SATURN_PAGE_COUNT &&
+                pages.length < SATURN_PAGE_COUNT && (
                   <button
                     type="button"
                     disabled={pagingBusy}
