@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InMemoryInvestigationService,
     InvestigationRequest,
     InvestigationSnapshot,
@@ -15,7 +15,7 @@ from melliatlas.jobs.api import (
     InvestigationStorageError,
 )
 from melliatlas.persistence.api import PostgisCompletedInvestigationStore
-from melliatlas.planning.api import TimeWindow
+from melliatlas.planning import TimeWindow
 from melliatlas.sources.providers.synthetic.api import (
     SYNTHETIC_SCENARIO_ID,
     SyntheticFixtureProvider,

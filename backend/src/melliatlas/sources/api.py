@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Literal, Protocol, runtime_checkable
 
-from melliatlas.planning.api import SyntheticScenario
+from melliatlas.planning import SyntheticScenario
 from melliatlas.sources.notices import TreatmentNotice, TreatmentProduct
 from melliatlas.territories.api import CountryCode
 

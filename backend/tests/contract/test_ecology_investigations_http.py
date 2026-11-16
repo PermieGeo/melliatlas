@@ -8,12 +8,12 @@ import httpx
 
 from melliatlas.api.app import AppSettings, create_app
 from melliatlas.api.composition import SourceProviderMode
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InMemoryInvestigationService,
     InvestigationRequest,
     InvestigationStatus,
 )
-from melliatlas.planning.api import TimeWindow
+from melliatlas.planning import TimeWindow
 from melliatlas.sources.providers.synthetic.api import (
     SYNTHETIC_ECOLOGY_SCENARIO_ID,
     SYNTHETIC_SCENARIO_ID,
@@ -151,9 +151,9 @@ def test_ecology_without_injected_planner_fails_closed() -> None:
 
 
 def test_bounded_ecology_limit_produces_completed_insufficient_evidence_without_plan() -> None:
-    from melliatlas.agent.api import DeterministicPlanner
-    from melliatlas.analyzers.api import find_ecology_overlaps
-    from melliatlas.planning.api import (
+    from melliatlas.agent import DeterministicPlanner
+    from melliatlas.analyzers import find_ecology_overlaps
+    from melliatlas.planning import (
         CandidateSite,
         SiteAssessment,
         SyntheticScenario,
@@ -188,8 +188,8 @@ def test_bounded_ecology_limit_produces_completed_insufficient_evidence_without_
 
 
 def test_ecology_inspector_failure_is_sanitized_as_failed_investigation() -> None:
-    from melliatlas.agent.api import DeterministicPlanner
-    from melliatlas.planning.api import CandidateSite, SiteAssessment, SyntheticScenario
+    from melliatlas.agent import DeterministicPlanner
+    from melliatlas.planning import CandidateSite, SiteAssessment, SyntheticScenario
 
     def factory(_source: SyntheticScenario) -> DeterministicPlanner:
         def unavailable(_site: CandidateSite) -> SiteAssessment:

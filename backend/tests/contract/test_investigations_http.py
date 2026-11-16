@@ -8,7 +8,7 @@ from pytest import MonkeyPatch
 
 from melliatlas.api.app import AppSettings, create_app
 from melliatlas.api.composition import SourceProviderMode
-from melliatlas.jobs.api import InMemoryInvestigationService
+from melliatlas.jobs import InMemoryInvestigationService
 from melliatlas.sources.providers.synthetic.api import (
     SYNTHETIC_SCENARIO_ID,
     SyntheticFixtureProvider,

@@ -19,7 +19,7 @@ of the generic ``ScenarioProvider`` protocol.
 from dataclasses import replace
 from datetime import date
 
-from melliatlas.planning.api import (
+from melliatlas.planning import (
     CandidateSite,
     EcologyEvidenceKind,
     EcologyZone,

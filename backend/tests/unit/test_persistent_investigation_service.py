@@ -3,13 +3,13 @@
 from datetime import date
 from uuid import UUID
 
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InMemoryInvestigationService,
     InvestigationRequest,
     InvestigationSnapshot,
     InvestigationStatus,
 )
-from melliatlas.planning.api import TimeWindow
+from melliatlas.planning import TimeWindow
 from melliatlas.sources.providers.synthetic.api import (
     SYNTHETIC_SCENARIO_ID,
     SyntheticFixtureProvider,

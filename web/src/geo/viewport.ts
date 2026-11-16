@@ -15,11 +15,18 @@ export const DEFAULT_VIEWPORT: MapViewport = {
 // Inverse spherical Web Mercator at projected y = pi is atan(sinh(pi))°.
 // This is the projection domain limit (about 85.05113°), not a user setting.
 const MAX_MERCATOR_LATITUDE = 85.05112878;
-const MAX_MAP_ZOOM = 18;
+// Browser payload-size cap: the camera consists of exactly three numeric fields.
+const MAX_STORED_VIEWPORT_CHARS = 160;
+// Camera zoom limits are chosen for the supported OpenStreetMap tile layer.
+const MIN_MAP_ZOOM = 2;
+export const MAX_MAP_ZOOM = 18;
+const WGS84_MAX_LONGITUDE = 180;
+// Reduce local-storage precision; do not treat a map camera as a surveyed point.
+const STORED_COORDINATE_DECIMALS = 4;
 
 /** Reject malformed or out-of-range persisted camera data before passing it to Leaflet. */
 export function parseMapViewport(raw: string | null): MapViewport | null {
-  if (!raw || raw.length > 160) return null;
+  if (!raw || raw.length > MAX_STORED_VIEWPORT_CHARS) return null;
   try {
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
@@ -39,8 +46,8 @@ export function parseMapViewport(raw: string | null): MapViewport | null {
       !Number.isFinite(longitude) ||
       !Number.isInteger(zoom) ||
       Math.abs(latitude) > MAX_MERCATOR_LATITUDE ||
-      Math.abs(longitude) > 180 ||
-      zoom < 2 ||
+      Math.abs(longitude) > WGS84_MAX_LONGITUDE ||
+      zoom < MIN_MAP_ZOOM ||
       zoom > MAX_MAP_ZOOM
     )
       return null;
@@ -64,8 +71,10 @@ export function saveMapViewport(viewport: MapViewport): void {
     window.localStorage.setItem(
       VIEWPORT_STORAGE_KEY,
       JSON.stringify({
-        latitude: Number(viewport.latitude.toFixed(4)),
-        longitude: Number(viewport.longitude.toFixed(4)),
+        latitude: Number(viewport.latitude.toFixed(STORED_COORDINATE_DECIMALS)),
+        longitude: Number(
+          viewport.longitude.toFixed(STORED_COORDINATE_DECIMALS),
+        ),
         zoom: viewport.zoom,
       }),
     );

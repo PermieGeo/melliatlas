@@ -80,3 +80,25 @@ it("does not fail if the browser blocks storage", () => {
   expect(readMapViewport()).toBeNull();
   expect(() => saveMapViewport(DEFAULT_VIEWPORT)).not.toThrow();
 });
+
+it("rejects oversized persisted camera payloads", () => {
+  const large = JSON.stringify({
+    latitude: 55,
+    longitude: 32,
+    zoom: 5,
+    data: "x".repeat(161),
+  });
+  expect(parseMapViewport(large)).toBeNull();
+});
+
+it("keeps the map camera inside declared zoom and projection limits", () => {
+  expect(parseMapViewport('{"latitude":0,"longitude":0,"zoom":2}')).toEqual({
+    latitude: 0,
+    longitude: 0,
+    zoom: 2,
+  });
+  expect(
+    parseMapViewport('{"latitude":0,"longitude":0,"zoom":18}'),
+  ).not.toBeNull();
+  expect(parseMapViewport('{"latitude":0,"longitude":0,"zoom":1}')).toBeNull();
+});

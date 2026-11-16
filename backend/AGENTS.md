@@ -7,7 +7,7 @@ Extends `../AGENTS.md`. Applies to Python backend code and tests.
 - Use capability-owned, typed public interfaces. Import peer capabilities only through their public API or explicitly approved facade.
 - Inject I/O clients and repositories at composition boundaries. Add adapters, protocols, and indirection only when required by actual consumers or testing seams.
 - Keep provider HTTP transport, parsing and source-specific routes under provider-owned modules; cross-provider routing may depend only on public capability ports.
-- Keep `api.py` files as documented, lightweight public facades; put nontrivial algorithms in owned implementation modules.
+- Keep `api.py` for public types and `Protocol` ports; use named feature modules for algorithms, adapters and stateful implementations. Export concrete implementations through explicit package facades, never through generic `implementation.py` buckets. Introduce a `Protocol` only for a real replaceable dependency or callback, not every pure function.
 - Record non-obvious public invariants, failure modes, and ownership in the relevant module contract; do not duplicate type declarations as prose.
 
 ## Python and integrations

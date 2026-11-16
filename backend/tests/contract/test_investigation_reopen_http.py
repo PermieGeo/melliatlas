@@ -7,7 +7,7 @@ from uuid import UUID
 import httpx
 
 from melliatlas.api.app import create_app
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InMemoryInvestigationService,
     InvestigationSnapshot,
     InvestigationStorageError,

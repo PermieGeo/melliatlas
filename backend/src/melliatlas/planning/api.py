@@ -1,10 +1,10 @@
-"""Stable public planning capability boundary.
+"""Published planning data contracts; executable policies live in focused modules.
 
-Implementation is delegated to implementation.py; consumers should import
-this module instead of depending on internal algorithm and storage details.
+Import these types for signatures and dependency injection. Concrete pure
+functions are exported by the package facade rather than this declarations file.
 """
 
-from melliatlas.planning.implementation import (
+from .models import (
     CandidateSite,
     EcologyEvidenceKind,
     EcologyOverlap,
@@ -21,9 +21,6 @@ from melliatlas.planning.implementation import (
     TreatmentReview,
     TreatmentScreening,
     TreatmentWarningCode,
-    assess_ecology,
-    build_season_plan,
-    prefer_sites_away_from_reported_treatments,
 )
 
 __all__ = [
@@ -33,17 +30,14 @@ __all__ = [
     "SyntheticScenario",
     "SeasonStop",
     "SeasonPlan",
-    "build_season_plan",
     "EcologyEvidenceKind",
     "EcologyStatus",
     "EcologyZone",
     "EcologyOverlap",
     "SiteAssessment",
-    "assess_ecology",
     "TreatmentProximity",
     "ReportedTreatmentProduct",
     "TreatmentScreening",
-    "TreatmentReview",
     "TreatmentWarningCode",
-    "prefer_sites_away_from_reported_treatments",
+    "TreatmentReview",
 ]

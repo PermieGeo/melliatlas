@@ -10,9 +10,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.concurrency import run_in_threadpool
 
-from melliatlas.agent.api import ReplanDecisionKind, ReplanOutcome
+from melliatlas.agent import ReplanDecisionKind, ReplanOutcome
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InvalidInvestigationRequest,
     InvestigationOutcomeKind,
     InvestigationRequest,
@@ -21,7 +21,7 @@ from melliatlas.jobs.api import (
     InvestigationStatus,
     InvestigationStorageError,
 )
-from melliatlas.planning.api import EcologyStatus, TimeWindow, TreatmentProximity
+from melliatlas.planning import EcologyStatus, TimeWindow, TreatmentProximity
 from melliatlas.sources.api import ScenarioListing
 from melliatlas.territories.api import CountryCode
 

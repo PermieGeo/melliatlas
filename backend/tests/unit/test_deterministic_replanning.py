@@ -6,14 +6,14 @@ from itertools import permutations
 
 import pytest
 
-from melliatlas.agent.api import (
+from melliatlas.agent import (
     DeterministicPlanner,
     ReplanDecisionKind,
     ReplanOutcome,
     SiteInspector,
 )
-from melliatlas.analyzers.api import find_ecology_overlaps
-from melliatlas.planning.api import (
+from melliatlas.analyzers import find_ecology_overlaps
+from melliatlas.planning import (
     CandidateSite,
     EcologyEvidenceKind,
     EcologyStatus,

@@ -6,14 +6,14 @@ from uuid import UUID
 import pytest
 from pytest import MonkeyPatch
 
-from melliatlas.jobs import implementation as job_implementation
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InMemoryInvestigationService,
     InvalidInvestigationRequest,
     InvestigationRequest,
     InvestigationStatus,
 )
-from melliatlas.planning.api import TimeWindow, build_season_plan
+from melliatlas.jobs import memory as job_memory
+from melliatlas.planning import TimeWindow, build_season_plan
 from melliatlas.sources.providers.synthetic.api import SyntheticFixtureProvider
 from melliatlas.territories.api import CountryCode
 
@@ -104,7 +104,7 @@ def test_processing_fault_reports_failed_without_leaking_exception(
     def fail(_candidates: object, _season: object) -> None:
         raise RuntimeError("internal secret to keep private")
 
-    monkeypatch.setattr(job_implementation, "build_season_plan", fail)
+    monkeypatch.setattr(job_memory, "build_season_plan", fail)
     service.process(queued.id)
     failed = service.get(queued.id)
     assert failed is not None

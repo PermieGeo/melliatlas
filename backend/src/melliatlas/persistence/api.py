@@ -5,7 +5,7 @@ from collections.abc import Callable, Sequence
 from typing import Final, LiteralString, Protocol
 from uuid import UUID
 
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InvestigationSnapshot,
     InvestigationStatus,
     InvestigationStorageError,

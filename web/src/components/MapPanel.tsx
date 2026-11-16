@@ -10,9 +10,22 @@ import { t } from "../i18n";
 import type { Locale } from "../i18n";
 import {
   DEFAULT_VIEWPORT,
+  MAX_MAP_ZOOM,
   readMapViewport,
   saveMapViewport,
 } from "../geo/viewport";
+
+// Display-only camera limits and marker sizes; none represents a safe distance.
+const SATURN_FOCUS_MAX_ZOOM = 13;
+const TERRITORY_FIT_MAX_ZOOM = 11;
+const SITE_FIT_MAX_ZOOM = 11;
+const SITE_BOUNDS_PADDING_FACTOR = 0.3;
+const TERRITORY_FIT_PADDING_PX = 12;
+const SELECTED_SITE_MARKER_RADIUS_PX = 11;
+const SITE_MARKER_RADIUS_PX = 8;
+const STARTING_POINT_MARKER_RADIUS_PX = 6;
+// Click selection precision is not cadastral or geodesic precision.
+const MAP_CLICK_COORDINATE_DECIMALS = 5;
 
 /** The selected apiary point stays in memory; only the general map camera is stored. */
 interface Props {
@@ -49,7 +62,10 @@ export function MapPanel({
     if (!instance || !layer || layer.getLayers().length === 0) return;
     const bounds = L.featureGroup(layer.getLayers()).getBounds();
     if (bounds.isValid())
-      instance.fitBounds(bounds, { animate: false, maxZoom: 13 });
+      instance.fitBounds(bounds, {
+        animate: false,
+        maxZoom: SATURN_FOCUS_MAX_ZOOM,
+      });
   };
   pointCallback.current = onPoint;
 
@@ -70,13 +86,17 @@ export function MapPanel({
       });
     });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 18,
+      maxZoom: MAX_MAP_ZOOM,
       attribution: "© OpenStreetMap contributors",
     }).addTo(instance);
     instance.on("click", (event: L.LeafletMouseEvent) => {
       pointCallback.current({
-        longitude: Number(event.latlng.lng.toFixed(5)),
-        latitude: Number(event.latlng.lat.toFixed(5)),
+        longitude: Number(
+          event.latlng.lng.toFixed(MAP_CLICK_COORDINATE_DECIMALS),
+        ),
+        latitude: Number(
+          event.latlng.lat.toFixed(MAP_CLICK_COORDINATE_DECIMALS),
+        ),
       });
     });
     const layer = L.layerGroup().addTo(instance);
@@ -99,7 +119,7 @@ export function MapPanel({
     for (const stop of stops) {
       const active = selectedId === stop.site_id;
       const marker = L.circleMarker([stop.latitude, stop.longitude], {
-        radius: active ? 11 : 8,
+        radius: active ? SELECTED_SITE_MARKER_RADIUS_PX : SITE_MARKER_RADIUS_PX,
         className: active
           ? "ma-site-marker ma-site-selected"
           : "ma-site-marker",
@@ -115,7 +135,7 @@ export function MapPanel({
       const point = L.circleMarker(
         [startingPoint.latitude, startingPoint.longitude],
         {
-          radius: 6,
+          radius: STARTING_POINT_MARKER_RADIUS_PX,
           className: "ma-starting-point",
         },
       );
@@ -126,7 +146,10 @@ export function MapPanel({
       const bounds = L.latLngBounds(
         stops.map((stop) => L.latLng(stop.latitude, stop.longitude)),
       );
-      instance.fitBounds(bounds.pad(0.3), { maxZoom: 11, animate: false });
+      instance.fitBounds(bounds.pad(SITE_BOUNDS_PADDING_FACTOR), {
+        maxZoom: SITE_FIT_MAX_ZOOM,
+        animate: false,
+      });
     }
   }, [locale, onSelect, selectedId, startingPoint, stops]);
 
@@ -149,8 +172,8 @@ export function MapPanel({
     if (bounds.isValid()) {
       instance.fitBounds(bounds, {
         animate: false,
-        maxZoom: 11,
-        padding: [12, 12],
+        maxZoom: TERRITORY_FIT_MAX_ZOOM,
+        padding: [TERRITORY_FIT_PADDING_PX, TERRITORY_FIT_PADDING_PX],
       });
     }
   }, [referenceGeometry]);

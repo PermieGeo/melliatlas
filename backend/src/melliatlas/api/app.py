@@ -27,7 +27,7 @@ from melliatlas.api.reference_loader import read_reference_documents
 from melliatlas.api.routes_investigations import create_investigation_router
 from melliatlas.api.routes_sources import create_source_router
 from melliatlas.api.routes_territories import create_territory_router
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InMemoryInvestigationService,
     InvestigationService,
 )

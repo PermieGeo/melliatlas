@@ -39,6 +39,8 @@ interface Report {
 }
 
 /** Never treat missing upstream data as evidence that treatments or risks are absent. */
+const MAX_VISIBLE_SATURN_RECORDS = 20;
+
 export function LiveAreaAnalysis({
   country,
   regionId,
@@ -262,34 +264,36 @@ export function LiveAreaAnalysis({
                   total: page.total_elements ?? tr("saturnMissing"),
                 })}
               </p>
-              {uniqueNotices.slice(0, 20).map((notice) => (
-                <details key={notice.record_id} className="saturn-record">
-                  <summary>
-                    {tr("saturnField", {
-                      record: notice.record_id,
-                      plan: notice.plan_id ?? tr("saturnMissing"),
-                    })}
-                  </summary>
-                  <p>
-                    {tr("saturnDates", {
-                      start: notice.scheduled_start ?? tr("saturnMissing"),
-                      end: notice.scheduled_end ?? tr("saturnMissing"),
-                    })}
-                  </p>
-                  {notice.products.map((product, index) => (
-                    <p key={index}>
-                      {tr("saturnProduct", {
-                        name: product.name ?? tr("saturnMissing"),
-                        crop: product.crop ?? tr("saturnMissing"),
-                        hazard:
-                          product.reported_bee_hazard_class ??
-                          tr("saturnMissing"),
+              {uniqueNotices
+                .slice(0, MAX_VISIBLE_SATURN_RECORDS)
+                .map((notice) => (
+                  <details key={notice.record_id} className="saturn-record">
+                    <summary>
+                      {tr("saturnField", {
+                        record: notice.record_id,
+                        plan: notice.plan_id ?? tr("saturnMissing"),
+                      })}
+                    </summary>
+                    <p>
+                      {tr("saturnDates", {
+                        start: notice.scheduled_start ?? tr("saturnMissing"),
+                        end: notice.scheduled_end ?? tr("saturnMissing"),
                       })}
                     </p>
-                  ))}
-                </details>
-              ))}
-              {uniqueNotices.length > 20 && (
+                    {notice.products.map((product, index) => (
+                      <p key={index}>
+                        {tr("saturnProduct", {
+                          name: product.name ?? tr("saturnMissing"),
+                          crop: product.crop ?? tr("saturnMissing"),
+                          hazard:
+                            product.reported_bee_hazard_class ??
+                            tr("saturnMissing"),
+                        })}
+                      </p>
+                    ))}
+                  </details>
+                ))}
+              {uniqueNotices.length > MAX_VISIBLE_SATURN_RECORDS && (
                 <p className="field-help">
                   {tr("analysisSaturnCount", {
                     count: uniqueNotices.length,

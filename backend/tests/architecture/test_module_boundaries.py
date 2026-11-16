@@ -75,8 +75,8 @@ def test_dependency_matrix_matches_current_implementation_plan() -> None:
         ("agent", "from melliatlas import api", "forbidden dependency"),
         ("api", "import httpx", "network client"),
         ("api", "from melliatlas.territories.api.helpers import x", "private module"),
-        ("territories", "from melliatlas.agent.api import Planner", "forbidden dependency"),
-        ("engine", "from melliatlas.agent.api import Planner", "forbidden dependency"),
+        ("territories", "from melliatlas.agent import Planner", "forbidden dependency"),
+        ("engine", "from melliatlas.agent import Planner", "forbidden dependency"),
         ("planning", "from melliatlas.persistence.api import Store", "forbidden dependency"),
         (
             "api",
@@ -134,7 +134,7 @@ def test_explicit_facade_export_is_permitted(tmp_path: Path) -> None:
 
 def test_rejects_dependency_cycle(tmp_path: Path) -> None:
     _violations(tmp_path, "agent", "from melliatlas.engine.api import Value")
-    issues = _violations(tmp_path, "engine", "from melliatlas.agent.api import Value")
+    issues = _violations(tmp_path, "engine", "from melliatlas.agent import Value")
     assert any("dependency cycle" in issue for issue in issues)
 
 
