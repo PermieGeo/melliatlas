@@ -70,6 +70,8 @@ Set `MELLIATLAS_DATABASE_URL` before starting the API; without it, the existing
 fail-closed reference state remains. Region names, canonical identifiers and
 provenance live in `melliatlas_region`, separate from `melliatlas_source_saturn`.
 The latter contains only an archived verified mapping for Smolensk initially.
-For additional codes use `import_saturn_subjects.py` with a reviewed local JSON
-snapshot of the public Saturn subject list; no upstream fetch is automatic.
+For additional codes, use the one-shot `capture_saturn_subjects.py` command only
+when public source access is authorized, review its local JSON output, and then
+run the separate offline `import_saturn_subjects.py`. Neither script runs at
+application startup. The capture is bounded, exclusive and never committed.
 See [installation](../docs/INSTALLATION.md) and the territory/persistence contracts.

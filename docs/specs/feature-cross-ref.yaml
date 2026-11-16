@@ -74,6 +74,8 @@ features:
       - backend/src/melliatlas/sources/providers/saturn/legacy_treatment.py#parse_saturn_treatment_page
       - backend/src/melliatlas/sources/providers/saturn/live.py#SaturnPublicTreatmentReader
       - backend/src/melliatlas/sources/providers/saturn/diagnostics.py#probe_one_page
+      - backend/src/melliatlas/sources/providers/saturn/subjects.py#validate_subject_directory
+      - backend/src/melliatlas/api/subject_capture.py#capture_subjects
       - backend/src/melliatlas/api/routes_sources.py#create_source_router
       - web/src/components/SaturnPanel.tsx
       - backend/src/melliatlas/persistence/regions.py#PostgresRegionCatalog
@@ -81,6 +83,7 @@ features:
       - backend/tests/unit/test_saturn_treatment_screening.py
       - backend/tests/contract/test_saturn_live_http.py
       - backend/tests/contract/test_saturn_probe.py
+      - backend/tests/contract/test_saturn_subject_capture.py
       - backend/tests/contract/test_persistent_region_directory.py
       - web/tests/saturn.test.tsx
   - feature_id: SOURCES.WEATHER_FORECAST

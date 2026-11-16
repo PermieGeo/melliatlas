@@ -222,3 +222,35 @@ reference path and numeric legacy request. `web/tests/saturn.test.tsx` checks
 canonical-ID posting, no-region disablement, and BY filtering. Manual Postgres
 integration, captured full Saturn directory reconciliation, and W02 district/
 geometry completion remain outstanding.
+
+### W01 follow-up — operator-only Saturn subject catalog capture (R02, partial)
+
+**Scope:** complete the operator path from independent preloaded RU regions to
+verified source-specific Saturn IDs. This is an authorized small follow-up to
+the existing PostgreSQL mapping work, not a new source registry, scheduled
+collector, or accepted W02 geographic catalog.
+
+**Public contracts and integration design:** `sources.providers.saturn.subjects`
+validates one source-specific directory JSON array without importing transport
+or persistence. `api.saturn_http.get_public_subject_directory()` uses a pinned
+HTTPS GET with redirects/retries disabled, 8-second timeout and 256 KiB body cap;
+`api.subject_capture.capture_subjects()` accepts an injected fetch and validator,
+and saves to an explicitly named new local file with exclusive restrictive
+permissions. `backend/scripts/capture_saturn_subjects.py` is the only operator
+entrypoint; it reports only count, digest and timestamp. The existing
+`import_saturn_subjects.py` reuses the same validator and continues to enforce
+transactional exact-name matching into `melliatlas_source_saturn`. There is no
+browser endpoint, application startup request or automatic source ingestion.
+
+**Failure behavior:** invalid JSON, duplicate/blank identifiers, unexpectedly
+small catalogs, non-JSON responses, 403, redirects, timeouts and preexisting
+files fail closed. No raw payload is printed or included in repository fixtures.
+Unknown region-name correspondences remain unmapped; source permissions and
+live compatibility must be verified before operator capture. No actual local
+PostgreSQL import or source read is claimed by these offline tests.
+
+**Tests:** `backend/tests/contract/test_saturn_subject_capture.py` exercises
+validation, privacy, byte budgets, exclusive capture and mocked transport
+failures; existing region mapping tests and backend import architecture checks
+remain required. W01/W02 acceptance remains pending PostgreSQL integration,
+source inspection and verified region identifiers.

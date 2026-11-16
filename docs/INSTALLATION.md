@@ -50,19 +50,40 @@ in `iso-codes` 4.18.0, and only the archived Smolensk Saturn subject mapping.
 No coverage of disputed/other regions, municipal districts or valid borders is
 claimed. With no database configured, the previous explicit `503` remains.
 
-To import further Saturn mappings, first obtain and review an authorized JSON
-array from the separately documented `GET /backend/beemaster/oktmo-subjects`
-endpoint. The importer performs **offline exact-name matching only**:
+### One-shot Saturn subject-directory capture and mapping review
+
+The independent RU/BY region seed never fetches Saturn. For an explicitly
+reviewed, operator-authorized check of the *historically observed* public
+endpoint, capture one bounded GET response to a **new local file outside the
+repository** (no scheduled collection, credentials or browser automation):
 
 ```bash
-python backend/scripts/import_saturn_subjects.py --file /path/to/reviewed-subjects.json --captured-at 2026-11-11T12:00:00+00:00
+python backend/scripts/capture_saturn_subjects.py --output /tmp/melliatlas-saturn-subjects.json
 ```
 
-Replace the capture time with its **actual** timestamp. The imported numeric
-identifiers are stored separately in `melliatlas_source_saturn`; unmatched
-names are not guessed and conflicting mappings reject the transaction. The
-ordinary application never fetches region directories from Saturn. Source
-access and reuse rights require separate approval.
+The command requires a new path, refuses overwrites, caps the response at
+256 KiB, requires 80–150 structurally valid and uniquely identified subjects,
+and writes the raw capture as a local `0600` file. It prints only entry count,
+SHA-256 and the **actual UTC capture timestamp**, not raw region records.
+`HTTP 403`, redirects, changed schemas or timeouts fail without a stored file.
+The reported 86 subjects in the dated historical research are not a guarantee
+of the provider's current availability, contractual stability or completeness.
+Do not commit the captured JSON or use it to claim approved reuse rights.
+
+After reviewing the locally captured names and provider codes, supply the
+**printed timestamp** to the existing offline importer:
+
+```bash
+python backend/scripts/import_saturn_subjects.py --file /tmp/melliatlas-saturn-subjects.json --captured-at 2026-11-16T00:00:00+00:00
+```
+
+The timestamp above is an **example only**; replace it with the capture output.
+The importer uses existing independent region names for unique exact normalized
+matches, retains distinct provider IDs in `melliatlas_source_saturn`, and
+rolls back conflicting entries. Unmatched names are counted for human review;
+they are never fuzzy-matched or assigned guessed IDs. Capture and import are
+explicit operations, never startup behavior. Confirm source access and reuse
+permission before real deployment.
 
 ## Optional local reference loading (V03 partial)
 

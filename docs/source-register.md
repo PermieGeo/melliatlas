@@ -79,6 +79,12 @@ unverified.
   `subject_id=55`, `oktmoCode=66000000` from 2026-11-11; only that mapping
   is initially pinned. The archive does not contain the complete 86-row
   `/beemaster/oktmo-subjects` response.
+- **Operator-only capture:** `backend/scripts/capture_saturn_subjects.py`
+  makes at most one bounded, fixed-origin GET of the historically observed
+  `/beemaster/oktmo-subjects` endpoint when explicitly run; it requires a new
+  private local file, validates the directory before writing and returns
+  structural count, SHA-256 and capture time. This does not approve reuse,
+  guarantee 86-current-subject coverage, or enable automatic polling.
 - **Further mappings:** run the reviewed, offline import command on a saved
   `/beemaster/oktmo-subjects` response. Only unique exact normalized names
   match. Unmatched regions are reported, not assigned guessed numeric IDs.
