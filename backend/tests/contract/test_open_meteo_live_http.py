@@ -158,3 +158,100 @@ def test_upstream_failures_never_become_empty_weather() -> None:
             assert "Internal upstream details" not in response.text
 
     asyncio.run(check())
+
+
+def test_weather_configuration_is_loaded_at_lifespan_not_app_construction() -> None:
+    calls: list[str] = []
+    reader = OpenMeteoForecastReader(lambda latitude, longitude: _payload())
+
+    def configure() -> OpenMeteoForecastReader:
+        calls.append("startup")
+        return reader
+
+    application = create_app(
+        settings=AppSettings(weather_live_enabled=True), weather_reader_factory=configure
+    )
+    assert calls == []
+
+    async def check() -> None:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=application), base_url="http://test"
+        ) as client:
+            before = await client.get("/api/v1/sources", params={"country": "BY"})
+            assert before.json() == []
+            before_forecast = await client.post(
+                "/api/v1/sources/weather/forecast", json={"latitude": 54, "longitude": 32}
+            )
+            assert before_forecast.status_code == 503
+            async with application.router.lifespan_context(application):
+                assert calls == ["startup"]
+                listed = await client.get("/api/v1/sources", params={"country": "BY"})
+                assert [item["id"] for item in listed.json()] == ["open-meteo"]
+                forecast = await client.post(
+                    "/api/v1/sources/weather/forecast", json={"latitude": 54, "longitude": 32}
+                )
+                assert forecast.status_code == 200
+            after = await client.get("/api/v1/sources", params={"country": "BY"})
+            assert after.json() == []
+
+    asyncio.run(check())
+    assert calls == ["startup"]
+
+
+def test_database_disabled_weather_remains_unadvertised_after_startup() -> None:
+    calls = 0
+
+    def configure() -> OpenMeteoForecastReader | None:
+        nonlocal calls
+        calls += 1
+        return None
+
+    application = create_app(
+        settings=AppSettings(weather_live_enabled=True), weather_reader_factory=configure
+    )
+
+    async def check() -> None:
+        async with application.router.lifespan_context(application):
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=application), base_url="http://test"
+            ) as client:
+                listed = await client.get("/api/v1/sources", params={"country": "RU"})
+                assert listed.json() == []
+                forecast = await client.post(
+                    "/api/v1/sources/weather/forecast", json={"latitude": 54, "longitude": 32}
+                )
+                assert forecast.status_code == 503
+
+    asyncio.run(check())
+    assert calls == 1
+
+
+def test_weather_configuration_failure_blocks_startup_without_fallback() -> None:
+    def configure() -> OpenMeteoForecastReader:
+        raise RuntimeError("Weather configuration migration is missing")
+
+    application = create_app(
+        settings=AppSettings(weather_live_enabled=True), weather_reader_factory=configure
+    )
+
+    async def check() -> None:
+        with pytest.raises(RuntimeError, match="migration is missing"):
+            async with application.router.lifespan_context(application):
+                pytest.fail("Misconfigured live weather must not start")
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=application), base_url="http://test"
+        ) as client:
+            listed = await client.get("/api/v1/sources", params={"country": "RU"})
+            assert listed.json() == []
+
+    asyncio.run(check())
+
+
+def test_cannot_combine_explicit_weather_reader_and_startup_factory() -> None:
+    reader = OpenMeteoForecastReader(lambda latitude, longitude: _payload())
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        create_app(
+            settings=AppSettings(weather_live_enabled=True),
+            weather_reader=reader,
+            weather_reader_factory=lambda: reader,
+        )

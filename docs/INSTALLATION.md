@@ -44,6 +44,7 @@ Run once for a new database; these commands are safe to rerun against matching e
 psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0002_region_directory.sql
 python backend/scripts/bootstrap_regions.py
 psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0003_administrative_boundaries.sql
+psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0004_weather_provider_configuration.sql
 ```
 
 Migration `0001_completed_investigations.sql` is optional and separate from geographic navigation.
@@ -117,6 +118,18 @@ npm run dev
 ```
 
 Open `http://127.0.0.1:5173`. Vite proxies `/api` to port `8000`. Without `MELLIATLAS_DATABASE_URL`, the backend serves region names only (no districts/geometry).
+
+Weather operational configuration is kept in the single `open-meteo` row of
+`melliatlas_weather_provider_config`: `enabled`, `timeout_seconds` (1–15),
+`max_body_bytes` (1024–100000), and the provider documentation URL (verified
+`https://open-meteo.com/` origin). Edit only with a reviewed database update;
+there is no public or remote operator configuration endpoint. The migration
+is required for database-backed live weather. If `MELLIATLAS_DATABASE_URL`
+and `MELLIATLAS_WEATHER_LIVE_ENABLED=true` are configured, settings are read
+at ASGI lifespan startup, not during module import. A missing migration prevents
+the server from starting in that explicit live-weather mode. Apply the `0004`
+migration before restarting; do not delete existing geographic data or turn
+on unreviewed fallback settings. Missing database settings fail closed; the source is still disabled unless the explicit environment gate is true.
 
 Optional local-only flags: `MELLIATLAS_SOURCE_PROVIDER=synthetic` enables fictional investigation scenarios; `MELLIATLAS_SATURN_LIVE_ENABLED=true` enables the experimental RU-only manual Saturn read; `MELLIATLAS_WEATHER_LIVE_ENABLED=true` enables a manually requested Open-Meteo forecast. Review source terms before use.
 

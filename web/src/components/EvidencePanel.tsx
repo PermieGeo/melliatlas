@@ -9,6 +9,22 @@ interface Props {
   selectedId: string | null;
 }
 
+const treatmentWarningKeys: Record<string, TranslationKey> = {
+  SYNTHETIC_NOTICE_UNVERIFIED: "syntheticTreatmentUnverified",
+  COVERAGE_NOT_ESTABLISHED: "treatmentCoverageUnknown",
+  DRIFT_NOT_EVALUATED: "treatmentDriftUnknown",
+  DEMONSTRATION_ONLY: "treatmentAvoidanceDemo",
+};
+
+/** Interpret known domain warning codes without localizing provider-authored evidence. */
+function treatmentWarningText(
+  code: string,
+  tr: (key: TranslationKey) => string,
+): string {
+  const key = treatmentWarningKeys[code];
+  return key === undefined ? code : tr(key);
+}
+
 const ecologyKeys: Record<EcologyStatus, TranslationKey> = {
   EXCLUDED: "ecologyExcluded",
   CAUTION: "ecologyCaution",
@@ -106,12 +122,19 @@ export function EvidencePanel({ result, selectedId, locale }: Props) {
               )}
               {entry.warnings.map((warning) => (
                 <p className="warning-text" key={warning}>
-                  {warning}
+                  {treatmentWarningText(warning, tr)}
                 </p>
               ))}
             </div>
           ))
         )}
+        {result.treatment_review?.warnings
+          .filter((warning) => !result.limitations.includes(warning))
+          .map((warning) => (
+            <p className="warning-text" key={warning}>
+              {treatmentWarningText(warning, tr)}
+            </p>
+          ))}
         {result.treatment_review &&
           result.treatment_review.avoided_site_ids.length > 0 && (
             <p className="warning-text">
@@ -175,7 +198,7 @@ export function EvidencePanel({ result, selectedId, locale }: Props) {
           ))}
           {result.limitations.map((item) => (
             <li key={item} className="warning-text">
-              {item}
+              {treatmentWarningText(item, tr)}
             </li>
           ))}
         </ul>

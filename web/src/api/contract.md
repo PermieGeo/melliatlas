@@ -40,7 +40,8 @@ signal)` posts the selected coordinates in the JSON body to the same-origin API.
 The strict decoder requires 24 sequential UTC hours, nullable bounded values,
 source attribution, grid coordinates and non-empty uncertainties. An aborted or
 stale request is not a completed forecast. `WeatherPanel` has a manual button,
-does not log or persist coordinates, and includes Open-Meteo attribution.
+does not log or persist coordinates, and includes Open-Meteo attribution using the validated `source_uri` supplied
+by the backend; browser modules do not duplicate a provider documentation URL.
 Neither a weather forecast nor a live treatment notice modifies synthetic
 investigation results or certifies pesticide drift, exposure or placement safety.
 

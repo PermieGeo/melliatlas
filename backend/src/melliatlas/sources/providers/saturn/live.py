@@ -9,14 +9,15 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 
 from melliatlas.sources.api import SourceReadError, TreatmentNoticePage
+from melliatlas.sources.providers.saturn.failures import SaturnReadFailure
 from melliatlas.sources.providers.saturn.legacy_treatment import parse_saturn_treatment_page
+from melliatlas.sources.providers.saturn.limits import MAX_BODY_BYTES
 from melliatlas.sources.providers.saturn.pagination import next_saturn_treatment_page
 from melliatlas.territories.api import CountryCode
 
 SATURN_SOURCE_ID = "saturn:public-beekeeper-portal"
 PAGE_SIZE = 10
 MAX_PAGE = 50
-MAX_BODY_BYTES = 1_000_000
 
 
 class SaturnPublicTreatmentReader:
@@ -47,7 +48,7 @@ class SaturnPublicTreatmentReader:
         try:
             raw = self._transport(body)
             if len(raw) > MAX_BODY_BYTES:
-                raise SourceReadError("Public portal response exceeds size budget")
+                raise SourceReadError(SaturnReadFailure.SATURN_PAGE_SIZE)
             payload: object = json.loads(raw)
             now = datetime.now(timezone.utc)
             page = parse_saturn_treatment_page(
@@ -63,7 +64,7 @@ class SaturnPublicTreatmentReader:
             if next_page is not None and next_page > MAX_PAGE:
                 next_page = None
         except (ValueError, TypeError, KeyError, UnicodeError) as error:
-            raise SourceReadError("Unexpected public portal response format") from error
+            raise SourceReadError(SaturnReadFailure.SATURN_PAGE_FORMAT) from error
         return TreatmentNoticePage(
             source_id=SATURN_SOURCE_ID,
             country=CountryCode.RU,

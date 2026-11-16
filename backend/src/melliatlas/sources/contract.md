@@ -55,8 +55,12 @@ Missing hourly values stay `None`, never zero. `SourceReadError` means unknown
 weather availability, not calm wind or no pesticide exposure.
 
 The Open-Meteo implementation decodes only one 24-hour forecast with 10-m wind
-speed/direction, gusts and precipitation. Its network transport belongs to the
-FastAPI composition boundary and is disabled unless explicitly configured.
-No advection, spray drift, safety rating, automatic refresh or cached forecasts
+speed/direction, gusts and precipitation. Provider-owned `open_meteo/http.py`
+uses a shared fixed-origin transport helper; only the API composition root can
+instantiate it. PostgreSQL `0004_weather_provider_configuration.sql` stores an
+optional enable/timeout/byte budget and allowlisted attribution URL. The ASGI
+entry point reads that row only when a database and the explicit weather live
+flag are both configured; missing configuration fails closed. The 24-hour UTC
+wire contract and source HTTP origin are not database overrides. No advection, spray drift, safety rating, automatic refresh or cached forecasts
 are provided. This source does not require a synthetic scenario and is usable
 independently of the country-specific Saturn notice reader.

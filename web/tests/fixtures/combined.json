@@ -236,10 +236,10 @@
     "warnings": [
       "Fictional ecology checks do not establish real-world site eligibility",
       "CAUTION is non-binding and requires ecological review",
-      "Synthetic treatment claims are not verified application events",
-      "Missing or distant reports do not establish complete coverage or safety",
-      "Wind, weather, drift and bee flight are not evaluated",
-      "Avoidance is a demonstration preference, not a legal exclusion or safe-distance rule"
+      "SYNTHETIC_NOTICE_UNVERIFIED",
+      "COVERAGE_NOT_ESTABLISHED",
+      "DRIFT_NOT_EVALUATED",
+      "DEMONSTRATION_ONLY"
     ]
   },
   "treatment_review": {
@@ -365,10 +365,10 @@
       "fixture-site-alpha-alternative"
     ],
     "warnings": [
-      "Synthetic treatment claims are not verified application events",
-      "Missing or distant reports do not establish complete coverage or safety",
-      "Wind, weather, drift and bee flight are not evaluated",
-      "Avoidance is a demonstration preference, not a legal exclusion or safe-distance rule"
+      "SYNTHETIC_NOTICE_UNVERIFIED",
+      "COVERAGE_NOT_ESTABLISHED",
+      "DRIFT_NOT_EVALUATED",
+      "DEMONSTRATION_ONLY"
     ]
   },
   "evidence": [
@@ -474,10 +474,10 @@
     "Absence of nearby notices does not establish coverage or site safety",
     "Fictional ecology checks do not establish real-world site eligibility",
     "CAUTION is non-binding and requires ecological review",
-    "Synthetic treatment claims are not verified application events",
-    "Missing or distant reports do not establish complete coverage or safety",
-    "Wind, weather, drift and bee flight are not evaluated",
-    "Avoidance is a demonstration preference, not a legal exclusion or safe-distance rule"
+    "SYNTHETIC_NOTICE_UNVERIFIED",
+    "COVERAGE_NOT_ESTABLISHED",
+    "DRIFT_NOT_EVALUATED",
+    "DEMONSTRATION_ONLY"
   ],
   "synthetic": true
 }

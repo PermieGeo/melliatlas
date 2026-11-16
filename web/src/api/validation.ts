@@ -487,11 +487,27 @@ export function decodeWeatherForecast(value: unknown): WeatherForecast {
     }
     previousTime = currentTime;
   }
+  const source_uri = nonEmpty(v.source_uri, "weather.source_uri");
+  // External links are server-provided, but must still match the approved origin.
+  let attribution: URL;
+  try {
+    attribution = new URL(source_uri);
+  } catch {
+    throw new WireError("weather.source_uri");
+  }
+  if (
+    attribution.protocol !== "https:" ||
+    attribution.hostname !== "open-meteo.com" ||
+    attribution.port !== "" ||
+    attribution.username !== "" ||
+    attribution.password !== ""
+  )
+    throw new WireError("weather.source_uri");
   const uncertainties = strings(v.uncertainties, "weather.uncertainties");
   if (uncertainties.length === 0) throw new WireError("weather.uncertainties");
   return {
     source_id,
-    source_uri: nonEmpty(v.source_uri, "weather.source_uri"),
+    source_uri,
     source_mode: oneOf(v.source_mode, "weather.source_mode", ["LIVE"]),
     synthetic: false,
     captured_at: nonEmpty(v.captured_at, "weather.captured_at"),

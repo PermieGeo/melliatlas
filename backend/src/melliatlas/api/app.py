@@ -1,6 +1,6 @@
 """FastAPI application composition."""
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,6 +16,12 @@ from melliatlas.api.composition import (
     compose_sources,
     compose_weather_reader,
 )
+from melliatlas.api.providers.open_meteo.routes import (
+    WeatherReaderState,
+    create_weather_router,
+    weather_capability,
+)
+from melliatlas.api.providers.saturn.routes import create_saturn_router, saturn_capability
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse, HealthResponse
 from melliatlas.api.reference_loader import read_reference_documents
 from melliatlas.api.routes_investigations import create_investigation_router
@@ -48,6 +54,7 @@ def create_app(
     investigations: InvestigationService | None = None,
     saturn_reader: TreatmentNoticeReader | None = None,
     weather_reader: WeatherForecastReader | None = None,
+    weather_reader_factory: Callable[[], WeatherForecastReader | None] | None = None,
     source_region_lookup: SourceTerritoryCodeLookup | None = None,
 ) -> FastAPI:
     config = settings if settings is not None else AppSettings()
@@ -58,16 +65,36 @@ def create_app(
     if snapshot_path is not None and territories is not None:
         raise ValueError("Explicit territory injection cannot be combined with reference files")
 
+    if weather_reader is not None and weather_reader_factory is not None:
+        raise ValueError("Weather reader and weather reader factory are mutually exclusive")
+
     loaded_catalog = InMemoryTerritoryCatalog() if snapshot_path is not None else None
+    initial_weather_reader: WeatherForecastReader | None = None
+    if config.weather_live_enabled and weather_reader_factory is None:
+        initial_weather_reader = (
+            weather_reader if weather_reader is not None else compose_weather_reader(True)
+        )
+    weather_state = WeatherReaderState(initial_weather_reader)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
-        if snapshot_path is not None and inventory_path is not None and loaded_catalog is not None:
-            snapshot, inventory = await run_in_threadpool(
-                read_reference_documents, snapshot_path, inventory_path
-            )
-            await loaded_catalog.apply_reference(snapshot, inventory)
-        yield
+        if config.weather_live_enabled and weather_reader_factory is not None:
+            # Do not query optional database settings during ASGI module import.
+            weather_state.reader = await run_in_threadpool(weather_reader_factory)
+        try:
+            if (
+                snapshot_path is not None
+                and inventory_path is not None
+                and loaded_catalog is not None
+            ):
+                snapshot, inventory = await run_in_threadpool(
+                    read_reference_documents, snapshot_path, inventory_path
+                )
+                await loaded_catalog.apply_reference(snapshot, inventory)
+            yield
+        finally:
+            if weather_reader_factory is not None:
+                weather_state.reader = None
 
     app = FastAPI(title=config.title, version=config.version, lifespan=lifespan)
 
@@ -96,12 +123,11 @@ def create_app(
         if config.saturn_live_enabled
         else None
     )
-    forecast_reader = (
-        (weather_reader if weather_reader is not None else compose_weather_reader(True))
-        if config.weather_live_enabled
-        else None
+    app.include_router(
+        create_source_router((saturn_capability(live_reader), weather_capability(weather_state)))
     )
-    app.include_router(create_source_router(live_reader, forecast_reader, source_region_lookup))
+    app.include_router(create_saturn_router(live_reader, source_region_lookup))
+    app.include_router(create_weather_router(weather_state))
     source_runtime = compose_sources(config.source_provider)
     job_service = (
         investigations

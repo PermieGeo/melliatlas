@@ -107,11 +107,10 @@ No generic frontend state framework, map drawing engine, Admin workspace or spec
 **Public contracts and integration design:** `sources.api.TreatmentNoticeReader`
 abstracts on-demand page reading, `sources.providers.saturn.api` exposes the
 pure decoder and bounded read adapter, and the only permitted network transport
-is `api.saturn_http`. The composition root enables this **independently** of
+is `sources.providers.saturn.http`. The composition root enables this **independently** of
 `SourceProviderMode` with `AppSettings.saturn_live_enabled` / the exact
-`MELLIATLAS_SATURN_LIVE_ENABLED=true` environment flag. `api.routes_sources`
-provides `GET /api/v1/sources` capability discovery and a strict POST bounded
-read. Source-country validation precedes transport. Reuse permission and exact
+`MELLIATLAS_SATURN_LIVE_ENABLED=true` environment flag. `api.routes_sources` lists only injected source capabilities;
+`api.providers.saturn.routes` implements the strict POST bounded read. Source-country validation precedes transport. Reuse permission and exact
 current upstream format remain unverified; the endpoint's payload is based on
 an historical `planapplybees` capture and must fail visibly if incompatible.
 
@@ -139,7 +138,7 @@ results. This is an independent source observation, not a new planning engine.
 
 **Boundary:** `sources.api.WeatherForecastReader` and typed `WeatherForecast`
 use `sources.providers.open_meteo.api.OpenMeteoForecastReader` through
-`api.composition.compose_weather_reader`. `api.weather_http` is the sole
+`api.composition.compose_weather_reader`. `sources.providers.open_meteo.http` is the sole
 fixed-origin transport; it requests 24 UTC hours, has strict time/size bounds,
 and never follows redirects. `AppSettings.weather_live_enabled=False` and
 `MELLIATLAS_WEATHER_LIVE_ENABLED=true` govern opt-in availability. Open-Meteo
@@ -232,7 +231,7 @@ collector, or accepted W02 geographic catalog.
 
 **Public contracts and integration design:** `sources.providers.saturn.subjects`
 validates one source-specific directory JSON array without importing transport
-or persistence. `api.saturn_http.get_public_subject_directory()` uses a pinned
+or persistence. `sources.providers.saturn.http.get_public_subject_directory()` uses a pinned
 HTTPS GET with redirects/retries disabled, 8-second timeout and 256 KiB body cap;
 `api.subject_capture.capture_subjects()` accepts an injected fetch and validator,
 and saves to an explicitly named new local file with exclusive restrictive

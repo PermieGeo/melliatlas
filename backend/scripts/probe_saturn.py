@@ -8,8 +8,8 @@ import argparse
 import json
 from dataclasses import asdict
 
-from melliatlas.api.saturn_http import post_public_page
 from melliatlas.sources.providers.saturn.diagnostics import probe_one_page
+from melliatlas.sources.providers.saturn.http import post_public_page
 
 
 def main() -> int:

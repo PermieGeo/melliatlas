@@ -135,8 +135,8 @@ def test_offline_http_investigation_replaces_treatment_intersection_with_alterna
                         "bee_hazard_class": 2,
                     }
                 ]
-                assert any("Wind" in warning for warning in review["warnings"])
-                assert any("do not establish" in warning for warning in review["warnings"])
+                assert "DRIFT_NOT_EVALUATED" in review["warnings"]
+                assert "COVERAGE_NOT_ESTABLISHED" in review["warnings"]
                 assert any(TREATMENT_FIXTURE_RECORD_ID in event for event in body["decision_trace"])
                 assert any(
                     item["id"] == TREATMENT_FIXTURE_RECORD_ID
