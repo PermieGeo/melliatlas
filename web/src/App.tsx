@@ -336,6 +336,7 @@ export default function App() {
             <SaturnPanel
               locale={locale}
               country={country}
+              regionId={referenceNavigation.regionId}
               onNotices={setSaturnNotices}
             />
             <WeatherPanel locale={locale} country={country} point={point} />

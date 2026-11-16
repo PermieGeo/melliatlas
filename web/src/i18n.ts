@@ -15,7 +15,7 @@ const en = {
   language: "Language",
   referenceHeading: "Reference geography",
   referenceHelp:
-    "Verified region boundaries require an imported reference catalog; this does not affect the live sources below.",
+    "Choose a preloaded administrative region. Boundaries and districts are separate optional reference data.",
   referenceRegion: "Referenced region",
   referenceDistrict: "Supported district",
   referenceSelectRegion: "Select a region",
@@ -36,7 +36,7 @@ const en = {
   referenceVersion: "Reference version",
   liveSourcesHeading: "Live data sources",
   liveSourcesHelp:
-    "The country determines available providers. A missing region catalog does not prevent a manual Saturn read or weather for a selected map point.",
+    "Choose a region from the independent administrative directory for Saturn; weather uses a selected map point.",
   liveSourcesJump: "Open live data sources",
   liveSourcesAvailability:
     "Only providers enabled on the server will appear. Missing data cannot be interpreted as no risk.",
@@ -44,12 +44,16 @@ const en = {
   demoWorkflowUnavailable:
     "Fictional planning is disabled. Live sources remain usable without a scenario, territory or season.",
   saturnTitle: "Saturn: public treatment notices",
-  saturnCode: "Saturn subject code",
+  saturnCode: "Saturn region mapping",
+  saturnSelectRegion:
+    "Select a Russian region in the left panel before loading Saturn notices.",
   saturnCodeHint:
-    "Enter the provider's numeric subject code from the official portal. It is not a district or ISO code.",
+    "The backend resolves the selected region using verified Saturn mappings; an unmapped region is not queried.",
   saturnRead: "Read one live page",
   saturnNext: "Read next page",
   saturnLoading: "Reading the public portal…",
+  saturnUnmapped:
+    "This region has no verified Saturn subject mapping. No request was sent to Saturn.",
   saturnError: "Saturn read failed: {reason}. Data availability is unknown.",
   saturnCount:
     "Page {page} · {count} identified notices · {skipped} unrecognized entries",
@@ -213,7 +217,7 @@ const ru: Record<keyof typeof en, string> = {
   language: "Язык",
   referenceHeading: "Географический справочник",
   referenceHelp:
-    "Проверенные регионы требуют загруженного справочника. Это не мешает работе реальных источников ниже.",
+    "Выбери регион из предварительно загруженного административного справочника. Границы и районы подключаются отдельно.",
   referenceRegion: "Проверенный регион",
   referenceDistrict: "Поддерживаемый район",
   referenceSelectRegion: "Выберите регион",
@@ -236,7 +240,7 @@ const ru: Record<keyof typeof en, string> = {
   referenceVersion: "Версия справочника",
   liveSourcesHeading: "Реальные источники данных",
   liveSourcesHelp:
-    "Доступные источники зависят от страны. Отсутствие справочника регионов не мешает запросу Saturn по коду или погоды по точке на карте.",
+    "Для Сатурн выбери регион из независимого справочника; для погоды достаточно точки на карте.",
   liveSourcesJump: "Перейти к реальным источникам",
   liveSourcesAvailability:
     "Показываются только источники, включённые на сервере. Отсутствие данных не означает отсутствие риска.",
@@ -244,12 +248,16 @@ const ru: Record<keyof typeof en, string> = {
   demoWorkflowUnavailable:
     "Демонстрационный планировщик отключён. Для реальных источников сценарий, территория и сезон не требуются.",
   saturnTitle: "Сатурн: сообщения об обработках",
-  saturnCode: "Код субъекта в Сатурн",
+  saturnCode: "Сопоставление региона с Сатурн",
+  saturnSelectRegion:
+    "Сначала выбери регион России в левой панели, затем загрузи уведомления Сатурн.",
   saturnCodeHint:
-    "Укажи числовой код субъекта из официального портала. Это не код района и не ISO-код.",
+    "Backend сопоставляет регион с проверенным кодом Сатурн. Если соответствие отсутствует, запрос не выполняется.",
   saturnRead: "Загрузить одну страницу",
   saturnNext: "Загрузить следующую",
   saturnLoading: "Чтение публичного портала…",
+  saturnUnmapped:
+    "Для региона нет проверенного соответствия в Сатурн. Запрос на портал не отправлен.",
   saturnError: "Ошибка чтения Сатурн: {reason}. Доступность данных неизвестна.",
   saturnCount:
     "Страница {page} · найдено {count} сообщений · не распознано {skipped}",

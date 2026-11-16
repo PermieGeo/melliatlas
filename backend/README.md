@@ -4,7 +4,7 @@ The backend is a Python/FastAPI modular monolith under active implementation. Th
 
 An explicitly configured development-only investigation slice adds a fixed offline RU synthetic scenario, a deterministic two-or-more-stop proposal, and `POST`/`GET` investigation endpoints. No provider is active by default; choose `MELLIATLAS_SOURCE_PROVIDER=synthetic` for the offline demo. When enabled, the store is per-application memory. An opt-in PostGIS adapter can durably save completed snapshots after migration and explicit injection; no PostgreSQL driver, DB connection or persistence is configured by default. In-flight background tasks are not durable. It does not supply verified ecological screening, weather, or real site availability. An explicit V04-03 fictional ecology scenario connects the pure `agent` replanner to the same jobs/HTTP boundary and returns a typed observation and decision trace. The V01 scenario remains unchanged. A separate fictional V04-05 treatment scenario now uses offline normalized planned-spraying claims to withhold an intersecting candidate, select an illustrative alternative, and return typed notice dates, product claims and uncertainty. This is not real spraying, drift analysis or placement advice. A bounded V04-06 joint fixture now combines both checks before selecting the final proposed stops and preserves their separate observations. The full source/engine pipeline and real environmental acceptance remain pending.
 
-The territory service deliberately starts **without approved real reference data**. Region reads return `503` until a validated snapshot is injected or explicitly loaded at ASGI startup. Test fixtures are incomplete, fictional catalogs and must never be used to claim coverage of Russian federal subjects or Belarusian oblasts. Complete real regional/district inventories, licensed geometries, PostGIS persistence and independent spatial integration checks remain open requirements. Shapely/GEOS validates local polygon topology but does not prove that boundaries, CRS labels or administrative coverage are correct.
+The territory service remains unconfigured until a validated file snapshot or the optional preseeded PostgreSQL region directory is supplied. Region reads return `503` until a validated snapshot is injected or explicitly loaded at ASGI startup. Test fixtures are incomplete, fictional catalogs and must never be used to claim coverage of Russian federal subjects or Belarusian oblasts. The pinned ISO 3166-2 region-only seed supplies 83 RU and 7 BY entries but not verified complete borders, extra jurisdictions or pilot districts. Independent spatial integration checks remain open requirements. Shapely/GEOS validates local polygon topology but does not prove that boundaries, CRS labels or administrative coverage are correct.
 
 ## Source layout
 
@@ -59,3 +59,17 @@ adapter, with network I/O isolated in `api/weather_http.py`. It requires
 activate synthetic scenarios. Requests are explicit, 24-hour, UTC and local
 point-specific; they do not measure wind at the apiary or estimate pesticide
 transport. Open-Meteo free API use is non-commercial and requires attribution.
+
+
+## Preloaded, provider-independent region directory
+
+Apply `migrations/0002_region_directory.sql` to PostgreSQL and run the explicit
+`backend/scripts/bootstrap_regions.py` seed. The optional `postgres` dependency
+is required (`pip install -e './backend[dev]'` includes it for development).
+Set `MELLIATLAS_DATABASE_URL` before starting the API; without it, the existing
+fail-closed reference state remains. Region names, canonical identifiers and
+provenance live in `melliatlas_region`, separate from `melliatlas_source_saturn`.
+The latter contains only an archived verified mapping for Smolensk initially.
+For additional codes use `import_saturn_subjects.py` with a reviewed local JSON
+snapshot of the public Saturn subject list; no upstream fetch is automatic.
+See [installation](../docs/INSTALLATION.md) and the territory/persistence contracts.

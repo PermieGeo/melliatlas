@@ -61,3 +61,26 @@ manual-only RU source. Earlier statements in this register about there being
 no live connector describe the historical offline stage, not the latest
 optional code. Its current upstream compatibility and reuse rights remain
 unverified.
+
+## Independent first-order region seed and source-specific mappings
+
+- **Dataset:** `iso-codes` 4.18.0, ISO 3166-2 country subdivisions, from
+  https://salsa.debian.org/iso-codes-team/iso-codes, LGPL-2.1-or-later.
+  Localized Russian display names are maintained alongside each ISO identifier.
+- **Pinned coverage:** 83 ISO-coded RU subdivisions and 7 BY subdivisions
+  (including Minsk city). This is not equivalent to current national territorial
+  claims, legal boundaries or full municipal inventory. No geometry is supplied.
+- **Identity:** `melliatlas_region` stores canonical country-scoped region ID,
+  ISO code, names, reference version and snapshot/import date. It remains
+  independent of pesticide, weather and external publication sources.
+- **Saturn:** `melliatlas_source_saturn` maps canonical RU region IDs to
+  Saturn `subject_id` and optionally OKTMO, with capture metadata.
+  The operator-provided `bee-saturn_agent_algorithm.zip` reports Smolensk
+  `subject_id=55`, `oktmoCode=66000000` from 2026-11-11; only that mapping
+  is initially pinned. The archive does not contain the complete 86-row
+  `/beemaster/oktmo-subjects` response.
+- **Further mappings:** run the reviewed, offline import command on a saved
+  `/beemaster/oktmo-subjects` response. Only unique exact normalized names
+  match. Unmatched regions are reported, not assigned guessed numeric IDs.
+  No provider network calls occur during seeding or app startup. Independent
+  review of source access and permissions remains open.

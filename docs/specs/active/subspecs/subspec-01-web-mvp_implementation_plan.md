@@ -175,3 +175,50 @@ including source discovery, manual selection of a weather point, and RU-only
 Saturn visibility. Existing synthetic-plan and browser tests remain required.
 **Acceptance:** local frontend checks and a real, permitted provider response
 remain outstanding; no new actual regional catalog was imported.
+
+### W01 follow-up — persistent region names and source-specific Saturn mapping (R02, partial)
+
+**Authorization:** developer requested preloaded country-owned regions in a
+shared database table, with a separate Saturn mapping table and a single
+country/region selection in the browser. The geography catalog is independent
+of every provider. W01 acceptance remains pending; W02 district/boundary
+coverage is **not** implied.
+
+#### Public contracts and integration design
+
+- `TerritoryCatalog` and new `SourceTerritoryCodeLookup` in
+  `backend/src/melliatlas/territories/api.py`: typed async, canonical region IDs,
+  a provider-specific lookup that returns `None` for an unmapped region.
+- `PostgresRegionCatalog` in `backend/src/melliatlas/persistence/regions.py`
+  implements those ports through parameterized read-only database access.
+  The adapter is injected at `main.py` when `MELLIATLAS_DATABASE_URL` is explicit.
+  Do not auto-seed, migrate, or contact providers at ASGI startup. Missing
+  database returns a typed unavailable state; district depth and geometry
+  remain unsupported/missing for the ISO name-only seed.
+- `backend/migrations/0002_region_directory.sql` adds `melliatlas_region`
+  (country, canonical ID, ISO code, names, source/version/date) and the separate
+  RU-only FK table `melliatlas_source_saturn` (source subject/OKTMO mapping,
+  provenance). The first seed, `backend/reference/iso3166-2-regions.json`, pins
+  83 RU and 7 BY first-order ISO 3166-2 subdivisions from iso-codes 4.18.0.
+  It is not a verified full modern jurisdiction or polygon inventory.
+  `bootstrap_regions.py` validates existing rows and seeds the archived
+  Smolensk `55` mapping; an operator-reviewed offline import may add further
+  exact-name mappings from a separate Saturn `/oktmo-subjects` capture.
+- Existing `GET /api/v1/territories/regions?country=...` remains the browser
+  directory contract. `POST /api/v1/sources/saturn/treatments` now accepts
+  **either** `region_id` or the legacy numeric `region_code`; exactly one is
+  required. Unmapped region returns `409/SOURCE_REGION_UNMAPPED` before any
+  source transport. Country BY remains rejected before mapping. Responses
+  echo the canonical region ID for matching client requests.
+- `web/src/components/SaturnPanel.tsx` shares the selected canonical region
+  from the left navigation. It neither requests Saturn regions on mount nor
+  exposes numeric codes; switching region aborts/clears stale source notices.
+
+**Tests:** `backend/tests/contract/test_persistent_region_directory.py`
+asserts independent RU/BY seeded identities, protocol behavior, unavailable
+catalog semantics, safe mapping, provider gating, and HTTP statuses. Existing
+territory and Saturn HTTP contract tests preserve the injected in-memory
+reference path and numeric legacy request. `web/tests/saturn.test.tsx` checks
+canonical-ID posting, no-region disablement, and BY filtering. Manual Postgres
+integration, captured full Saturn directory reconciliation, and W02 district/
+geometry completion remain outstanding.

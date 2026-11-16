@@ -128,6 +128,7 @@ export interface SaturnNoticePage {
   source_id: string;
   country: CountryCode;
   region_code: number;
+  region_id: string | null;
   captured_at: string;
   page_number: number;
   next_page: number | null;

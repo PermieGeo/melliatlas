@@ -4,7 +4,7 @@
 
 - Python 3.12 or newer.
 - A local virtual environment and an installable development toolchain.
-- PostgreSQL/PostGIS will be required in later MVP-01 implementation steps; the initial health endpoint does not use a database.
+- PostgreSQL/PostGIS is optional for health and isolated tests, but required for durable preloaded administrative regions.
 
 From the repository root:
 
@@ -24,6 +24,45 @@ python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000
 ```
 
 The `uvicorn` command requires an ASGI server. FastAPI's development installation does not necessarily install it; install an ASGI server separately only after its dependency is approved, or run the included FastAPI ASGI tests without starting an external server. No public deployment is configured.
+
+## Preload independent RU/BY regions into PostgreSQL (optional)
+
+The optional database path holds **first-order administrative names and IDs**,
+not real polygon boundaries. PostgreSQL 15+ is recommended. Install the
+opt-in `postgres` extra (also included in `backend[dev]`) and create a local
+database through your normal PostgreSQL administration. The region directory is independent of the older completed-result/PostGIS
+migration. Apply `0001` separately only if you also use completed-result
+persistence. For a new empty PostgreSQL database, the region setup is:
+
+```bash
+python -m pip install -e './backend[postgres]'
+export MELLIATLAS_DATABASE_URL='postgresql://user:password@127.0.0.1:5432/melliatlas'
+psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0002_region_directory.sql
+python backend/scripts/bootstrap_regions.py
+export MELLIATLAS_SOURCE_PROVIDER=disabled
+export MELLIATLAS_SATURN_LIVE_ENABLED=true
+python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Use your own local credentials and **do not commit connection strings**. Apply migration 0002 and seed once; subsequent runs validate the same entries. The region seed is safe to rerun and rejects
+conflicting existing rows. It includes the 83 RU / 7 BY subdivisions identified
+in `iso-codes` 4.18.0, and only the archived Smolensk Saturn subject mapping.
+No coverage of disputed/other regions, municipal districts or valid borders is
+claimed. With no database configured, the previous explicit `503` remains.
+
+To import further Saturn mappings, first obtain and review an authorized JSON
+array from the separately documented `GET /backend/beemaster/oktmo-subjects`
+endpoint. The importer performs **offline exact-name matching only**:
+
+```bash
+python backend/scripts/import_saturn_subjects.py --file /path/to/reviewed-subjects.json --captured-at 2026-11-11T12:00:00+00:00
+```
+
+Replace the capture time with its **actual** timestamp. The imported numeric
+identifiers are stored separately in `melliatlas_source_saturn`; unmatched
+names are not guessed and conflicting mappings reject the transaction. The
+ordinary application never fetches region directories from Saturn. Source
+access and reuse rights require separate approval.
 
 ## Optional local reference loading (V03 partial)
 
@@ -75,9 +114,9 @@ python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000
 ```
 
 Use the Web client with country `RU`; the server advertises `saturn` only there.
-Enter the provider's own numeric subject identifier as seen in its portal and
-click **Read one live page**. No source-specific region code is inferred from
-MelliAtlas administrative IDs. The request sends one bounded POST to a pinned
+Select a country and a preloaded region in the left panel, then click
+**Read one live page**. The server resolves a verified numeric Saturn subject
+code from its separate mapping table; missing mappings return HTTP 409. The request sends one bounded POST to a pinned
 legacy public URL; status 403/404, changed response shape or inaccessible site
 returns an explicit error, never fabricated data. `BY` never offers or contacts
 Saturn. No automatic polling, rate-intensive scanning, scheduled crawling or

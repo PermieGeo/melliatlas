@@ -100,3 +100,14 @@ For a local live preview, explicitly enable the opt-in Saturn and weather
 adapters in the backend as documented above. The Saturn panel accepts only a
 manually verified upstream subject code; weather reads require a point selected
 on the map. For BY, Saturn is never offered, but weather can be available.
+
+
+### Preseeded country region navigation
+
+With the optional PostgreSQL region directory configured on the backend, the
+left panel offers independent RU/BY ISO-coded first-order regions. Saturn uses
+the selected canonical region ID and a server-owned mapping table; no manual
+numeric Saturn code is entered. Regions with no verified Saturn mapping return
+`409/SOURCE_REGION_UNMAPPED` without contacting the provider. The initial seed
+contains only the archived Smolensk source mapping. Region borders and pilot
+districts are not included in the name-only seed; their absence is explicit.
