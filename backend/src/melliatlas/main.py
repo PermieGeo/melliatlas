@@ -5,7 +5,9 @@ from pathlib import Path
 
 from melliatlas.api.app import AppSettings, create_app
 from melliatlas.api.composition import SourceProviderMode
+from melliatlas.api.reference_loader import read_iso_region_directory
 from melliatlas.persistence.geography import PostgisTerritoryCatalog
+from melliatlas.territories.region_directory import RegionDirectoryCatalog
 
 
 def _optional_path(env_name: str) -> Path | None:
@@ -51,13 +53,25 @@ def _database_regions() -> PostgisTerritoryCatalog | None:
 
 
 _regions = _database_regions()
+_reference_snapshot = _optional_path("MELLIATLAS_REFERENCE_SNAPSHOT")
+_reference_inventory = _optional_path("MELLIATLAS_REFERENCE_INVENTORY")
+if _reference_snapshot is not None or _reference_inventory is not None:
+    _catalog = None
+elif _regions is not None:
+    _catalog = _regions
+else:
+    _catalog = RegionDirectoryCatalog(
+        read_iso_region_directory(
+            Path(__file__).resolve().parents[2] / "reference" / "iso3166-2-regions.json"
+        )
+    )
 
 app = create_app(
-    territories=_regions,
+    territories=_catalog,
     source_region_lookup=_regions,
     settings=AppSettings(
-        reference_snapshot_path=_optional_path("MELLIATLAS_REFERENCE_SNAPSHOT"),
-        reference_inventory_path=_optional_path("MELLIATLAS_REFERENCE_INVENTORY"),
+        reference_snapshot_path=_reference_snapshot,
+        reference_inventory_path=_reference_inventory,
         source_provider=_source_provider_mode(),
         saturn_live_enabled=_saturn_enabled(),
         weather_live_enabled=_weather_enabled(),

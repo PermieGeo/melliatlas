@@ -48,3 +48,20 @@ to the independent region table and an RU-only country constraint. An unmapped
 region is not guessed, fabricated or queried remotely. The mapping's historical
 capture provenance is recorded; separate review is required before production
 use and bulk ingestion.
+
+
+
+## Bundled ISO region names (default local ASGI entry point)
+
+`RegionDirectoryCatalog` serves only pinned, provider-independent subdivision names
+loaded at startup by `api.reference_loader.read_iso_region_directory`. The reader
+validates source/version, all 83 RU and 7 BY canonical identities, names and
+uniqueness. It does not claim real boundaries, district coverage or source-specific
+Saturn mappings. `list_districts` returns unsupported depth (409 over HTTP);
+`get_geometry` returns missing (404). A dataset error prevents startup.
+`valid_on` is the local read date for this historical ISO name inventory, not
+a claim that administrative borders were independently verified that day.
+
+The explicit `create_app()` catalog-injection contract remains unchanged. When
+`MELLIATLAS_DATABASE_URL` is set, the PostGIS catalog takes precedence and
+failures do not silently downgrade to the bundled inventory.

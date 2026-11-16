@@ -30,9 +30,8 @@ const en = {
   headerContext: "Environmental source explorer",
   syntheticMode: "Synthetic source",
   setup: "01 / SETUP",
-  heading: "Explore sources around your apiary",
-  introduction:
-    "Read available treatment notices and weather forecasts. Fictional planning is a separate optional mode.",
+  heading: "Find nectar-rich foraging areas",
+  introduction: "Geospatial analytics for migratory beekeeping",
   syntheticTitle: "Fictional data only.",
   syntheticDisclaimer:
     "This illustrates the workflow, not a forecast, warning or safety clearance.",
@@ -127,7 +126,7 @@ const en = {
     "No verified regions are listed. This does not confirm complete geographic coverage.",
   availableRegions: "Regions from the current API reference are shown.",
   unavailableRegions:
-    "The region directory is not configured. Run the documented PostgreSQL seed before using the map.",
+    "Region directory unavailable. If PostgreSQL is configured, check its connection, migrations and seed.",
   season: "Placement period",
   seasonStart: "Season start",
   seasonEnd: "Season end",
@@ -258,9 +257,8 @@ const ru: Record<keyof typeof en, string> = {
   headerContext: "Исследование данных для пчеловода",
   syntheticMode: "Синтетический источник",
   setup: "01 / ПОДГОТОВКА",
-  heading: "Изучение данных вокруг пасеки",
-  introduction:
-    "Проверяйте доступные сообщения об обработках и прогноз погоды. Демонстрационное планирование — отдельный режим.",
+  heading: "Поиск медоносных угодий",
+  introduction: "Гео-аналитика для кочевого пчеловодства",
   syntheticTitle: "Только вымышленные данные.",
   syntheticDisclaimer:
     "Это демонстрация механизма, не прогноз, оповещение или подтверждение безопасности.",
@@ -359,7 +357,7 @@ const ru: Record<keyof typeof en, string> = {
     "Справочник не содержит подтверждённых регионов. Это не сведения о полном покрытии.",
   availableRegions: "Показаны регионы из текущего API-справочника.",
   unavailableRegions:
-    "Справочник регионов ещё не загружен в PostgreSQL. Требуется первоначальная настройка базы.",
+    "Справочник регионов недоступен. Если настроен PostgreSQL, проверьте подключение, миграции и данные.",
   season: "Период размещения",
   seasonStart: "Начало сезона",
   seasonEnd: "Конец сезона",

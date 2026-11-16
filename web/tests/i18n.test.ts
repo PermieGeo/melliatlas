@@ -2,6 +2,14 @@ import { expect, it } from "vitest";
 import { countryName, t } from "../src/i18n";
 
 it("localizes UI labels and future country codes without embedding a country-name switch", () => {
+  expect(t("ru", "heading")).toBe("Поиск медоносных угодий");
+  expect(t("ru", "introduction")).toBe(
+    "Гео-аналитика для кочевого пчеловодства",
+  );
+  expect(t("en", "heading")).toBe("Find nectar-rich foraging areas");
+  expect(t("en", "introduction")).toBe(
+    "Geospatial analytics for migratory beekeeping",
+  );
   expect(t("ru", "country")).toBe("Страна");
   expect(t("en", "country")).toBe("Country");
   expect(

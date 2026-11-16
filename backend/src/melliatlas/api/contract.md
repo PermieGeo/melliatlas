@@ -8,7 +8,7 @@
 - `GET /health` returns HTTP 200 and `{"status":"ok"}`. It measures process responsiveness, not readiness of references or databases.
 - `GET /openapi.json` exposes success and error response schemas, stable error codes, and applicable `404`, `409`, `422` and `503` statuses; `/docs` provides the framework API viewer.
 - `GET /api/v1/territories/countries` lists supported country codes RU/BY, **not** claims of loaded boundary data.
-- `GET /api/v1/territories/regions?country=RU|BY` returns typed first-order catalog entries when a validated reference has been injected.
+- `GET /api/v1/territories/regions?country=RU|BY` returns typed first-order catalog entries when a catalog has been injected. The standard ASGI entry point uses its pinned local name-only ISO list when no database is configured; it does not imply region boundaries or district coverage.
 - `GET /api/v1/territories/districts?region_id=...` returns the complete supported pilot district catalog or an explicit unsupported-depth error.
 - `GET /api/v1/territories/{territory_id}` returns one canonical territory.
 - `GET /api/v1/territories/geometry/{territory_id}` returns an available WGS84 GeoJSON geometry, reference ID, and coordinate system.
@@ -130,3 +130,4 @@ reported no treatments; `503` means the region mapping database is unavailable.
 The response includes `region_id` for a canonical-ID request, or null for the
 legacy code. Country BY is still rejected before mapping and transport.
 No source-specific identifier is leaked into the independent region catalog.
+

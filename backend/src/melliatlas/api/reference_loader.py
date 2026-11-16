@@ -1,16 +1,19 @@
 """Offline loading of normalized reference files and independent inventories."""
 
+from datetime import date
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from melliatlas.territories.api import (
     CountryCode,
     ExpectedInventory,
+    GeometryStatus,
     ReferenceManifest,
     ReferenceSnapshot,
     Territory,
     TerritoryGeometry,
+    TerritoryKind,
 )
 
 
@@ -66,3 +69,65 @@ def write_reference_report(
         "district_count": sum(item.kind.value == "district" for item in snapshot.territories),
         "geometry_count": len(snapshot.geometries),
     }
+
+
+class _IsoSubdivision(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    id: str
+    country: CountryCode
+    iso_code: str
+    name: str
+    name_en: str
+
+
+class _IsoDirectory(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    source: str
+    version: str
+    source_uri: str
+    license: str
+    scope_note: str
+    regions: list[_IsoSubdivision] = Field(min_length=1)
+
+
+def read_iso_region_directory(path: Path) -> tuple[Territory, ...]:
+    """Load the pinned source catalog; no claim about boundaries or current completeness."""
+    document = _IsoDirectory.model_validate_json(path.read_bytes())
+    if (document.source, document.version) != ("iso-codes", "4.18.0"):
+        raise ValueError("Unexpected ISO region dataset version")
+    if not document.source_uri or not document.license or not document.scope_note:
+        raise ValueError("Region source provenance is missing")
+    if len(document.regions) != 90 or {
+        country: sum(item.country is country for item in document.regions)
+        for country in CountryCode
+    } != {CountryCode.RU: 83, CountryCode.BY: 7}:
+        raise ValueError("Incomplete pinned ISO subdivision list")
+    if (
+        len({item.id for item in document.regions}) != 90
+        or len({item.iso_code for item in document.regions}) != 90
+    ):
+        raise ValueError("Duplicate ISO region identities")
+    for item in document.regions:
+        suffix = item.id.rsplit(":", 1)[-1]
+        if (
+            item.id != f"{item.country.value.lower()}:region:{suffix}"
+            or item.iso_code != f"{item.country.value}-{suffix.upper()}"
+            or not item.name.strip()
+            or not item.name_en.strip()
+        ):
+            raise ValueError("Invalid ISO region identity or name")
+    return tuple(
+        Territory(
+            id=item.id,
+            country=item.country,
+            kind=TerritoryKind.REGION,
+            name=item.name,
+            parent_id=None,
+            reference_id=f"iso-codes:{document.version}",
+            valid_on=date.today(),
+            geometry_status=GeometryStatus.MISSING,
+        )
+        for item in document.regions
+    )

@@ -6,12 +6,14 @@ features:
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
       - backend/src/melliatlas/territories/api.py#TerritoryCatalog
+      - backend/src/melliatlas/territories/region_directory.py#RegionDirectoryCatalog
       - backend/src/melliatlas/persistence/regions.py#PostgresRegionCatalog
       - backend/src/melliatlas/persistence/geography.py#PostgisTerritoryCatalog
     test_files:
       - backend/tests/contract/test_territory_api.py
       - backend/tests/contract/test_reference_startup.py
       - backend/tests/contract/test_persistent_region_directory.py
+      - backend/tests/contract/test_bundled_region_directory.py
       - backend/tests/contract/test_administrative_geometry.py
   - feature_id: GEOGRAPHY.BY_REGIONS
     implementation_status: partial
@@ -19,12 +21,14 @@ features:
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
       - backend/src/melliatlas/territories/catalog.py#InMemoryTerritoryCatalog
+      - backend/src/melliatlas/territories/region_directory.py#RegionDirectoryCatalog
       - backend/src/melliatlas/persistence/regions.py#PostgresRegionCatalog
       - backend/src/melliatlas/persistence/geography.py#PostgisTerritoryCatalog
     test_files:
       - backend/tests/contract/test_territory_http.py
       - backend/tests/contract/test_reference_startup.py
       - backend/tests/contract/test_persistent_region_directory.py
+      - backend/tests/contract/test_bundled_region_directory.py
       - backend/tests/contract/test_administrative_geometry.py
   - feature_id: GEOGRAPHY.PILOT_DISTRICTS
     implementation_status: partial
@@ -241,4 +245,5 @@ features:
       - web/tests/workflow.test.tsx
       - web/tests/reference-geometry.test.ts
       - web/tests/reference-navigation.test.tsx
+
 

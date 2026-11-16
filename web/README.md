@@ -92,8 +92,8 @@ The country selector and on-demand live-source panels do **not** require fiction
 investigation metadata. With the default `MELLIATLAS_SOURCE_PROVIDER=disabled`,
 the fictional territory, scenario and season controls are not rendered; an
 explicit status explains the unavailable demo and links to the live sources.
-A missing validated region catalog still produces `503` and leaves geographic
-region selection unavailable. This must not be replaced with fabricated
+The standard local backend provides its pinned name-only RU/BY region list even
+without PostgreSQL. An unavailable configured database still produces `503`. This must not be replaced with fabricated
 administrative regions or assumed Saturn subject-code mappings.
 
 For a local live preview, explicitly enable the opt-in Saturn and weather
@@ -129,8 +129,9 @@ source-page and weather buttons, UUID lookup, and source-jump link are not
 shown in the main user workflow; the fictional scenario remains collapsed and
 opt-in. No private coordinates are persisted in the browser.
 
-The API cannot manufacture administrative geography: run the PostgreSQL
+The API cannot manufacture administrative boundaries or districts: run the PostgreSQL
 `0002` seed and the separately reviewed `0003` ADM1/ADM2 boundary imports
 from `docs/INSTALLATION.md` before evaluating map zoom, district selectors,
 or the area action. Without these imports the form explains that the required
 reference data is missing rather than falling back to synthetic geography.
+

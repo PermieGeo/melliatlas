@@ -4,7 +4,7 @@
 
 - Python 3.12 or newer.
 - A local virtual environment and an installable development toolchain.
-- PostgreSQL/PostGIS is optional for health and isolated tests, but required for durable preloaded administrative regions.
+- PostgreSQL/PostGIS is optional for health, the bundled name-only RU/BY region list, and isolated tests; it is required for reviewed administrative boundaries and districts.
 
 From the repository root:
 
@@ -24,6 +24,12 @@ python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000
 ```
 
 The `uvicorn` command requires an ASGI server. FastAPI's development installation does not necessarily install it; install an ASGI server separately only after its dependency is approved, or run the included FastAPI ASGI tests without starting an external server. No public deployment is configured.
+
+## Region names without a database
+
+The standard `melliatlas.main:app` entry point loads the pinned `backend/reference/iso3166-2-regions.json` when `MELLIATLAS_DATABASE_URL` is unset. This provides 83 Russian and 7 Belarusian first-order names immediately, even with fictional sources disabled. It does **not** include ADM1 geometry, ADM2 districts, approved present-day coverage, or Saturn region-ID mappings; requesting districts returns `409` and geometry returns `404`. A weather or place analysis needing a boundary remains unavailable. The startup loader rejects a modified, incomplete or inconsistent pinned file instead of silently inventing entries.
+
+To make the area map and district selector useful, configure PostgreSQL/PostGIS and run the explicit migrations, region seed, and reviewed ADM1 then ADM2 imports below. Restart the server after setting `MELLIATLAS_DATABASE_URL`. A configured database that is unavailable or incompletely migrated reports an error; the backend does not hide it by switching silently to the bundled directory.
 
 ## Preload independent RU/BY regions into PostgreSQL (optional)
 
@@ -48,7 +54,7 @@ Use your own local credentials and **do not commit connection strings**. Apply m
 conflicting existing rows. It includes the 83 RU / 7 BY subdivisions identified
 in `iso-codes` 4.18.0, and only the archived Smolensk Saturn subject mapping.
 No coverage of disputed/other regions, municipal districts or valid borders is
-claimed. With no database configured, the previous explicit `503` remains.
+claimed. With no database configured, the pinned name-only directory is used instead of a `503` for region reads.
 
 ### Import independent administrative boundaries and districts (manual, reviewed)
 
@@ -237,3 +243,4 @@ and is RU-only. Both sources are disabled by default. Forecast coordinates
 are transmitted to Open-Meteo after the button click, even when the map tile
 layer is disabled. Do not enable the free endpoint for commercial deployment
 without reviewing the provider's separate commercial terms and attribution.
+
