@@ -23,3 +23,13 @@ A completed V04-03 snapshot includes the optional typed `ReplanResult` alongside
 ## V04-06 joint fictional screening (partial)
 
 For the explicit combined fixture, jobs constructs `agent.CombinedPlanner` from the existing injected ecology/treatment factories and records both `replanning` and `treatment_review` in the same completed snapshot. Its top-level plan equals `replanning.plan` after both assessments; only ecology-`CAUTION` candidates outside the reported near/intersecting field screen may be proposed. Unavailable collaborators, missing treatment observations, invalid identities or callback failures produce `FAILED` without a plan; fewer than two jointly qualified sites complete with `NO_FEASIBLE_ALTERNATIVE`. The completed JSON reader validates consistent final outcomes and plans, source-evidence links, screening coverage for the same assessed candidates when a plan is present (and no unaccounted ecological observation in no-plan results), and absence of ecological exclusions/unknowns and treatment-avoided sites from a proposal. Historical V01/V04-03/V04-05 payloads remain readable. No live treatment feed, weather-derived drift, or real PostGIS acceptance is claimed.
+
+
+## Capability layout
+
+`api.py` declares the `ScenarioProvider`, `InvestigationService`,
+`CompletedInvestigationStore` and planner-factory Protocols, and exposes typed
+lifecycle values from `models.py`. The stateful development service is in
+`memory.py`; `snapshot_codec.py` and `codec_fields.py` own serialization and
+untrusted-payload validation. Only the package facade exports concrete services
+and codec functions. No implementation bucket is part of the public interface.

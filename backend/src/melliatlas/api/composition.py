@@ -7,10 +7,10 @@ from enum import StrEnum
 from functools import partial
 from typing import TYPE_CHECKING
 
-from melliatlas.agent.api import DeterministicPlanner, TreatmentPlanner
-from melliatlas.analyzers.api import find_ecology_overlaps, screen_treatment_notices
-from melliatlas.jobs.api import EcologyPlannerFactory, TreatmentPlannerFactory
-from melliatlas.planning.api import (
+from melliatlas.agent import DeterministicPlanner, TreatmentPlanner
+from melliatlas.analyzers import find_ecology_overlaps, screen_treatment_notices
+from melliatlas.jobs import EcologyPlannerFactory, TreatmentPlannerFactory
+from melliatlas.planning import (
     CandidateSite,
     SiteAssessment,
     SyntheticScenario,
@@ -27,7 +27,7 @@ from melliatlas.territories.api import CountryCode
 
 if TYPE_CHECKING:
     from melliatlas.sources.providers.open_meteo.settings import WeatherTransportSettings
-    from melliatlas.sources.providers.synthetic.api import SyntheticFixtureProvider
+    from melliatlas.sources.providers.synthetic import SyntheticFixtureProvider
 
 
 class SourceProviderMode(StrEnum):
@@ -83,7 +83,7 @@ def compose_sources(mode: SourceProviderMode) -> SourceComposition:
     if mode is SourceProviderMode.DISABLED:
         return SourceComposition(provider=_DisabledScenarioProvider())
     if mode is SourceProviderMode.SYNTHETIC:
-        from melliatlas.sources.providers.synthetic.api import SyntheticFixtureProvider
+        from melliatlas.sources.providers.synthetic import SyntheticFixtureProvider
 
         provider = SyntheticFixtureProvider()
         return SourceComposition(
@@ -98,7 +98,7 @@ def compose_saturn_reader(enabled: bool) -> TreatmentNoticeReader | None:
     """Create the opt-in RU-only live transport, separate from scenario selection."""
     if not enabled:
         return None
-    from melliatlas.sources.providers.saturn.api import SaturnPublicTreatmentReader
+    from melliatlas.sources.providers.saturn import SaturnPublicTreatmentReader
     from melliatlas.sources.providers.saturn.http import post_public_page
 
     return SaturnPublicTreatmentReader(post_public_page)
@@ -110,7 +110,7 @@ def compose_weather_reader(
     """Opt into Open-Meteo reads without creating a global source registry."""
     if not enabled:
         return None
-    from melliatlas.sources.providers.open_meteo.api import OpenMeteoForecastReader
+    from melliatlas.sources.providers.open_meteo import OpenMeteoForecastReader
     from melliatlas.sources.providers.open_meteo.http import get_public_forecast
     from melliatlas.sources.providers.open_meteo.settings import SOURCE_URI
 

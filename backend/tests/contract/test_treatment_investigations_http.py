@@ -10,11 +10,11 @@ from uuid import UUID
 import httpx
 import pytest
 
-from melliatlas.agent.api import TreatmentInspector, TreatmentPlanner
-from melliatlas.analyzers.api import screen_treatment_notices
+from melliatlas.agent import TreatmentInspector, TreatmentPlanner
+from melliatlas.analyzers import screen_treatment_notices
 from melliatlas.api.app import AppSettings, create_app
 from melliatlas.api.composition import SourceProviderMode
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InMemoryInvestigationService,
     InvestigationOutcomeKind,
     InvestigationRequest,
@@ -24,7 +24,7 @@ from melliatlas.jobs.api import (
     deserialize_completed_snapshot,
     serialize_completed_snapshot,
 )
-from melliatlas.planning.api import (
+from melliatlas.planning import (
     CandidateSite,
     EcologyEvidenceKind,
     EcologyZone,
@@ -34,7 +34,7 @@ from melliatlas.planning.api import (
     TreatmentProximity,
     TreatmentScreening,
 )
-from melliatlas.sources.providers.synthetic.api import (
+from melliatlas.sources.providers.synthetic import (
     SYNTHETIC_TREATMENT_SCENARIO_ID,
     SyntheticFixtureProvider,
 )

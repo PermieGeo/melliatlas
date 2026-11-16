@@ -25,8 +25,8 @@ root may choose a provider explicitly and inject its collaborators into jobs; or
 peer capabilities must depend on `sources.api` contracts rather than concrete adapters.
 The current `disabled` provider mode returns no scenarios and never silently falls back
 to synthetic evidence. Provider-specific behavior and limitations are documented
-in the module docstrings of `providers/synthetic/api.py` and
-`providers/saturn/api.py`. No network or PostGIS source ingestion is enabled by
+in `providers/synthetic/provider.py` and
+`providers/saturn/api.py`; concrete adapters are exported from their provider package facades. No network or PostGIS source ingestion is enabled by
 this refactoring.
 
 ## Opt-in public treatment-notice reads (experimental)
@@ -64,3 +64,33 @@ flag are both configured; missing configuration fails closed. The 24-hour UTC
 wire contract and source HTTP origin are not database overrides. No advection, spray drift, safety rating, automatic refresh or cached forecasts
 are provided. This source does not require a synthetic scenario and is usable
 independently of the country-specific Saturn notice reader.
+
+## Optional bounded district and date filtering
+
+`TreatmentNoticeReader.read_page` accepts optional provider district code,
+start date and end date. The Saturn adapter includes a verified district code
+in upstream `beekeperSearchFilter.district` and date-only bounds in
+`startDateUpdateMap` and `endDateUpdateMap`. It never infers source IDs from
+canonical district or region codes. A filtered page is partial evidence and
+its actual upstream filtering semantics have not been independently verified.
+For the experimental Saturn reader, a date range can span at most one calendar
+year (inclusive endpoints, Feb 29 clamps to Feb 28). One request asks for 10
+source records; at most pages 0 through 9 can be read, giving a maximum of 100
+source records per explicit filter. The HTTP result signals a provider count
+above the cap or an additional page past the cap. It never claims complete
+coverage from a capped response or deduplicated notice count.
+
+## One-shot Smolensk district directory review
+
+`providers/saturn/districts.py` validates a bounded JSON array of source-owned
+`id` and `name` pairs from the historical `beemaster/district/55` endpoint.
+`providers/saturn/http.py` pins that endpoint and offers a single manual GET
+with a size limit, no redirects or retries. The operator saves the bytes once
+using `capture_saturn_districts.py`, then reviews a separate, read-only
+`import_saturn_districts.py` mapping proposal against imported PostGIS ADM2
+districts. No network operation is triggered by ordinary territory navigation.
+A provider ID enters the durable source-specific mapping only after explicit
+operator approval of the captured bytes; no source ID is inferred from a
+canonical territory ID. The existing Saturn reader then sends the approved
+source ID as `beekeperSearchFilter.district` for the user's manual request.
+External endpoint compatibility and use rights remain independently gated.

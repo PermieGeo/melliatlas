@@ -42,9 +42,9 @@ NETWORK_IMPORTS = frozenset(
 # allowed to construct a concrete provider. Domain and route modules still use APIs.
 COMPOSITION_ROOT_PROVIDER_IMPORTS = frozenset(
     {
-        "melliatlas.sources.providers.synthetic.api",
-        "melliatlas.sources.providers.saturn.api",
-        "melliatlas.sources.providers.open_meteo.api",
+        "melliatlas.sources.providers.synthetic",
+        "melliatlas.sources.providers.saturn",
+        "melliatlas.sources.providers.open_meteo",
         "melliatlas.sources.providers.saturn.http",
         "melliatlas.sources.providers.open_meteo.http",
         "melliatlas.sources.providers.open_meteo.settings",
@@ -156,11 +156,11 @@ def find_violations(source_root: Path) -> list[str]:
                     )
                     or (
                         source_module == "melliatlas.api.providers.saturn.routes"
-                        and imported == "melliatlas.sources.providers.saturn.api"
+                        and imported == "melliatlas.sources.providers.saturn"
                     )
                     or (
                         source_module == "melliatlas.api.providers.open_meteo.routes"
-                        and imported == "melliatlas.sources.providers.open_meteo.api"
+                        and imported == "melliatlas.sources.providers.open_meteo"
                     )
                 )
                 if not composition_import:

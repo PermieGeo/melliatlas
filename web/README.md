@@ -1,8 +1,8 @@
 # Web — beekeeper workspace
 
-`web/` is the **only** MelliAtlas browser client. It is a React 19 / TypeScript / Leaflet Vite application. There is no operator/Admin UI, no background source collection and no browser telemetry. Opt-in, manual-only live Saturn and weather reads are available in the current experimental UI.
+`web/` is the **only** MelliAtlas browser client. It is a React 19 / TypeScript / Leaflet Vite application. There is no operator/Admin UI, no background source collection and no browser telemetry. Opt-in live Saturn reads and automatic, territory-selected weather previews are available in the current experimental UI.
 
-The W01 workspace now starts with country-scoped live source access, independent of the fictional investigation. Where enabled, Saturn accepts a manually verified upstream subject code and Open-Meteo accepts a point chosen on the map. An optional fictional scenario permits a separate FastAPI investigation with a bounded season, timeline and attributed ecology/treatment findings. Source claims and synthetic geometric screening are not confirmed spray events or safe-placement assessments. Country, scenario and region controls read the API; when validated RU/BY catalogs are missing, the app displays the HTTP `503` limitation instead of inventing regional coverage.
+The W01 workspace now starts with country-scoped live source access, independent of the fictional investigation. Where enabled, Saturn requires a reviewed district mapping and Open-Meteo receives a validated point inside the selected territory. An optional fictional scenario permits a separate FastAPI investigation with a bounded season, timeline and attributed ecology/treatment findings. Source claims and synthetic geometric screening are not confirmed spray events or safe-placement assessments. Country, scenario and region controls read the API; when validated RU/BY catalogs are missing, the app displays the HTTP `503` limitation instead of inventing regional coverage.
 
 ## Run locally
 
@@ -51,7 +51,7 @@ Frontend unit tests and browser checks are offline API-mocked. The backend fixtu
 
 ### Country, language and synthetic scenarios
 
-The country preference is RU when the API advertises it, otherwise the first returned country. Country names are rendered using the selected locale and `Intl.DisplayNames`; selecting any future backend-supported country does not require browser-side `if (code === ...)` branches. RU and EN labels are available independently of the chosen country. The English source-report/evidence wording is preserved as received and is not presented as a translated provider claim.
+The country preference is the last validated public country ID, then RU when offered, otherwise the first returned country. Country names are rendered using the selected locale and `Intl.DisplayNames`; selecting any future backend-supported country does not require browser-side `if (code === ...)` branches. RU and EN labels are available independently of the chosen country. The English source-report/evidence wording is preserved as received and is not presented as a translated provider claim.
 
 The client calls `GET /api/v1/investigations/scenarios?country=...` to list only executable fictional scenarios and their supported territory and season range. No synthetic territory IDs, scenario IDs or fixed fixture dates are compiled into the UI. A country without executable scenarios disables submission but still permits reopening a previously completed investigation. Validated region reference coverage remains a separate concern; a fictional scenario does not prove real boundaries.
 
@@ -66,82 +66,68 @@ The reference region/district navigation is independent of synthetic scenario se
 
 ## Experimental public Saturn preview (RU only)
 
-When the backend explicitly sets `MELLIATLAS_SATURN_LIVE_ENABLED=true`, the
-client discovers the public Saturn source for RU and offers a manual one-page
-read by the upstream numeric subject code. The same UI does not expose Saturn
-for BY or other countries. Returned unverified notices and available source
-polygons appear independently of the offline synthetic investigation. Empty or
-failed requests prove neither absence of spraying nor complete source coverage;
-there is no current-date filtering or automatic crawling. Provider compatibility
-and reuse terms require independent validation before public deployment.
+When `MELLIATLAS_SATURN_LIVE_ENABLED=true`, users may request one page of
+unverified Saturn notices for the currently selected canonical RU district.
+Each district ID must have a separately operator-reviewed Saturn provider code
+stored in `melliatlas_source_saturn_district` after migration `0005`; no region
+fallback is allowed. A manual date interval defaults to local today through
+one calendar month, with a server-enforced maximum of 31 days. This maps to
+candidate upstream `UpdateMap` date filters, not verified spraying dates.
+Missing mappings return 409, and no network request occurs. Source completeness,
+filter compatibility and access/reuse permission remain unverified; no
+background crawling or safety conclusion is provided.
 
 ## Live on-demand weather preview
 
-With `MELLIATLAS_WEATHER_LIVE_ENABLED=true` on the backend, select any map point
-and click **Read 24-hour forecast**. Weather displays forecast 10-m wind,
-reported direction, gusts and precipitation separately from Saturn notices and
-fictional investigation results. This forwards the selected point to
-Open-Meteo via the server; no automatic polling, browser persistence or drift
-safety judgment occurs. A disabled/unreachable source is not assumed to have
-zero wind. Displayed data are attributed to Open-Meteo (CC BY 4.0); the free
-endpoint is licensed for non-commercial use only.
+With `MELLIATLAS_WEATHER_LIVE_ENABLED=true`, the browser automatically reads
+one 24-hour Open-Meteo forecast whenever a validated territory and a point
+inside its approved polygon are available. Forecast wind, gusts, direction
+and precipitation are displayed in an inline panel above the map (without a
+new browser window). A click inside the selected boundary can change the
+forecast point, which is never stored. There is no scheduled polling or
+pesticide-drift assessment. The free endpoint requires appropriate attribution
+and non-commercial use.
 
 ## Live-first navigation when no reference catalog is loaded
 
-The country selector and on-demand live-source panels do **not** require fictional
-investigation metadata. With the default `MELLIATLAS_SOURCE_PROVIDER=disabled`,
-the fictional territory, scenario and season controls are not rendered; an
-explicit status explains the unavailable demo and links to the live sources.
-The standard local backend provides its pinned name-only RU/BY region list even
-without PostgreSQL. An unavailable configured database still produces `503`. This must not be replaced with fabricated
-administrative regions or assumed Saturn subject-code mappings.
-
-For a local live preview, explicitly enable the opt-in Saturn and weather
-adapters in the backend as documented above. The Saturn panel accepts only a
-manually verified upstream subject code; weather reads require a point selected
-on the map. For BY, Saturn is never offered, but weather can be available.
-
-
-### Preseeded country region navigation
-
-With the optional PostgreSQL region directory configured on the backend, the
-left panel offers independent RU/BY ISO-coded first-order regions. Saturn uses
-the selected canonical region ID and a server-owned mapping table; no manual
-numeric Saturn code is entered. Regions with no verified Saturn mapping return
-`409/SOURCE_REGION_UNMAPPED` without contacting the provider. The initial seed
-contains only the archived Smolensk source mapping. Region borders and pilot
-districts are not included in the name-only seed; their absence is explicit.
-
+Country and public source discovery are independent of fictional investigation
+metadata. A local server with no imported ADM1/ADM2 geometry offers country and
+region-name navigation but cannot construct a verified district selection or
+an automatic representative weather location. Configure reviewed PostGIS
+boundaries and the explicit live-weather gate to enable the geographic
+forecast; configure reviewed Saturn district mappings and its gate for a
+manual district read. No source identifiers or boundaries are inferred.
 
 ## Area-first beekeeper workflow (W01 partial)
 
-Select a country, then an independently seeded region and optional reviewed
-district. The map always loads OpenStreetMap tiles; their host receives tile requests.
-The last viewed map center and zoom are saved to browser-local `localStorage`
-(`melliatlas.map.viewport.v1`) and restored on reopening, even when no territory
-is selected. Selected apiary points are not separately stored. The map fits a
-selected region or district **only when its reviewed ADM1/ADM2 boundary is
-available from the API**; changing territory takes priority over a previously
-saved camera or an earlier synthetic plan. Large regions require a more local
-district or a click inside the reviewed boundary before the **Analyze selected
-area** action becomes available.
+Select a country, region and reviewed district. Public country/region/district
+IDs are stored in browser `localStorage` (`melliatlas.territory.selection.v1`)
+and restored only after each API catalog validates them. The independent map
+camera uses `melliatlas.map.viewport.v1`. Point coordinates are never persisted.
+A valid WGS84 polygon is required before the map fits the selected territory,
+chooses a representative point inside it and automatically loads the 24-hour
+weather preview above the map. The map and timeline/evidence panels extend to
+the right edge, with navigation controls in a left sidebar.
 
-The one action fetches enabled, country-scoped live sources: RU-only Saturn
-and a point-specific Open-Meteo forecast. The result is explicitly preliminary:
-Saturn currently returns only **one region-wide page**, not a full inventory
-for the selected square, and no drift or safety model is executed. An empty
-provider response must not be interpreted as proof of safety. The old direct
-source-page and weather buttons, UUID lookup, and source-jump link are not
-shown in the main user workflow; the fictional scenario remains collapsed and
-opt-in. Only the map viewport, not the selected apiary point or investigation payload,
-is retained in browser storage. The visible camera center may nevertheless be
-location-sensitive; clear this site's stored data to discard it.
+The **Analyze selected area** action is available only for a reviewed district
+with a validated boundary and a date range of at most 31 days. The backend
+resolves its Saturn provider district code from an independently reviewed
+mapping; an unmapped district never silently triggers a region-wide read. The
+date filter defaults to today through one calendar month. All findings remain
+partial source claims, not confirmation of spraying, coverage or site safety.
 
-The API cannot manufacture administrative boundaries or districts: run the PostgreSQL
-`0002` seed and the separately reviewed `0003` ADM1/ADM2 boundary imports
-from `docs/INSTALLATION.md` before evaluating region/district map zoom, district
-options, or the area action. The browser already issues a cancellable district
-request when a region is selected, but the name-only ISO seed returns HTTP 409
-instead of fictional district entries. Without these imports the form explains that the required
-reference data is missing rather than falling back to synthetic geography.
 
+## Compact live-data workspace (W01 follow-up)
+
+The top header displays the beekeeper-oriented product title and tagline. The
+left sidebar keeps only geographic selection, Saturn date controls, and an
+explicitly enabled fictional-demo disclosure. The optional starting point is
+explained in a contrasting panel directly above the taller map. Open-Meteo
+renders its first UTC forecast hour immediately, with the other hours inside
+an accessible native details disclosure. Saturn zero-record responses receive
+an explicit partial/unknown-coverage message, never a statement of safety.
+The honey-orange/charcoal palette uses CSS styles, not map model constants.
+Manual Saturn dates auto-adjust their opposite bound if a change would exceed
+the backend's 31-day request limit. A limited Smolensk ADM2 localization uses
+an optional server-provided `name_ru` while English still uses the unchanged
+source `name`; apply migration `0006` before the localized DB-backed API runs.

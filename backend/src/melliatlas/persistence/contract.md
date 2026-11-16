@@ -1,6 +1,6 @@
 # PostGIS Completed Investigation Store Contract — V02 (partial)
 
-`PostgisCompletedInvestigationStore` implements the jobs-owned `CompletedInvestigationStore` protocol. A caller injects a DB-API-compatible PostgreSQL connection factory; the adapter does not import a driver, read credentials, open implicit connections at application startup, or install dependencies. Each operation owns and closes its connection and cursor.
+`persistence/postgis_store.py` owns `PostgisCompletedInvestigationStore`, which implements the jobs-owned `CompletedInvestigationStore` protocol. A caller injects a DB-API-compatible PostgreSQL connection factory; the adapter does not import a driver, read credentials, open implicit connections at application startup, or install dependencies. Each operation owns and closes its connection and cursor.
 
 `save` accepts only `COMPLETED` snapshots with a domain outcome, inserts the immutable JSONB payload and the selected stop points as an `EPSG:4326` PostGIS `MULTIPOINT` geometry, and commits once. A duplicate UUID cannot overwrite history. A failed insert or commit is rolled back; the jobs service then reports `FAILED` rather than exposing a completed response. `load` returns a validated typed snapshot from a fresh connection or `None` for a missing UUID. Database errors are wrapped as `InvestigationStorageError`, without leaking SQL or credentials through HTTP.
 
@@ -61,3 +61,33 @@ reference identity, region parent, name, provenance, validity anchor and actual
 PostGIS geometry match. Any conflicting row rolls back the batch. The database
 verifier counts exact reference IDs, checks spatial/CRS validity and district
 parent presence, but does not certify present-day authoritative boundaries.
+
+## Independently reviewed district identity
+
+`PostgresRegionCatalog.find_district_code` reads
+`melliatlas_source_saturn_district` created by migration `0005`. This table
+is intentionally unseeded. The lookup joins existing canonical district
+geometry, its parent region and the separately verified Saturn subject ID;
+an absent mapping cannot turn into an unfiltered provider request.
+
+A Smolensk-only operator workflow captures the provider directory using one
+bounded read of `beemaster/district/55` and separately previews imported
+canonical ADM2 IDs against the captured district IDs and names. The preview
+is read-only; insertion requires an explicit capture SHA-256 approval. The
+importer accepts only unique one-to-one exact-normalized names or separately
+reviewed explicit overrides, checks the subject mapping (`55`) and rejects
+conflicting existing rows. Unmatched entries remain unmapped. No mapping
+is generated from a geoBoundaries `shapeID` or a guessed name/code, and no
+remote lookups occur during application startup or source reads. Without a
+successful reviewed import, the existing source route continues to fail closed.
+
+## Optional district display localization
+
+Migration `0006_smolensk_district_names.sql` adds a nullable `name_ru` column
+to the existing independent administrative geometry table and seeds only
+explicitly listed Smolensk district translations when English names match.
+The read-only `PostgisTerritoryCatalog` exposes the optional translation on
+`Territory` without changing the original `name`, canonical ID, province,
+geometry, reference version or source authority. API consumers choose a locale;
+missing translations fall back to source names. This is a UI display field,
+not a new verified administrative inventory or Saturn identity.

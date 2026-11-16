@@ -1,26 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  listExternalSources,
-  readSaturnPage,
-  readWeatherForecast,
-} from "../api/client";
+import { listExternalSources, readSaturnPage } from "../api/client";
+import { SATURN_PAGE_COUNT, SATURN_RECORD_LIMIT } from "../api/types";
 import type {
   CountryCode,
   ExternalSource,
-  Position,
   SaturnNotice,
   SaturnNoticePage,
-  WeatherForecast,
 } from "../api/types";
 import { t } from "../i18n";
 import type { Locale, TranslationKey } from "../i18n";
 
-/** An explicit user action, scoped to one geographic selection and its weather point. */
+/** One explicit district-scoped Saturn read; weather loads separately above the map. */
 export interface AreaAnalysisRequest {
   sequence: number;
   country: CountryCode;
   regionId: string;
-  point: Position;
+  districtId: string;
+  dateStart: string;
+  dateEnd: string;
 }
 
 interface Props {
@@ -35,10 +32,10 @@ type ReadResult<T> = { kind: "ok"; data: T } | { kind: "error"; code: string };
 interface Report {
   request: AreaAnalysisRequest;
   saturn: ReadResult<SaturnNoticePage> | null;
-  weather: ReadResult<WeatherForecast> | null;
 }
 
 /** Never treat missing upstream data as evidence that treatments or risks are absent. */
+
 export function LiveAreaAnalysis({
   country,
   regionId,
@@ -104,37 +101,30 @@ export function LiveAreaAnalysis({
     }
     const hasSaturn =
       country === "RU" && sources.some((source) => source.id === "saturn");
-    const hasWeather = sources.some((source) => source.id === "open-meteo");
-    if (!hasSaturn && !hasWeather) return () => controller.abort();
+    if (!hasSaturn) {
+      setReport({ request, saturn: null });
+      return () => controller.abort();
+    }
     setBusy(true);
-    void Promise.all([
-      hasSaturn
-        ? readSaturnPage(country, regionId, 0, controller.signal)
-        : Promise.resolve(null),
-      hasWeather
-        ? readWeatherForecast(request.point, controller.signal)
-        : Promise.resolve(null),
-    ]).then(([saturn, weather]) => {
+    void readSaturnPage(country, regionId, 0, controller.signal, {
+      districtId: request.districtId,
+      dateStart: request.dateStart,
+      dateEnd: request.dateEnd,
+    }).then((saturn) => {
       if (controller.signal.aborted) return;
       const checkedSaturn: ReadResult<SaturnNoticePage> | null =
         saturn?.kind === "ok"
           ? saturn.data.country === country &&
-            saturn.data.region_id === regionId
+            saturn.data.region_id === regionId &&
+            saturn.data.district_id === request.districtId &&
+            saturn.data.date_start === request.dateStart &&
+            saturn.data.date_end === request.dateEnd
             ? { kind: "ok", data: saturn.data }
             : { kind: "error", code: "INVALID_RESPONSE" }
           : saturn?.kind === "error"
             ? { kind: "error", code: saturn.code }
             : null;
-      const checkedWeather: ReadResult<WeatherForecast> | null =
-        weather?.kind === "ok"
-          ? weather.data.requested_latitude === request.point.latitude &&
-            weather.data.requested_longitude === request.point.longitude
-            ? { kind: "ok", data: weather.data }
-            : { kind: "error", code: "INVALID_RESPONSE" }
-          : weather?.kind === "error"
-            ? { kind: "error", code: weather.code }
-            : null;
-      setReport({ request, saturn: checkedSaturn, weather: checkedWeather });
+      setReport({ request, saturn: checkedSaturn });
       setBusy(false);
       noticesRef.current(
         checkedSaturn?.kind === "ok" ? checkedSaturn.data.notices : [],
@@ -155,7 +145,6 @@ export function LiveAreaAnalysis({
     morePages?.regionId === regionId
       ? morePages.pages
       : [];
-  const forecast = shown?.weather?.kind === "ok" ? shown.weather.data : null;
   const page = shown?.saturn?.kind === "ok" ? shown.saturn.data : null;
   const pages = page ? [page, ...extraPages] : [];
   const uniqueNotices = [
@@ -166,6 +155,9 @@ export function LiveAreaAnalysis({
     ).values(),
   ];
   const lastPage = pages[pages.length - 1] ?? null;
+  const recordLimitExceeded = pages.some(
+    (entry) => entry.record_limit_exceeded,
+  );
   const geometryCount = uniqueNotices.filter(
     (notice) => notice.geometry !== null,
   ).length;
@@ -174,6 +166,8 @@ export function LiveAreaAnalysis({
       !page ||
       !lastPage ||
       lastPage.next_page === null ||
+      lastPage.next_page >= SATURN_PAGE_COUNT ||
+      pages.length >= SATURN_PAGE_COUNT ||
       pagingBusy ||
       !request
     )
@@ -184,43 +178,49 @@ export function LiveAreaAnalysis({
     pagingController.current = controller;
     setPagingBusy(true);
     setPagingError(null);
-    void readSaturnPage(country, regionId, nextNumber, controller.signal).then(
-      (response) => {
-        if (controller.signal.aborted) return;
-        setPagingBusy(false);
-        if (response.kind === "error") {
-          setPagingError(response.code);
-          return;
-        }
-        if (
-          response.data.country !== country ||
-          response.data.region_id !== regionId ||
-          response.data.page_number !== nextNumber ||
-          response.data.total_elements !== page.total_elements ||
-          response.data.source_id !== page.source_id ||
-          (response.data.next_page !== null &&
-            response.data.next_page <= nextNumber)
-        ) {
-          setPagingError("INVALID_RESPONSE");
-          return;
-        }
-        const loaded = [...extraPages, response.data];
-        setMorePages({
-          sequence: request.sequence,
-          country,
-          regionId,
-          pages: loaded,
-        });
-        const merged = [
-          ...new Map(
-            [page, ...loaded]
-              .flatMap((entry) => entry.notices)
-              .map((notice) => [notice.record_id, notice] as const),
-          ).values(),
-        ];
-        noticesRef.current(merged);
-      },
-    );
+    void readSaturnPage(country, regionId, nextNumber, controller.signal, {
+      districtId: request.districtId,
+      dateStart: request.dateStart,
+      dateEnd: request.dateEnd,
+    }).then((response) => {
+      if (controller.signal.aborted) return;
+      setPagingBusy(false);
+      if (response.kind === "error") {
+        setPagingError(response.code);
+        return;
+      }
+      if (
+        response.data.country !== country ||
+        response.data.region_id !== regionId ||
+        response.data.district_id !== request.districtId ||
+        response.data.date_start !== request.dateStart ||
+        response.data.date_end !== request.dateEnd ||
+        response.data.page_number !== nextNumber ||
+        response.data.total_elements !== page.total_elements ||
+        response.data.source_id !== page.source_id ||
+        response.data.page_number >= SATURN_PAGE_COUNT ||
+        (response.data.next_page !== null &&
+          response.data.next_page <= nextNumber)
+      ) {
+        setPagingError("INVALID_RESPONSE");
+        return;
+      }
+      const loaded = [...extraPages, response.data];
+      setMorePages({
+        sequence: request.sequence,
+        country,
+        regionId,
+        pages: loaded,
+      });
+      const merged = [
+        ...new Map(
+          [page, ...loaded]
+            .flatMap((entry) => entry.notices)
+            .map((notice) => [notice.record_id, notice] as const),
+        ).values(),
+      ];
+      noticesRef.current(merged);
+    });
   };
   return (
     <section className="live-analysis" aria-label={tr("analysisResultsTitle")}>
@@ -251,10 +251,23 @@ export function LiveAreaAnalysis({
                   total: page.total_elements ?? tr("saturnMissing"),
                 })}
               </p>
+              {recordLimitExceeded && (
+                <p role="alert" className="analysis-empty">
+                  {tr("analysisSaturnRecordLimit", {
+                    limit: SATURN_RECORD_LIMIT,
+                  })}
+                </p>
+              )}
+              {uniqueNotices.length === 0 && (
+                <div className="analysis-empty" role="status">
+                  <strong>{tr("analysisNoRecordsTitle")}</strong>
+                  <p>{tr("analysisNoRecordsDetail")}</p>
+                </div>
+              )}
               <p className="field-help">
                 {tr("analysisSaturnGeometryCount", { count: geometryCount })}
               </p>
-              {geometryCount === 0 && (
+              {uniqueNotices.length > 0 && geometryCount === 0 && (
                 <p className="field-help">{tr("analysisSaturnNoGeometry")}</p>
               )}
               <p className="field-help">
@@ -262,7 +275,7 @@ export function LiveAreaAnalysis({
                   total: page.total_elements ?? tr("saturnMissing"),
                 })}
               </p>
-              {uniqueNotices.slice(0, 20).map((notice) => (
+              {uniqueNotices.slice(0, SATURN_RECORD_LIMIT).map((notice) => (
                 <details key={notice.record_id} className="saturn-record">
                   <summary>
                     {tr("saturnField", {
@@ -289,7 +302,7 @@ export function LiveAreaAnalysis({
                   ))}
                 </details>
               ))}
-              {uniqueNotices.length > 20 && (
+              {uniqueNotices.length > SATURN_RECORD_LIMIT && (
                 <p className="field-help">
                   {tr("analysisSaturnCount", {
                     count: uniqueNotices.length,
@@ -304,7 +317,9 @@ export function LiveAreaAnalysis({
                 <p role="alert">{tr("saturnError", { reason: pagingError })}</p>
               )}
               {lastPage?.next_page !== null &&
-                lastPage?.next_page !== undefined && (
+                lastPage?.next_page !== undefined &&
+                lastPage.next_page < SATURN_PAGE_COUNT &&
+                pages.length < SATURN_PAGE_COUNT && (
                   <button
                     type="button"
                     disabled={pagingBusy}
@@ -319,66 +334,8 @@ export function LiveAreaAnalysis({
                 )}
             </div>
           )}
-          {shown.weather?.kind === "error" && (
-            <p role="alert">
-              {tr("weatherError", { reason: shown.weather.code })}
-            </p>
-          )}
-          {forecast && (
-            <div className="analysis-source-result">
-              <h3>{tr("weatherTitle")}</h3>
-              <p className="field-help">{tr("weatherWarning")}</p>
-              <details>
-                <summary>
-                  {tr("analysisForecastHours", {
-                    count: forecast.hours.length,
-                  })}
-                </summary>
-                <div className="weather-scroll">
-                  <table className="weather-table">
-                    <thead>
-                      <tr>
-                        <th>{tr("weatherTime")}</th>
-                        <th>{tr("weatherWind")}</th>
-                        <th>{tr("weatherDirection")}</th>
-                        <th>{tr("weatherGusts")}</th>
-                        <th>{tr("weatherRain")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {forecast.hours.map((hour) => (
-                        <tr key={hour.time}>
-                          <td>{hour.time.slice(0, 16).replace("T", " ")}</td>
-                          {[
-                            hour.wind_speed_kmh,
-                            hour.wind_direction_degrees,
-                            hour.wind_gusts_kmh,
-                            hour.precipitation_mm,
-                          ].map((value, i) => (
-                            <td key={i}>
-                              {value === null ? tr("weatherMissing") : value}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </details>
-              <a
-                href={forecast.source_uri}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {tr("weatherAttribution")}
-              </a>
-            </div>
-          )}
           {shown.saturn === null && (
             <p className="field-help">{tr("analysisSaturnNotSupported")}</p>
-          )}
-          {shown.weather === null && (
-            <p className="field-help">{tr("analysisWeatherNotEnabled")}</p>
           )}
         </div>
       )}

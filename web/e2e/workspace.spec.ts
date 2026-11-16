@@ -77,11 +77,9 @@ test("keeps the fictional map/timeline readable when online tiles fail", async (
       external.push(request.url());
   });
   await page.goto("/");
-  await page.getByText("Необязательное демонстрационное исследование").click();
+  await page.getByText("Демо-сценарии").click();
   await expect(page.getByText(/Только вымышленные данные/)).toBeVisible();
-  await expect(
-    page.getByText(/Справочник регионов ещё не загружен в PostgreSQL/),
-  ).toBeVisible();
+  await expect(page.getByText(/Справочник регионов недоступен/)).toBeVisible();
   await page.getByRole("button", { name: /Исследовать размещение/ }).click();
   await expect(
     page.getByText("Предварительный план сформирован"),

@@ -239,6 +239,7 @@ export function readSaturnPage(
   region: number | string,
   pageNumber: number,
   signal: AbortSignal,
+  scope?: { districtId: string; dateStart: string; dateEnd: string },
 ): Promise<ApiResult<SaturnNoticePage>> {
   return request(
     "/api/v1/sources/saturn/treatments",
@@ -253,6 +254,13 @@ export function readSaturnPage(
           ? { region_code: region }
           : { region_id: region }),
         page_number: pageNumber,
+        ...(scope
+          ? {
+              district_id: scope.districtId,
+              date_start: scope.dateStart,
+              date_end: scope.dateEnd,
+            }
+          : {}),
       }),
     },
   );

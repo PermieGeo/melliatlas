@@ -1,6 +1,6 @@
 # Deterministic Fictional Replanning Contract — V04-02 (partial)
 
-`melliatlas.agent.api.DeterministicPlanner` is a pure, synchronous and bounded policy-orchestration boundary. It accepts an explicitly injected `SiteInspector` returning the `planning.SiteAssessment` for one `planning.CandidateSite`. It owns decisions based on observations, not polygon geometry, source acquisition or ecological eligibility policy. `agent` imports only the public `planning.api`; the caller composes the existing `analyzers.find_ecology_overlaps` and `planning.assess_ecology` outside the agent.
+`melliatlas.agent.DeterministicPlanner` is a pure, synchronous and bounded policy-orchestration boundary. It accepts an explicitly injected `SiteInspector` returning the `planning.SiteAssessment` for one `planning.CandidateSite`. It owns decisions based on observations, not polygon geometry, source acquisition or ecological eligibility policy. `agent` imports only the public `planning.api`; the caller composes the existing `analyzers.find_ecology_overlaps` and `planning.assess_ecology` outside the agent.
 
 The planner first calculates the initial chronological forage proposal. It validates candidate identity and WGS84 coordinates before any inspection, rejects duplicate IDs, and observes each candidate in a stable order at most once. A check budget bounds calls to the injected inspector. An `EXCLUDED` result removes the candidate, a non-binding `CAUTION` remains a qualified synthetic proposal with warnings, and `UNKNOWN` is not promoted to eligible. `ELIGIBLE` is deliberately rejected while independent ecological coverage is unavailable. Only inspected, qualified candidates can appear in the revised proposal. If fewer than two stops remain, the result has no plan; if the budget is reached before all candidates are inspected, it has no plan even when the inspected subset appears sufficient.
 
@@ -10,10 +10,18 @@ This is an offline fictional decision demonstration, not an authorization to pla
 
 ## V04-05 treatment-aware provisional planning (partial)
 
-`agent.api.TreatmentPlanner` owns a separate, bounded offline treatment-observation loop over an injected typed `TreatmentInspector`. It clips each fictional candidate window to the requested planning season, performs at most `max_checks` site inspections, and passes observations to `planning.prefer_sites_away_from_reported_treatments`. Its `TreatmentPlanningResult` includes a provisional plan or no plan, typed source-attributed findings and ordered decision trace. Missing, duplicated or mismatched observations fail explicitly; a bounded-check failure cannot silently yield a plan. Neither this loop nor its near-field screen establishes real spraying, safety or a legal exclusion.
+`agent.TreatmentPlanner` owns a separate, bounded offline treatment-observation loop over an injected typed `TreatmentInspector`. It clips each fictional candidate window to the requested planning season, performs at most `max_checks` site inspections, and passes observations to `planning.prefer_sites_away_from_reported_treatments`. Its `TreatmentPlanningResult` includes a provisional plan or no plan, typed source-attributed findings and ordered decision trace. Missing, duplicated or mismatched observations fail explicitly; a bounded-check failure cannot silently yield a plan. Neither this loop nor its near-field screen establishes real spraying, safety or a legal exclusion.
 
 The independent scenario remains unchanged. The module imports only `planning.api`, never provider or analyzer internals.
 
 ## V04-06 bounded joint screening (partial)
 
 `CombinedPlanner(ecology, treatment)` composes the two existing bounded, injected planners without a general DAG or direct source/analyzer imports. Both inspect the original candidates; any missing observation or failed callback propagates. Only candidates with an explicit fictional ecological `CAUTION` assessment and without a near/intersecting reported treatment are considered for the joint provisional seasonal plan. Unknown ecology is never promoted to eligible, and unknown treatment coverage never becomes a safety assertion. The final `ReplanResult` records the joint plan and outcome, retains ecology assessments/IDs, and adds `TREATMENT_CHECK` trace steps linked to reported source record IDs. `TreatmentReview` independently retains every reported product, time and proximity finding. Ecological check budgets and treatment check budgets remain bounded individually; reaching either without complete evidence never yields a plan.
+
+
+## Capability layout
+
+`api.py` declares inspector and planner `Protocol` ports and typed results from `models.py`.
+Concrete `DeterministicPlanner`, `TreatmentPlanner`, and `CombinedPlanner` live in
+`ecology.py`, `treatment.py`, and `combined.py`, respectively; the package
+facade exports these implementations for composition without exposing private paths.

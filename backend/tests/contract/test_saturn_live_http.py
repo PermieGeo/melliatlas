@@ -3,6 +3,7 @@
 import asyncio
 import json
 from dataclasses import replace
+from datetime import date
 
 import httpx
 import pytest
@@ -108,7 +109,14 @@ class FakeSaturnReader:
         self._failing = failing
 
     def read_page(
-        self, *, country: CountryCode, region_code: int, page_number: int
+        self,
+        *,
+        country: CountryCode,
+        region_code: int,
+        page_number: int,
+        district_code: int | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> TreatmentNoticePage:
         self.calls.append((country, region_code, page_number))
         if self._failing:
@@ -175,7 +183,14 @@ def test_upstream_failure_is_not_confused_with_no_notices() -> None:
 def test_injected_provider_cannot_label_synthetic_records_as_live() -> None:
     class InvalidReader(FakeSaturnReader):
         def read_page(
-            self, *, country: CountryCode, region_code: int, page_number: int
+            self,
+            *,
+            country: CountryCode,
+            region_code: int,
+            page_number: int,
+            district_code: int | None = None,
+            start_date: date | None = None,
+            end_date: date | None = None,
         ) -> TreatmentNoticePage:
             page = super().read_page(
                 country=country, region_code=region_code, page_number=page_number

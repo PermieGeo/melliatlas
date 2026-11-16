@@ -60,3 +60,42 @@ The country selector is independent of source applicability. Country/region/dist
 - **Known gaps:** the new experimental `GET /api/v1/sources` lists only explicitly enabled Saturn for RU; there is no general source registry, paginated investigation history or verified complete RU/BY reference dataset. Executable synthetic scenario identifiers, territory associations and supported seasons are exposed by the new read-only discovery operation; it does not provide reference geography, permissions or real source coverage. Completed snapshots are durable only with an explicitly configured and independently verified PostGIS store.
 - **Web authorization:** the developer additionally requested a bounded RU-only live notice preview alongside the W01 fictional-browser slice. The preview remains opt-in and separate from investigation decisions. Backend acceptance and umbrella MVP-01 acceptance are still pending. Runtime credentials, live sources and third-party data reuse remain separately gated.
 - **Environmental evidence:** no verified/current Saturn API contract, permission to reuse live Saturn data, validated pesticide drift or weather-based exposure model is delivered by MVP-01. No synthetic treatment result provides a permission or safety conclusion.
+
+## W01 operator-approved follow-up behavior
+
+The browser may persist only public geographic selection IDs and camera state.
+Restoration requires server-confirmed country, region and district identity.
+The selected territory's validated reference geometry authorizes one automatic
+point weather preview on page load; there is no scheduled polling or automatic
+Saturn collection. An explicit selected-area source read must be district-
+scoped through an independently reviewed Saturn district ID, with a bounded
+default source date interval of today through one calendar month. If a provider
+mapping is absent, the read is unavailable rather than widened to the entire
+region. Source filter accuracy and rights are not established by the demo.
+The map and adjoining analysis panels occupy the available content width.
+
+
+## W01 follow-up — compact map-first interaction (partial)
+
+In the main live-source workspace, the beekeeper title and tagline belong in
+the masthead, not the navigation sidebar. The map is modestly taller and has a
+visible ephemeral starting-point explanation immediately above it. The weather
+panel shows one UTC hour by default; remaining hours are in a keyboard-operable
+disclosure, without suppressing model/provenance limitations. An empty Saturn
+response is clearly labeled as no returned identified records, not a guarantee
+of no spraying. Manually changing one date automatically keeps the other date
+inside the one-calendar-year backend limit. Russian display labels for imported
+Smolensk districts may come from optional reviewed `name_ru`; missing labels
+fall back to the original imported name. A honey-orange, grey and charcoal
+palette changes only presentation, not source semantics or readiness.
+
+## W01 follow-up — operator-reviewed Smolensk Saturn district mappings
+
+The local administrator may explicitly capture one public Saturn directory
+response for subject 55 and review a proposed Smolensk ADM2 district-to-source
+identity mapping. Only a separately approved capture digest authorizes an
+insert into the existing source-specific mapping table. Unmatched and ambiguous
+districts remain unavailable, preserving the district-only scope requirement
+and the 100-record manual page limit. Historical source examples do not
+establish current provider operation, complete district coverage or permission
+to collect; the workflow performs no implicit network request on startup.

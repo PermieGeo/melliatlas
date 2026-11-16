@@ -5,7 +5,7 @@ from datetime import date
 
 import pytest
 
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InMemoryInvestigationService,
     InvestigationOutcomeKind,
     InvestigationRequest,
@@ -14,8 +14,8 @@ from melliatlas.jobs.api import (
     deserialize_completed_snapshot,
     serialize_completed_snapshot,
 )
-from melliatlas.planning.api import TimeWindow
-from melliatlas.sources.providers.synthetic.api import (
+from melliatlas.planning import TimeWindow
+from melliatlas.sources.providers.synthetic import (
     SYNTHETIC_SCENARIO_ID,
     SyntheticFixtureProvider,
 )
@@ -110,15 +110,15 @@ def test_codec_rejects_bad_snapshot_object_and_nonfinite_coordinate() -> None:
 
 
 def _completed_ecology() -> InvestigationSnapshot:
-    from melliatlas.agent.api import DeterministicPlanner
-    from melliatlas.analyzers.api import find_ecology_overlaps
-    from melliatlas.planning.api import (
+    from melliatlas.agent import DeterministicPlanner
+    from melliatlas.analyzers import find_ecology_overlaps
+    from melliatlas.planning import (
         CandidateSite,
         SiteAssessment,
         SyntheticScenario,
         assess_ecology,
     )
-    from melliatlas.sources.providers.synthetic.api import SYNTHETIC_ECOLOGY_SCENARIO_ID
+    from melliatlas.sources.providers.synthetic import SYNTHETIC_ECOLOGY_SCENARIO_ID
 
     def factory(scenario: SyntheticScenario) -> DeterministicPlanner:
         def inspect(site: CandidateSite) -> SiteAssessment:
@@ -145,8 +145,8 @@ def _completed_ecology() -> InvestigationSnapshot:
 
 
 def test_ecology_snapshot_codec_roundtrip_restores_typed_decisions_and_plan() -> None:
-    from melliatlas.agent.api import ReplanDecisionKind, ReplanOutcome
-    from melliatlas.planning.api import EcologyStatus
+    from melliatlas.agent import ReplanDecisionKind, ReplanOutcome
+    from melliatlas.planning import EcologyStatus
 
     original = _completed_ecology()
     restored = deserialize_completed_snapshot(serialize_completed_snapshot(original))
@@ -200,15 +200,15 @@ def test_codec_rejects_replanning_plan_divergence() -> None:
 def test_ecology_completed_snapshot_roundtrips_through_completed_store_port() -> None:
     from uuid import UUID
 
-    from melliatlas.agent.api import DeterministicPlanner
-    from melliatlas.analyzers.api import find_ecology_overlaps
-    from melliatlas.planning.api import (
+    from melliatlas.agent import DeterministicPlanner
+    from melliatlas.analyzers import find_ecology_overlaps
+    from melliatlas.planning import (
         CandidateSite,
         SiteAssessment,
         SyntheticScenario,
         assess_ecology,
     )
-    from melliatlas.sources.providers.synthetic.api import SYNTHETIC_ECOLOGY_SCENARIO_ID
+    from melliatlas.sources.providers.synthetic import SYNTHETIC_ECOLOGY_SCENARIO_ID
 
     class SerializedStore:
         def __init__(self) -> None:

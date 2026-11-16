@@ -6,7 +6,7 @@ import httpx
 
 from melliatlas.api.app import AppSettings, create_app
 from melliatlas.api.composition import SourceProviderMode
-from melliatlas.sources.providers.synthetic.api import SYNTHETIC_COMBINED_SCENARIO_ID
+from melliatlas.sources.providers.synthetic import SYNTHETIC_COMBINED_SCENARIO_ID
 
 
 def test_scenarios_are_server_defined_and_country_scoped() -> None:

@@ -1,33 +1,58 @@
-"""Stable public agent capability boundary.
+"""Public observation and planner contracts for the agent capability.
 
-Implementation is delegated to implementation.py; consumers should import
-this module instead of depending on internal algorithm and storage details.
+Callers inject typed inspectors; implementations need not inherit these Protocols.
+The domain result values are stable and shared across alternative planners.
 """
 
-from melliatlas.agent.implementation import (
-    CombinedPlanner,
+from typing import Protocol
+
+from melliatlas.planning import CandidateSite, SiteAssessment, TimeWindow, TreatmentScreening
+
+from .models import (
     CombinedPlanningResult,
-    DeterministicPlanner,
     ReplanDecision,
     ReplanDecisionKind,
     ReplanOutcome,
     ReplanResult,
-    SiteInspector,
-    TreatmentInspector,
-    TreatmentPlanner,
     TreatmentPlanningResult,
 )
 
+
+class SiteInspector(Protocol):
+    """Inspect a site positionally; callback parameter names are not contractual."""
+
+    def __call__(self, site: CandidateSite, /) -> SiteAssessment: ...
+
+
+class TreatmentInspector(Protocol):
+    """Inspect one candidate positionally without constraining callback parameter names."""
+
+    def __call__(self, site: CandidateSite, /) -> tuple[TreatmentScreening, ...]: ...
+
+
+class EcologyPlanner(Protocol):
+    """Ecology planning boundary used for dependency injection."""
+
+    def plan(self, candidates: tuple[CandidateSite, ...], season: TimeWindow) -> ReplanResult: ...
+
+
+class TreatmentPlannerPort(Protocol):
+    """Treatment planning boundary used for dependency injection."""
+
+    def plan(
+        self, candidates: tuple[CandidateSite, ...], season: TimeWindow
+    ) -> TreatmentPlanningResult: ...
+
+
 __all__ = [
-    "SiteInspector",
-    "TreatmentInspector",
     "ReplanOutcome",
     "ReplanDecisionKind",
     "ReplanDecision",
     "ReplanResult",
-    "DeterministicPlanner",
     "TreatmentPlanningResult",
-    "TreatmentPlanner",
     "CombinedPlanningResult",
-    "CombinedPlanner",
+    "SiteInspector",
+    "TreatmentInspector",
+    "EcologyPlanner",
+    "TreatmentPlannerPort",
 ]

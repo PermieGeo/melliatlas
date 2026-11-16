@@ -102,13 +102,13 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
         WHERE r.id = %s
     """
     _DISTRICTS: Final[LiteralString] = """
-        SELECT territory_id, country_code, name, region_id, reference_id, valid_on
+        SELECT territory_id, country_code, name, region_id, reference_id, valid_on, name_ru
         FROM melliatlas_admin_geometry
         WHERE region_id = %s AND kind = 'district'
         ORDER BY name, territory_id
     """
     _DISTRICT: Final[LiteralString] = """
-        SELECT territory_id, country_code, name, region_id, reference_id, valid_on
+        SELECT territory_id, country_code, name, region_id, reference_id, valid_on, name_ru
         FROM melliatlas_admin_geometry
         WHERE territory_id = %s AND kind = 'district'
     """
@@ -141,11 +141,15 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
     @staticmethod
     def _district(row: tuple[object, ...]) -> Territory:
         if (
-            len(row) != 6
+            len(row) != 7
             or any(not isinstance(value, str) for value in row[:5])
             or not isinstance(row[5], date)
         ):
             raise ReferenceUnavailableError("Invalid district database row")
+        translated = row[6]
+        if translated is not None and (not isinstance(translated, str) or not translated.strip()):
+            raise ReferenceUnavailableError("Invalid district display name")
+        localized_name: str | None = translated if isinstance(translated, str) else None
         identifier, country, name, region, reference = row[:5]
         if (
             not isinstance(identifier, str)
@@ -172,6 +176,7 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
             reference_id=reference,
             valid_on=row[5],
             geometry_status=GeometryStatus.AVAILABLE,
+            name_ru=localized_name,
         )
 
     async def locate_point(

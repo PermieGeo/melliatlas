@@ -53,7 +53,9 @@ class RegionConnection:
 
     def execute(self, query: str, params: Sequence[object] = ()) -> None:
         self.statements.append((query, tuple(params)))
-        if "FROM melliatlas_source_saturn" in query:
+        if "FROM melliatlas_source_saturn_district" in query:
+            self.rows = ((1472,),) if params == ("ru:district:verified", "ru:region:smo") else ()
+        elif "FROM melliatlas_source_saturn" in query:
             self.rows = ((55,),) if params == ("ru:region:smo",) else ()
         elif "WHERE country_code = %s" in query:
             self.rows = tuple(x for x in self.db.rows if x[1] == params[0])
@@ -88,7 +90,14 @@ class RecordedSaturnReader:
         self.calls: list[tuple[CountryCode, int, int]] = []
 
     def read_page(
-        self, *, country: CountryCode, region_code: int, page_number: int
+        self,
+        *,
+        country: CountryCode,
+        region_code: int,
+        page_number: int,
+        district_code: int | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> TreatmentNoticePage:
         from datetime import datetime, timezone
 
@@ -183,6 +192,46 @@ def test_source_mapping_is_ru_only_and_never_guessed() -> None:
         is None
     )
     assert len(db.connections) == count
+
+
+def test_saturn_district_mapping_is_distinct_from_geography_identity() -> None:
+    db = RegionDatabase()
+    store = PostgresRegionCatalog(db.connect)
+    assert (
+        asyncio.run(
+            store.find_district_code(
+                source_id="saturn",
+                country=CountryCode.RU,
+                region_id="ru:region:smo",
+                district_id="ru:district:verified",
+            )
+        )
+        == 1472
+    )
+    assert (
+        asyncio.run(
+            store.find_district_code(
+                source_id="saturn",
+                country=CountryCode.RU,
+                region_id="ru:region:mos",
+                district_id="ru:district:verified",
+            )
+        )
+        is None
+    )
+    before = len(db.connections)
+    assert (
+        asyncio.run(
+            store.find_district_code(
+                source_id="saturn",
+                country=CountryCode.BY,
+                region_id="by:region:vi",
+                district_id="by:district:verified",
+            )
+        )
+        is None
+    )
+    assert len(db.connections) == before
 
 
 def test_database_failure_is_not_reported_as_empty_catalog() -> None:

@@ -1,10 +1,11 @@
-"""Public Open-Meteo adapter entry point.
+"""Public Open-Meteo forecast types; execution belongs to forecast.py.
 
-No HTTP transport or domain parsing is implemented in this facade.
-The source remains explicit and disabled unless enabled by composition.
+The generic WeatherForecastReader Protocol is defined by the sources capability.
+The bounded forecast horizon remains a source-specific fixed contract.
 """
 
-from melliatlas.sources.providers.open_meteo.forecast import OpenMeteoForecastReader
-from melliatlas.sources.providers.open_meteo.settings import FORECAST_HOURS
+from melliatlas.sources.api import WeatherForecast, WeatherForecastReader
 
-__all__ = ["OpenMeteoForecastReader", "FORECAST_HOURS"]
+from .settings import FORECAST_HOURS
+
+__all__ = ["FORECAST_HOURS", "WeatherForecast", "WeatherForecastReader"]

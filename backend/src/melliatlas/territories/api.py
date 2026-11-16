@@ -50,6 +50,7 @@ class Territory:
     reference_id: str
     valid_on: date
     geometry_status: GeometryStatus
+    name_ru: str | None = None
 
 
 @dataclass(frozen=True)
@@ -136,6 +137,14 @@ class SourceTerritoryCodeLookup(Protocol):
 
     async def find_code(
         self, *, source_id: str, country: CountryCode, region_id: str
+    ) -> int | None: ...
+
+
+class SourceDistrictCodeLookup(Protocol):
+    """Resolve a reviewed provider district ID without guessing from GeoJSON IDs."""
+
+    async def find_district_code(
+        self, *, source_id: str, country: CountryCode, region_id: str, district_id: str
     ) -> int | None: ...
 
 

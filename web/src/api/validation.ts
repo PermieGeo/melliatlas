@@ -1,3 +1,4 @@
+import { SATURN_PAGE_COUNT, SATURN_PAGE_SIZE } from "./types";
 import type {
   Assessment,
   Country,
@@ -55,6 +56,10 @@ function integer(value: unknown, field: string): number {
   const result = numeric(value, field);
   if (!Number.isInteger(result) || result < 0) throw new WireError(field);
   return result;
+}
+function booleanValue(value: unknown, field: string): boolean {
+  if (typeof value !== "boolean") throw new WireError(field);
+  return value;
 }
 function booleanTrue(value: unknown, field: string): true {
   if (value !== true) throw new WireError(field);
@@ -182,6 +187,10 @@ export function decodeTerritories(value: unknown): Territory[] {
       country: country(item.country, `${path}.country`),
       kind: oneOf(item.kind, `${path}.kind`, ["country", "region", "district"]),
       name: nonEmpty(item.name, `${path}.name`),
+      name_ru:
+        item.name_ru === undefined || item.name_ru === null
+          ? null
+          : nonEmpty(item.name_ru, `${path}.name_ru`),
       parent_id: maybe(item.parent_id, text, `${path}.parent_id`),
       reference_id: nonEmpty(item.reference_id, `${path}.reference_id`),
       valid_on: text(item.valid_on, `${path}.valid_on`),
@@ -598,6 +607,18 @@ export function decodeSaturnPage(value: unknown): SaturnNoticePage {
       v.region_id === undefined
         ? null
         : maybe(v.region_id, nonEmpty, "saturnPage.region_id"),
+    district_id:
+      v.district_id === undefined
+        ? null
+        : maybe(v.district_id, nonEmpty, "saturnPage.district_id"),
+    date_start:
+      v.date_start === undefined
+        ? null
+        : maybe(v.date_start, text, "saturnPage.date_start"),
+    date_end:
+      v.date_end === undefined
+        ? null
+        : maybe(v.date_end, text, "saturnPage.date_end"),
     captured_at: nonEmpty(v.captured_at, "saturnPage.captured_at"),
     page_number: integer(v.page_number, "saturnPage.page_number"),
     next_page: maybe(v.next_page, integer, "saturnPage.next_page"),
@@ -606,6 +627,10 @@ export function decodeSaturnPage(value: unknown): SaturnNoticePage {
       integer,
       "saturnPage.total_elements",
     ),
+    record_limit_exceeded: booleanValue(
+      v.record_limit_exceeded,
+      "saturnPage.record_limit_exceeded",
+    ),
     unidentified_records: integer(
       v.unidentified_records,
       "saturnPage.unidentified_records",
@@ -613,6 +638,14 @@ export function decodeSaturnPage(value: unknown): SaturnNoticePage {
     notices: list(v.notices, "saturnPage.notices", saturnNotice),
     coverage_complete: false as const,
   };
+  if (
+    page.page_number >= SATURN_PAGE_COUNT ||
+    (page.next_page !== null &&
+      (page.next_page >= SATURN_PAGE_COUNT ||
+        page.next_page <= page.page_number)) ||
+    page.notices.length + page.unidentified_records > SATURN_PAGE_SIZE
+  )
+    throw new WireError("saturnPage.recordBudget");
   if (
     page.notices.some(
       (notice) =>

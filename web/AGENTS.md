@@ -11,7 +11,7 @@ Extends `../AGENTS.md`. Applies to React and TypeScript code under `web/`.
 ## React and TypeScript
 - Use strict TypeScript and explicit types at component and network boundaries. Do not bypass type checks with `any`, `@ts-ignore`, or unchecked casts.
 - Keep renders predictable and effects explicit; extract nontrivial transformations when they improve comprehension or testing.
-- Translate stable domain statuses/warning codes in the UI; keep Leaflet presentation colors and styles in CSS and document non-obvious geographic constants near the calculation.
+- Translate stable domain statuses/warning codes in the UI; keep Leaflet presentation colors and styles in CSS. Name and explain non-obvious numeric bounds, map-camera choices and precision limits where they are used; preserve mathematical invariants as constants rather than database configuration.
 - Handle failures, cancellation, stale responses, and loading/empty/error UI states explicitly.
 - Prefer local state; avoid redundant copies of remote data. Never expose credentials or private coordinates in browser logs, bundles, or telemetry.
 

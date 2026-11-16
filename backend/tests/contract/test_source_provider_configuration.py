@@ -13,7 +13,7 @@ from fastapi import FastAPI
 from melliatlas.api.app import AppSettings, create_app
 from melliatlas.api.composition import SourceProviderMode, compose_sources
 from melliatlas.sources.api import ScenarioProvider
-from melliatlas.sources.providers.synthetic.api import (
+from melliatlas.sources.providers.synthetic import (
     SYNTHETIC_COMBINED_SCENARIO_ID,
     SyntheticFixtureProvider,
 )

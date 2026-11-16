@@ -1,6 +1,11 @@
 /** Wire contracts mirror FastAPI InvestigationResponse and territory DTOs. */
 /** ISO 3166-1 alpha-2 code supplied by the country catalog, not a closed UI enum. */
 export type CountryCode = string;
+
+/** Fixed source-read wire budget; backend enforces the same provider-owned cap. */
+export const SATURN_PAGE_SIZE = 10;
+export const SATURN_RECORD_LIMIT = 100;
+export const SATURN_PAGE_COUNT = SATURN_RECORD_LIMIT / SATURN_PAGE_SIZE;
 export type InvestigationStatus = "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
 export type Outcome =
   "PLAN_FOUND" | "INSUFFICIENT_EVIDENCE" | "NO_FEASIBLE_ALTERNATIVE";
@@ -24,6 +29,7 @@ export interface Territory {
   country: CountryCode;
   kind: "country" | "region" | "district";
   name: string;
+  name_ru?: string | null;
   parent_id: string | null;
   reference_id: string;
   valid_on: string;
@@ -133,10 +139,14 @@ export interface SaturnNoticePage {
   country: CountryCode;
   region_code: number;
   region_id: string | null;
+  district_id?: string | null;
+  date_start?: string | null;
+  date_end?: string | null;
   captured_at: string;
   page_number: number;
   next_page: number | null;
   total_elements: number | null;
+  record_limit_exceeded: boolean;
   unidentified_records: number;
   notices: SaturnNotice[];
   coverage_complete: false;

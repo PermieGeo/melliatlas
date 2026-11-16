@@ -13,6 +13,8 @@ features:
       - backend/src/melliatlas/api/routes_territories.py#create_territory_router
       - web/src/App.tsx
       - web/src/hooks/useTerritoryReference.ts
+      - web/src/geo/territoryPreference.ts
+      - web/src/geo/dateRange.ts
     test_files:
       - backend/tests/contract/test_territory_api.py
       - backend/tests/contract/test_reference_startup.py
@@ -41,6 +43,9 @@ features:
     owners:
       - backend/src/melliatlas/territories/api.py#TerritoryImport
       - backend/src/melliatlas/persistence/geography.py#PostgisTerritoryCatalog
+      - backend/migrations/0006_smolensk_district_names.sql
+      - web/src/components/ReferenceControls.tsx
+      - web/src/api/validation.ts
       - backend/scripts/prepare_geoboundaries.py#prepare
       - backend/scripts/prepare_all_geoboundaries.py#prepare_all
       - backend/scripts/import_admin_boundaries.py#import_boundaries
@@ -53,6 +58,7 @@ features:
       - backend/tests/unit/test_geoboundaries_preparation.py
       - backend/tests/unit/test_navigation_diagnostics.py
       - web/tests/reference-navigation.test.tsx
+      - web/tests/territory-preference.test.ts
   - feature_id: MAP.BASEMAP
     implementation_status: planned
     stages: [MVP-01]
@@ -70,7 +76,7 @@ features:
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
-      - backend/src/melliatlas/sources/providers/synthetic/api.py#SyntheticFixtureProvider
+      - backend/src/melliatlas/sources/providers/synthetic/provider.py#SyntheticFixtureProvider
     test_files:
       - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_synthetic_investigation.py
@@ -97,8 +103,13 @@ features:
       - backend/src/melliatlas/sources/providers/saturn/live.py#SaturnPublicTreatmentReader
       - backend/src/melliatlas/sources/providers/saturn/diagnostics.py#probe_one_page
       - backend/src/melliatlas/sources/providers/saturn/subjects.py#validate_subject_directory
+      - backend/src/melliatlas/sources/providers/saturn/districts.py#validate_district_directory
+      - backend/scripts/capture_saturn_districts.py#main
+      - backend/scripts/import_saturn_districts.py#run_import
       - backend/src/melliatlas/api/subject_capture.py#capture_subjects
       - backend/src/melliatlas/api/providers/saturn/routes.py#create_saturn_router
+      - backend/src/melliatlas/territories/api.py#SourceDistrictCodeLookup
+      - backend/migrations/0005_saturn_district_mapping.sql
       - web/src/components/SaturnPanel.tsx
       - web/src/components/LiveAreaAnalysis.tsx
       - web/src/components/MapPanel.tsx
@@ -106,8 +117,10 @@ features:
     test_files:
       - backend/tests/unit/test_saturn_treatment_screening.py
       - backend/tests/contract/test_saturn_live_http.py
+      - backend/tests/contract/test_saturn_district_scope.py
       - backend/tests/contract/test_saturn_probe.py
       - backend/tests/contract/test_saturn_subject_capture.py
+      - backend/tests/unit/test_saturn_district_mapping.py
       - backend/tests/contract/test_persistent_region_directory.py
       - web/tests/saturn.test.tsx
       - web/tests/live-area-analysis.test.tsx
@@ -120,16 +133,18 @@ features:
       - backend/src/melliatlas/sources/providers/open_meteo/forecast.py#OpenMeteoForecastReader
       - backend/src/melliatlas/api/providers/open_meteo/routes.py#create_weather_router
       - web/src/components/WeatherPanel.tsx
+      - web/src/geo/selection.ts
     test_files:
       - backend/tests/contract/test_open_meteo_live_http.py
       - web/tests/weather.test.tsx
+      - web/tests/territory-preference.test.ts
   - feature_id: AGRICULTURE.NOTICES
     implementation_status: partial
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
-      - backend/src/melliatlas/analyzers/implementation.py#screen_treatment_notices
-      - backend/src/melliatlas/jobs/implementation.py#InMemoryInvestigationService
+      - backend/src/melliatlas/analyzers/treatment.py#screen_treatment_notices
+      - backend/src/melliatlas/jobs/memory.py#InMemoryInvestigationService
     test_files:
       - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_saturn_treatment_screening.py
@@ -149,7 +164,7 @@ features:
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
-      - backend/src/melliatlas/persistence/api.py#PostgisCompletedInvestigationStore
+      - backend/src/melliatlas/persistence/postgis_store.py#PostgisCompletedInvestigationStore
     test_files:
       - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_postgis_store_unit.py
@@ -160,7 +175,7 @@ features:
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
-      - backend/src/melliatlas/jobs/implementation.py#InMemoryInvestigationService
+      - backend/src/melliatlas/jobs/memory.py#InMemoryInvestigationService
     test_files:
       - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/contract/test_investigations_http.py
@@ -183,9 +198,9 @@ features:
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
-      - backend/src/melliatlas/agent/implementation.py#DeterministicPlanner
-      - backend/src/melliatlas/agent/implementation.py#TreatmentPlanner
-      - backend/src/melliatlas/agent/implementation.py#CombinedPlanner
+      - backend/src/melliatlas/agent/ecology.py#DeterministicPlanner
+      - backend/src/melliatlas/agent/treatment.py#TreatmentPlanner
+      - backend/src/melliatlas/agent/combined.py#CombinedPlanner
     test_files:
       - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_deterministic_replanning.py
@@ -196,8 +211,8 @@ features:
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
-      - backend/src/melliatlas/agent/implementation.py#ReplanDecision
-      - backend/src/melliatlas/agent/implementation.py#TreatmentPlanningResult
+      - backend/src/melliatlas/agent/models.py#ReplanDecision
+      - backend/src/melliatlas/agent/models.py#TreatmentPlanningResult
     test_files:
       - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_deterministic_replanning.py
@@ -208,8 +223,8 @@ features:
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
-      - backend/src/melliatlas/analyzers/implementation.py#find_ecology_overlaps
-      - backend/src/melliatlas/planning/implementation.py#assess_ecology
+      - backend/src/melliatlas/analyzers/ecology.py#find_ecology_overlaps
+      - backend/src/melliatlas/planning/ecology.py#assess_ecology
     test_files:
       - backend/tests/unit/test_ecology_screening.py
   - feature_id: ECOLOGY.ALTERNATIVES
@@ -217,8 +232,8 @@ features:
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
-      - backend/src/melliatlas/agent/implementation.py#DeterministicPlanner
-      - backend/src/melliatlas/agent/implementation.py#TreatmentPlanner
+      - backend/src/melliatlas/agent/ecology.py#DeterministicPlanner
+      - backend/src/melliatlas/agent/treatment.py#TreatmentPlanner
     test_files:
       - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_deterministic_replanning.py
@@ -229,8 +244,8 @@ features:
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
-      - backend/src/melliatlas/planning/implementation.py#build_season_plan
-      - backend/src/melliatlas/planning/implementation.py#prefer_sites_away_from_reported_treatments
+      - backend/src/melliatlas/planning/season.py#build_season_plan
+      - backend/src/melliatlas/planning/treatment.py#prefer_sites_away_from_reported_treatments
     test_files:
       - backend/tests/unit/test_synthetic_investigation.py
       - backend/tests/contract/test_treatment_investigations_http.py
@@ -255,8 +270,11 @@ features:
       - web/src/components/Timeline.tsx
       - web/src/components/ReferenceControls.tsx
       - web/src/hooks/useTerritoryReference.ts
+      - web/src/geo/territoryPreference.ts
+      - web/src/geo/dateRange.ts
       - web/src/api/client.ts
     test_files:
       - web/tests/workflow.test.tsx
       - web/tests/reference-geometry.test.ts
       - web/tests/reference-navigation.test.tsx
+      - web/tests/territory-preference.test.ts

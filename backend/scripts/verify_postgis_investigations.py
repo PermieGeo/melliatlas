@@ -16,7 +16,7 @@ from uuid import UUID, uuid4
 import httpx
 
 from melliatlas.api.app import create_app
-from melliatlas.jobs.api import (
+from melliatlas.jobs import (
     InMemoryInvestigationService,
     InvestigationOutcomeKind,
     InvestigationRequest,
@@ -24,9 +24,9 @@ from melliatlas.jobs.api import (
     InvestigationStatus,
     InvestigationStorageError,
 )
-from melliatlas.persistence.api import PostgisCompletedInvestigationStore
-from melliatlas.planning.api import TimeWindow
-from melliatlas.sources.providers.synthetic.api import (
+from melliatlas.persistence import PostgisCompletedInvestigationStore
+from melliatlas.planning import TimeWindow
+from melliatlas.sources.providers.synthetic import (
     SYNTHETIC_SCENARIO_ID,
     SyntheticFixtureProvider,
 )

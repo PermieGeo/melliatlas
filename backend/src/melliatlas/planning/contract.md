@@ -1,6 +1,6 @@
 # Planning Contract — V01 Synthetic Slice
 
-`melliatlas.planning.api` owns the immutable `TimeWindow`, `CandidateSite`, `SeasonStop`, and `SeasonPlan` models and deterministic `build_season_plan` calculation.
+`melliatlas.planning.api` exposes the immutable `TimeWindow`, `CandidateSite`, `SeasonStop`, and `SeasonPlan` models and deterministic `build_season_plan` calculation.
 
 A `TimeWindow` is inclusive and rejects reversed dates. Candidate forage windows are fictional and must be confined to the supported scenario by the caller. The calculation clips candidate windows to the request season, sorts by start date and stable site identifier, and produces non-overlapping ordered stops; at least two are required for a recommendation. Otherwise it returns `None`, never a made-up second stop.
 
@@ -23,3 +23,10 @@ The radius and proximity classification are analysis results, not placement perm
 screening: unverified notices, unknown coverage, unmodeled drift and demonstration
 only. Clients localize these codes; the planning domain does not format end-user
 English/Russian messages. This is not a hazard classification or safety decision.
+
+## Capability layout
+
+`models.py` owns immutable domain data; `season.py`, `ecology.py`, and
+`treatment.py` own the corresponding pure policies. `api.py` declares the
+public value types; the `melliatlas.planning` package facade exports the
+concrete policy functions. No generic implementation module is used.

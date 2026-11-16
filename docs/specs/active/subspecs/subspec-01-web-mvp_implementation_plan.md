@@ -73,7 +73,7 @@ The first slice uses only existing POST/GET operations and additive nullable res
 
 **Requirement IDs:** `MVP01-WEB-R02`, `R04`, `R08`–`R10`. **Acceptance remains pending.**
 
-**Public contracts and integration design:** `sources.providers.synthetic.api.SyntheticFixtureProvider.list_scenarios(country)` advertises only executable fictional sources and their supported `TimeWindow`. `api.routes_investigations` maps these records to a `ScenarioListingDto` with stable `id`, `name`, `country`, `territory_id`, `territory_name`, `source_mode`, `season_start`, `season_end`, `is_default`. `GET /api/v1/investigations/scenarios?country=...` returns `200` and an empty array for countries with no scenario, and the existing `422/INVALID_REQUEST` response for unsupported country codes. For explicitly injected custom investigation services, no synthetic source is advertised without an injected scenario listing.
+**Public contracts and integration design:** `sources.providers.synthetic.SyntheticFixtureProvider.list_scenarios(country)` advertises only executable fictional sources and their supported `TimeWindow`. `api.routes_investigations` maps these records to a `ScenarioListingDto` with stable `id`, `name`, `country`, `territory_id`, `territory_name`, `source_mode`, `season_start`, `season_end`, `is_default`. `GET /api/v1/investigations/scenarios?country=...` returns `200` and an empty array for countries with no scenario, and the existing `422/INVALID_REQUEST` response for unsupported country codes. For explicitly injected custom investigation services, no synthetic source is advertised without an injected scenario listing.
 
 `web/src/api/` validates the response before any scenario can be selected. The UI country code is an open ISO alpha-2 string validated at the network boundary; backend support is still governed by its declared current country catalog. The default preference is RU when offered, otherwise the first API country. Switching country aborts stale results and reloads both actual regions and executable scenarios. Scenario boundaries set the initial dates and constrain user input. An unavailable catalog is never represented as validated geography; fictional options are clearly labeled. UI-controlled text lives in a typed RU/EN dictionary, while provider-authored source claims remain unmodified for provenance.
 
@@ -105,7 +105,7 @@ No generic frontend state framework, map drawing engine, Admin workspace or spec
 ### W01 additional user-authorized task — RU-only public Saturn preview
 
 **Public contracts and integration design:** `sources.api.TreatmentNoticeReader`
-abstracts on-demand page reading, `sources.providers.saturn.api` exposes the
+abstracts on-demand page reading, `sources.providers.saturn` exports the
 pure decoder and bounded read adapter, and the only permitted network transport
 is `sources.providers.saturn.http`. The composition root enables this **independently** of
 `SourceProviderMode` with `AppSettings.saturn_live_enabled` / the exact
@@ -137,7 +137,7 @@ existing live-source panel without changing W01 acceptance or synthetic study
 results. This is an independent source observation, not a new planning engine.
 
 **Boundary:** `sources.api.WeatherForecastReader` and typed `WeatherForecast`
-use `sources.providers.open_meteo.api.OpenMeteoForecastReader` through
+use `sources.providers.open_meteo.OpenMeteoForecastReader` through
 `api.composition.compose_weather_reader`. `sources.providers.open_meteo.http` is the sole
 fixed-origin transport; it requests 24 UTC hours, has strict time/size bounds,
 and never follows redirects. `AppSettings.weather_live_enabled=False` and
@@ -395,3 +395,80 @@ Bash `[[ ... ]]` support; shell runner regression tests guard this behavior.
 **Saturn preview:** A completed manual area action still reads only source page zero. The user can request later pages one at a time, within the existing provider page cap. The browser deduplicates record IDs, clears stale pages on territory changes and draws any valid source polygons; a map control fits the camera to fetched fields. Counts distinguish available polygons from notices, and region-wide pagination is never represented as complete district inventory. The provider district-code mapping and complete district-scoped collection remain outside this increment pending separate source-contract and mapping review.
 
 **Checks:** `backend/tests/contract/test_administrative_geometry.py` verifies parameterized point queries; `backend/tests/contract/test_territory_http.py` checks success, 404/503/422; `web/tests/reference-navigation.test.tsx` checks map click selection; `web/tests/live-area-analysis.test.tsx` checks manual pagination and polygon accumulation. Live PostGIS geography, provider field visibility and browser checks remain operator acceptance gates.
+
+## W01 follow-up — persisted geographic context and live-source scope
+
+The Web workspace restores public country/region/district IDs in order only
+after independent catalog validation; its existing camera persistence remains
+separate, and private map points are not stored. On a selected territory with
+validated geometry, choose a point strictly inside its polygon and fetch one
+24-hour Open-Meteo preview directly into the above-map panel. No automatic
+Saturn harvesting or polling is authorized. The manual selected-area action
+requires a reviewed district and a default date-only interval from local
+today through one calendar month (a user-chosen range may span one calendar year). The server resolves the
+source-owned district ID from a new, deliberately unseeded migration `0005`
+table; 409 is preferred to region-scope fallback. Provider `UpdateMap` filter
+semantics and permission require independent verification before asserting
+complete coverage. The layout uses a full-width workspace with navigation
+sidebar rather than leaving unused right-hand space. New contract/unit tests
+cover restoration, weather auto-read, geometry/point safety and no-unmapped-
+district source calls. W01 and W02 acceptance statuses remain unchanged.
+
+
+### W01 follow-up — compact geospatial workspace and reviewed RU district labels
+
+**Scope and requirements:** Developer-authorized visual/interaction adjustment
+within `MVP01-WEB-R01/R02/R07/R08`. Keep the reviewed API territory IDs,
+partial source semantics and original provider labels. Show a compact
+honey-orange/charcoal map-first layout; move the optional ephemeral point
+explanation from the sidebar into a visible map-adjacent panel, enlarge the map
+height, keep only the first Open-Meteo hour visible initially and disclose the
+other 23 with a native accessible control. Remove redundant sidebar explanations
+and show the beekeeper headline/tagline in the header. Report a zero-notice
+Saturn response distinctly, with an explicit warning that no received records
+is not evidence of no spraying or verified completeness.
+
+**Public contracts:** `TerritoryResponse.name_ru` adds a nullable localized label
+without replacing `name` or changing identity. PostGIS migration `0006`
+introduces the optional column and conditionally seeds only known Smolensk
+source-name matches; other regions retain the original name. `web/src/api/types.ts`
+and `validation.ts` accept the optional field and reject invalid values.
+`web/src/components/ReferenceControls.tsx` chooses the Russian label only for
+`locale=ru`. No Saturn district-code mapping is inferred. The browser's
+`updateSourceDateRange` adjusts the other date when a manual edit would exceed
+one calendar year, matching the backend bound. The Saturn reader is limited
+to at most 100 source records across 10 manually requested pages and explicitly
+reports when the source provides more. No automatic harvesting is authorized.
+
+**Tests/acceptance:** `backend/tests/contract/test_administrative_geometry.py`,
+`web/tests/territory-preference.test.ts`, `reference-navigation.test.tsx`,
+`weather.test.tsx`, and `live-area-analysis.test.tsx` cover localization,
+manual date edits, compact forecast and explicit empty responses. Full local
+frontend checks, a real migrated PostGIS schema, and browser behavior require
+operator verification. W01/W02 acceptance statuses remain unchanged.
+
+### W01 follow-up — reviewed Saturn Smolensk district directory bootstrap
+
+**Scope:** close the operator setup gap for the already implemented
+district-only Saturn preview without enabling region-wide fallback or automatic
+collection. The source contract is the historically observed one-shot
+`beemaster/district/55` directory; its current live compatibility and reuse
+rights remain unverified. No browser API, persisted canonical territory
+identifier, date filter or 100-record retrieval bound changes.
+
+**Implementation:** `backend/src/melliatlas/sources/providers/saturn/districts.py`
+validates bounded district ID/name entries and
+`sources/providers/saturn/http.py` pins the manual public GET.
+`backend/scripts/capture_saturn_districts.py` saves one unmodified source
+response exclusively for review; `backend/scripts/import_saturn_districts.py`
+produces an offline PostGIS matching report and requires a reviewed source
+digest before writing verified pairs to the existing `0005` table. A missing
+or ambiguous district remains unmapped rather than invoking regional Saturn
+reads. No database migration is introduced by this task.
+
+**Checks:** `backend/tests/unit/test_saturn_district_mapping.py` verifies
+validation, name matching, explicit overrides, idempotency and conflicts;
+`backend/tests/contract/test_saturn_subject_capture.py` verifies the fixed,
+bounded single GET. The existing district HTTP contract and 100-record tests
+remain authoritative. Manual live capture, real PostGIS import and source
+permission are deployment gates, not outcomes of the fixture tests.

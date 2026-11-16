@@ -10,9 +10,9 @@ from unittest.mock import patch
 
 import pytest
 
-from melliatlas.analyzers.api import TreatmentProximity, screen_treatment_notices
-from melliatlas.planning.api import CandidateSite, TimeWindow
-from melliatlas.sources.providers.saturn.api import parse_saturn_treatment_page
+from melliatlas.analyzers import TreatmentProximity, screen_treatment_notices
+from melliatlas.planning import CandidateSite, TimeWindow
+from melliatlas.sources.providers.saturn import parse_saturn_treatment_page
 
 CAPTURED_AT = datetime(2026, 5, 1, tzinfo=timezone.utc)
 START = 1780617600  # 2026-06-05 UTC
@@ -198,7 +198,7 @@ def test_screening_rejects_invalid_coordinates_or_radius() -> None:
 
 
 def test_pagination_validates_source_progress_without_fabricating_coverage() -> None:
-    from melliatlas.sources.providers.saturn.api import next_saturn_treatment_page
+    from melliatlas.sources.providers.saturn import next_saturn_treatment_page
 
     first_raw = page(record(field_id=71), record(field_id=72))
     first_raw.update({"size": 2, "totalElements": 3, "totalPages": 2, "last": False})
@@ -250,7 +250,7 @@ def test_unrecognized_revision_flag_does_not_revive_obsolete_dates() -> None:
 
 def test_public_notice_contract_is_available_before_any_provider_import() -> None:
     """Regression: unrelated HTTP modules must not fail pytest collection."""
-    from melliatlas.analyzers.api import screen_treatment_notices as screen
+    from melliatlas.analyzers import screen_treatment_notices as screen
     from melliatlas.sources import api as sources_api
     from melliatlas.sources.notices import TreatmentNotice as NoticeImplementation
 
@@ -266,9 +266,9 @@ def test_imports_do_not_require_provider_initialization_order() -> None:
     root = Path(__file__).resolve().parents[2] / "src"
     env["PYTHONPATH"] = str(root)
     code = (
-        "from melliatlas.analyzers.api import screen_treatment_notices; "
+        "from melliatlas.analyzers import screen_treatment_notices; "
         "from melliatlas.sources.api import TreatmentNotice; "
-        "from melliatlas.sources.providers.saturn.api import parse_saturn_treatment_page; "
+        "from melliatlas.sources.providers.saturn import parse_saturn_treatment_page; "
         "from melliatlas.api.app import create_app; "
         "assert TreatmentNotice and parse_saturn_treatment_page and create_app"
     )
@@ -284,7 +284,7 @@ def test_imports_do_not_require_provider_initialization_order() -> None:
 
 
 def test_provider_compatibility_module_preserves_existing_exports() -> None:
-    from melliatlas.sources.providers.saturn.api import parse_saturn_treatment_page as public_parser
+    from melliatlas.sources.providers.saturn import parse_saturn_treatment_page as public_parser
     from melliatlas.sources.providers.saturn.legacy_treatment import (
         parse_saturn_treatment_page as legacy_parser,
     )

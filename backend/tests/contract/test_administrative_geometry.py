@@ -6,8 +6,10 @@ from collections.abc import Sequence
 from datetime import date
 from typing import LiteralString
 
+import httpx
 import pytest
 
+from melliatlas.api.app import create_app
 from melliatlas.persistence.geography import PostgisTerritoryCatalog
 from melliatlas.territories.api import CountryCode, GeometryStatus, ReferenceUnavailableError
 
@@ -62,6 +64,7 @@ class GeographyConnection:
                 "by:region:vi",
                 "geoboundaries:BLR-ADM2",
                 date(2026, 11, 16),
+                "Витебский район",
             )
             self.rows = (district,) if params[0] in ("by:region:vi", "by:district:abc123") else ()
         elif "FROM melliatlas_region" in query:
@@ -104,6 +107,8 @@ def test_regions_and_districts_are_independent_of_saturn() -> None:
     districts = asyncio.run(store.list_districts("by:region:vi"))
     assert len(districts) == 1
     assert districts[0].parent_id == "by:region:vi"
+    assert districts[0].name_ru == "Витебский район"
+    assert districts[0].name == "Vitebsk district"
     geometry = asyncio.run(store.get_geometry(districts[0].id))
     assert geometry is not None
     assert geometry.reference_id == districts[0].reference_id
@@ -158,3 +163,26 @@ def test_point_lookup_uses_imported_geometry_and_returns_canonical_district() ->
         asyncio.run(
             catalog.locate_point(country=CountryCode.BY, longitude=float("nan"), latitude=55)
         )
+
+
+def test_localized_name_is_optional_and_does_not_replace_reference_identity() -> None:
+    db = GeographyDatabase()
+    catalog = PostgisTerritoryCatalog(db.connect)
+    district = asyncio.run(catalog.get("by:district:abc123"))
+    assert district is not None
+    assert district.id == "by:district:abc123"
+    assert district.name == "Vitebsk district"
+    assert district.name_ru == "Витебский район"
+
+    async def read_api() -> httpx.Response:
+        app = create_app(territories=catalog)
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+        ) as client:
+            return await client.get("/api/v1/territories/districts?region_id=by:region:vi")
+
+    response = asyncio.run(read_api())
+    assert response.status_code == 200
+    payload = response.json()[0]
+    assert payload["name_ru"] == "Витебский район"
+    assert payload["name"] == "Vitebsk district"
