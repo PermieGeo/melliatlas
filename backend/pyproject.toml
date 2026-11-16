@@ -27,7 +27,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "scripts"]
 
 [tool.ruff]
 target-version = "py312"
@@ -38,6 +38,6 @@ select = ["E4", "E7", "E9", "F", "I"]
 
 [tool.pyright]
 include = ["src", "tests"]
-extraPaths = ["src"]
+extraPaths = ["src", "scripts"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"

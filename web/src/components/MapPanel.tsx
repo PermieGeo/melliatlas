@@ -8,27 +8,30 @@ import type {
 } from "../api/types";
 import { t } from "../i18n";
 import type { Locale } from "../i18n";
+import {
+  DEFAULT_VIEWPORT,
+  readMapViewport,
+  saveMapViewport,
+} from "../geo/viewport";
 
-/** Render-only Leaflet inputs; user coordinates are never logged or persisted. */
+/** The selected apiary point stays in memory; only the general map camera is stored. */
 interface Props {
   locale: Locale;
   stops: Stop[];
   selectedId: string | null;
   startingPoint: Position | null;
-  showTiles: boolean;
   referenceGeometry: TerritoryGeometry | null;
   saturnNotices: SaturnNotice[];
   onSelect: (siteId: string) => void;
   onPoint: (point: Position) => void;
 }
 
-/** The basemap is opt-in because remote tile services observe approximate viewports. */
+/** Show OSM map tiles and restore the last browser-local camera position. */
 export function MapPanel({
   locale,
   stops,
   selectedId,
   startingPoint,
-  showTiles,
   referenceGeometry,
   saturnNotices,
   onSelect,
@@ -37,7 +40,6 @@ export function MapPanel({
   const host = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const overlays = useRef<L.LayerGroup | null>(null);
-  const tiles = useRef<L.TileLayer | null>(null);
   const boundaryLayer = useRef<L.GeoJSON | null>(null);
   const treatmentLayer = useRef<L.LayerGroup | null>(null);
   const pointCallback = useRef(onPoint);
@@ -49,7 +51,20 @@ export function MapPanel({
       zoomControl: true,
       attributionControl: true,
     });
-    instance.setView([0, 0], 2);
+    const saved = readMapViewport() ?? DEFAULT_VIEWPORT;
+    instance.setView([saved.latitude, saved.longitude], saved.zoom);
+    instance.on("moveend", () => {
+      const center = instance.getCenter();
+      saveMapViewport({
+        latitude: center.lat,
+        longitude: center.lng,
+        zoom: instance.getZoom(),
+      });
+    });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(instance);
     instance.on("click", (event: L.LeafletMouseEvent) => {
       pointCallback.current({
         longitude: Number(event.latlng.lng.toFixed(5)),
@@ -63,29 +78,10 @@ export function MapPanel({
       instance.remove();
       map.current = null;
       overlays.current = null;
-      tiles.current = null;
       boundaryLayer.current = null;
       treatmentLayer.current = null;
     };
   }, []);
-
-  useEffect(() => {
-    const instance = map.current;
-    if (!instance) return;
-    if (showTiles && tiles.current === null) {
-      tiles.current = L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-          maxZoom: 18,
-          attribution: "© OpenStreetMap contributors",
-        },
-      ).addTo(instance);
-    }
-    if (!showTiles && tiles.current !== null) {
-      instance.removeLayer(tiles.current);
-      tiles.current = null;
-    }
-  }, [showTiles]);
 
   useEffect(() => {
     const layer = overlays.current;
@@ -122,9 +118,6 @@ export function MapPanel({
       point.bindTooltip(t(locale, "mapStartingPoint"));
       layer.addLayer(point);
     }
-    if (stops.length === 0 && startingPoint !== null) {
-      instance.setView([startingPoint.latitude, startingPoint.longitude], 9);
-    }
     if (stops.length > 0) {
       const bounds = L.latLngBounds(
         stops.map((stop) => L.latLng(stop.latitude, stop.longitude)),
@@ -152,10 +145,16 @@ export function MapPanel({
       interactive: false,
     }).addTo(instance);
     boundaryLayer.current = boundary;
-    if (!stops.length && startingPoint === null) {
-      instance.fitBounds(boundary.getBounds(), { animate: false });
+    // An explicit territory choice takes precedence over previous stops and viewport.
+    const bounds = boundary.getBounds();
+    if (bounds.isValid()) {
+      instance.fitBounds(bounds, {
+        animate: false,
+        maxZoom: 11,
+        padding: [12, 12],
+      });
     }
-  }, [referenceGeometry, stops.length, startingPoint]);
+  }, [referenceGeometry]);
 
   useEffect(() => {
     const instance = map.current;

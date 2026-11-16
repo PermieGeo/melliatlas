@@ -116,9 +116,15 @@ districts are not included in the name-only seed; their absence is explicit.
 ## Area-first beekeeper workflow (W01 partial)
 
 Select a country, then an independently seeded region and optional reviewed
-district. The map fits the selected **imported** territory geometry. Large
-regions require a more local district or a click inside the reviewed boundary
-before the **Analyze selected area** action becomes available.
+district. The map always loads OpenStreetMap tiles; their host receives tile requests.
+The last viewed map center and zoom are saved to browser-local `localStorage`
+(`melliatlas.map.viewport.v1`) and restored on reopening, even when no territory
+is selected. Selected apiary points are not separately stored. The map fits a
+selected region or district **only when its reviewed ADM1/ADM2 boundary is
+available from the API**; changing territory takes priority over a previously
+saved camera or an earlier synthetic plan. Large regions require a more local
+district or a click inside the reviewed boundary before the **Analyze selected
+area** action becomes available.
 
 The one action fetches enabled, country-scoped live sources: RU-only Saturn
 and a point-specific Open-Meteo forecast. The result is explicitly preliminary:
@@ -127,11 +133,15 @@ for the selected square, and no drift or safety model is executed. An empty
 provider response must not be interpreted as proof of safety. The old direct
 source-page and weather buttons, UUID lookup, and source-jump link are not
 shown in the main user workflow; the fictional scenario remains collapsed and
-opt-in. No private coordinates are persisted in the browser.
+opt-in. Only the map viewport, not the selected apiary point or investigation payload,
+is retained in browser storage. The visible camera center may nevertheless be
+location-sensitive; clear this site's stored data to discard it.
 
 The API cannot manufacture administrative boundaries or districts: run the PostgreSQL
 `0002` seed and the separately reviewed `0003` ADM1/ADM2 boundary imports
-from `docs/INSTALLATION.md` before evaluating map zoom, district selectors,
-or the area action. Without these imports the form explains that the required
+from `docs/INSTALLATION.md` before evaluating region/district map zoom, district
+options, or the area action. The browser already issues a cancellable district
+request when a region is selected, but the name-only ISO seed returns HTTP 409
+instead of fictional district entries. Without these imports the form explains that the required
 reference data is missing rather than falling back to synthetic geography.
 

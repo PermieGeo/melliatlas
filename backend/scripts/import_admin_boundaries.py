@@ -5,14 +5,13 @@ The source license, validity year and any ambiguous unit matches require operato
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
 from datetime import date
 from pathlib import Path
 from typing import TypeGuard
-
-import psycopg
 
 MAX_BYTES = 150 * 1024 * 1024
 MAX_FEATURES = 5000
@@ -97,7 +96,7 @@ def _mapping(path: Path | None) -> dict[str, str]:
     return mapping
 
 
-def _choose_region(
+def choose_region(
     shape_id: str,
     name: str,
     iso: str | None,
@@ -143,10 +142,13 @@ def import_boundaries(
     used: set[str] = set()
     matched = 0
     skipped = 0
+    import psycopg
+
     with psycopg.connect(dsn) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT id, iso_3166_2, name, name_en FROM melliatlas_region WHERE country_code = %s",
+                "SELECT id, iso_3166_2, name, name_en FROM melliatlas_region "
+                "WHERE country_code = %s",
                 (country,),
             )
             directory = [(r[0], r[1], r[2], r[3]) for r in cursor.fetchall()]
@@ -155,7 +157,7 @@ def import_boundaries(
             for shape_id, name, iso, geometry in features:
                 region_id: str | None
                 if level == "ADM1":
-                    region_id = _choose_region(shape_id, name, iso, mapping, directory)
+                    region_id = choose_region(shape_id, name, iso, mapping, directory)
                 else:
                     cursor.execute(
                         """WITH candidate AS (
@@ -213,14 +215,60 @@ def import_boundaries(
                     matched += 1
                 else:
                     cursor.execute(
-                        """SELECT external_shape_id, reference_id FROM melliatlas_admin_geometry
-                           WHERE territory_id = %s""",
-                        (territory_id,),
+                        """SELECT external_shape_id, reference_id, name, region_id,
+                                  reference_uri, reference_license, valid_on,
+                                  ST_Equals(boundary,
+                                      ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)))
+                           FROM melliatlas_admin_geometry WHERE territory_id = %s""",
+                        (geometry, territory_id),
                     )
                     existing = cursor.fetchone()
-                    if existing != (shape_id, reference_id):
+                    if existing != (
+                        shape_id,
+                        reference_id,
+                        name,
+                        region_id,
+                        reference_uri,
+                        license_id,
+                        valid_on,
+                        True,
+                    ):
                         raise ValueError("Existing boundary differs from the reviewed import")
     return matched, len(features), skipped
+
+
+def manifest_provenance(
+    manifest_path: Path, path: Path, country: str, level: str
+) -> tuple[str, str, str]:
+    """Bind imported file bytes and provenance to the reviewed download manifest."""
+    metadata = _object(_load_json(manifest_path))
+    if (
+        metadata.get("schema_version") != 1
+        or metadata.get("country") != country
+        or metadata.get("level") != level
+        or metadata.get("file_name") != path.name
+    ):
+        raise ValueError("Manifest identity does not match the requested import")
+    expected_digest = _value(metadata.get("sha256"), "sha256")
+    if not re.fullmatch(r"[a-f0-9]{64}", expected_digest):
+        raise ValueError("Invalid downloaded dataset digest")
+    if path.stat().st_size > MAX_BYTES:
+        raise ValueError("Reference file exceeds the review limit")
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    if digest != expected_digest:
+        raise ValueError("Boundary GeoJSON has changed since the reviewed download")
+    reference_id = _value(metadata.get("reference_id"), "reference_id")
+    reference_uri = _value(metadata.get("source_uri"), "source_uri")
+    license_id = _value(metadata.get("license"), "license")
+    expected_country = ISO_COUNTRIES[country]
+    expected_url = f"https://www.geoboundaries.org/api/current/gbOpen/{expected_country}/{level}/"
+    if (
+        reference_uri != expected_url
+        or not re.fullmatch(rf"geoboundaries:{expected_country}-{level}-[0-9]+", reference_id)
+        or metadata.get("unit_count") != len(_features(path, country, level))
+    ):
+        raise ValueError("Unexpected boundary manifest source or inventory")
+    return reference_id, reference_uri, license_id
 
 
 def main() -> None:
@@ -230,13 +278,22 @@ def main() -> None:
     parser.add_argument("--country", choices=sorted(ISO_COUNTRIES), required=True)
     parser.add_argument("--level", choices=("ADM1", "ADM2"), required=True)
     parser.add_argument("--file", type=Path, required=True)
-    parser.add_argument("--reference-id", required=True)
-    parser.add_argument("--source-uri", required=True)
-    parser.add_argument("--license", required=True)
+    parser.add_argument("--manifest", type=Path)
+    parser.add_argument("--reference-id")
+    parser.add_argument("--source-uri")
+    parser.add_argument("--license")
     parser.add_argument("--valid-on", type=date.fromisoformat, required=True)
     parser.add_argument("--mapping", type=Path)
     parser.add_argument("--allow-partial", action="store_true")
     args = parser.parse_args()
+    if args.manifest is not None:
+        if any((args.reference_id, args.source_uri, args.license)):
+            parser.error("Use either --manifest or explicit provenance fields")
+        provenance = manifest_provenance(args.manifest, args.file, args.country, args.level)
+    else:
+        if not all((args.reference_id, args.source_uri, args.license)):
+            parser.error("Provide --manifest or all three provenance fields")
+        provenance = (args.reference_id, args.source_uri, args.license)
     dsn = os.environ.get("MELLIATLAS_DATABASE_URL")
     if not dsn:
         parser.error("MELLIATLAS_DATABASE_URL is required")
@@ -245,9 +302,9 @@ def main() -> None:
         args.file,
         args.country,
         args.level,
-        args.reference_id,
-        args.source_uri,
-        args.license,
+        provenance[0],
+        provenance[1],
+        provenance[2],
         args.valid_on,
         args.mapping,
         args.allow_partial,

@@ -77,6 +77,80 @@ is geoBoundaries gbOpen, with provider metadata at:
 - `https://www.geoboundaries.org/api/current/gbOpen/BLR/ADM1/`
 - `https://www.geoboundaries.org/api/current/gbOpen/BLR/ADM2/`
 
+A reproducible, explicit download workflow is available for the published
+geoBoundaries `gbOpen` dataset. Run the following **on the machine which can
+reach the source**, from the repository root. The commands never access the
+database; large geometry files and their review manifests stay outside Git.
+
+```bash
+export MELLIATLAS_BOUNDARIES_DIR="$HOME/melliatlas-boundaries"
+python backend/scripts/prepare_geoboundaries.py --country RU --level ADM1 --output-dir "$MELLIATLAS_BOUNDARIES_DIR"
+python backend/scripts/prepare_geoboundaries.py --country RU --level ADM2 --output-dir "$MELLIATLAS_BOUNDARIES_DIR"
+python backend/scripts/prepare_geoboundaries.py --country BY --level ADM1 --output-dir "$MELLIATLAS_BOUNDARIES_DIR"
+python backend/scripts/prepare_geoboundaries.py --country BY --level ADM2 --output-dir "$MELLIATLAS_BOUNDARIES_DIR"
+```
+
+Each command fetches pinned API metadata followed by the provider's **simplified**
+GeoJSON, validates all feature identities and the advertised unit count, and
+writes `<boundaryID>.geojson` and a sibling `.manifest.json` containing source
+ID, license, vintage, download URL, file digest and capture time. ADM1 also
+writes `.review.json` containing names, ISO codes and **exact-only proposed**
+canonical matches. Review the unmatched entries and create a separate mapping
+JSON of verified `shapeID -> region_id` entries if necessary. Never automatically
+assign unmatched names or assume that a source dataset is an authoritative
+current boundary inventory. The files are never silently replaced; repeat
+captures need a new output directory. GitHub LFS download failures are reported
+rather than mistaken for valid GeoJSON.
+
+For example, after reviewing the **current** downloaded manifest and ADM1
+matching report, import RU ADM1 and then RU ADM2 with their actual filenames
+(the IDs below identify the metadata snapshot inspected on 2026-11-16 and can
+change in later upstream releases):
+
+```bash
+python backend/scripts/import_admin_boundaries.py --country RU --level ADM1 \
+  --file "$MELLIATLAS_BOUNDARIES_DIR/RUS-ADM1-28173009.geojson" \
+  --manifest "$MELLIATLAS_BOUNDARIES_DIR/RUS-ADM1-28173009.geojson.manifest.json" \
+  --valid-on 2017-01-01
+python backend/scripts/import_admin_boundaries.py --country RU --level ADM2 \
+  --file "$MELLIATLAS_BOUNDARIES_DIR/RUS-ADM2-50074027.geojson" \
+  --manifest "$MELLIATLAS_BOUNDARIES_DIR/RUS-ADM2-50074027.geojson.manifest.json" \
+  --valid-on 2017-01-01
+```
+
+For Belarus use `--country BY`, the captured `BLR-ADM1-*` then `BLR-ADM2-*`
+filenames, and a reviewed 2005 vintage (the inspected provider records identify
+`BLR-ADM1-45462678` and `BLR-ADM2-67162791`). The example first-of-year
+`--valid-on` values are **year-level metadata anchors**, not precise legal
+boundary effective dates. Document any separately verified actual effective date
+instead of treating the anchor as a verified enactment date.
+
+The manifest path binds an import to the captured file's SHA-256, country,
+level, version and advertised feature count. Any discrepancy stops before
+connecting to PostgreSQL. To supply reviewed ADM1 matches, add
+`--mapping /path/to/reviewed-mapping.json` to that ADM1 import. For districts,
+parent regions are identified by spatial containment of the already imported
+ADM1 geometry. Ambiguous/missing parents abort the entire transaction; only a
+consciously reviewed `--allow-partial` run skips unmatched units. Do not present
+such a run as complete district coverage.
+
+After both levels are imported for a country, compare **stored** geometry to
+the captured source inventories:
+
+```bash
+python backend/scripts/verify_admin_boundaries.py --country RU \
+  --adm1-manifest "$MELLIATLAS_BOUNDARIES_DIR/RUS-ADM1-28173009.geojson.manifest.json" \
+  --adm2-manifest "$MELLIATLAS_BOUNDARIES_DIR/RUS-ADM2-50074027.geojson.manifest.json"
+```
+
+The verification uses read-only SQL, requires matching version counts and
+reports invalid geometries, orphaned districts and other-version rows.
+A failure means the imported data is incomplete **relative to this source
+snapshot**. It does not independently validate current jurisdiction boundaries.
+Restart the API with `MELLIATLAS_DATABASE_URL` configured to serve the stored
+regions and districts. Import only after reviewing each dataset's provenance,
+coverage, terms and regional matching reports.
+
 Inspect each source's collection date, boundaries, attribution and license;
 these historical files do **not** establish current administrative authority.
 Original source licenses differ by geography: RU is ODbL-sourced and BY is
@@ -183,7 +257,7 @@ npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. Vite proxies `/api` to the local backend. The first successful npm installation must generate and commit `web/package-lock.json` for reproducible installs. Do not claim `npm ci` or a reproducible build until that lockfile is present. The optional external map tile layer is disabled by default; enable it explicitly if you accept sharing map viewport requests with OpenStreetMap.
+Open `http://127.0.0.1:5173`. Vite proxies `/api` to the local backend. The first successful npm installation must generate and commit `web/package-lock.json` for reproducible installs. Do not claim `npm ci` or a reproducible build until that lockfile is present. The map loads OpenStreetMap tiles automatically (the tile host receives the tile coordinates). The last map center and zoom are stored only in this browser under `melliatlas.map.viewport.v1`; no apiary point is separately persisted. To avoid external map requests, block the tile host or use a separately approved offline map source in a future deployment. Region/district zoom requires the reviewed ADM1/ADM2 data described above.
 
 See [Web README](../web/README.md) for the synthetic scenario and client-specific verification commands.
 

@@ -85,7 +85,7 @@ The first slice uses only existing POST/GET operations and additive nullable res
 
 **Requirement and oracle:** `MVP01-WEB-R02` / `MVP01-WEB-A06`, partial pending approved reference catalogs. Implement against existing `GET /api/v1/territories/regions`, `/districts`, and `/geometry/{territory_id}` with no backend contract changes.
 
-**Public contracts and integration design:** `web/src/api/types.ts` defines `TerritoryGeometry` and Polygon/MultiPolygon WGS84 wire structures; `validation.ts` strictly decodes coordinates, rings and CRS. `client.ts` exposes `getTerritoryGeometry(territoryId, signal): Promise<ApiResult<TerritoryGeometry>>`; `listDistricts` remains unchanged. The view-level `useTerritoryReference(country, regions)` owns cancellable district and geometry reads, ID/version matching and explicit `404/409/503` presentation states. `ReferenceControls` is a separate reference selector; the fictional scenario selector never treats administrative catalogs as executable sources. `MapPanel` renders only a returned, validated reference polygon; external map tiles remain opt-in.
+**Public contracts and integration design:** `web/src/api/types.ts` defines `TerritoryGeometry` and Polygon/MultiPolygon WGS84 wire structures; `validation.ts` strictly decodes coordinates, rings and CRS. `client.ts` exposes `getTerritoryGeometry(territoryId, signal): Promise<ApiResult<TerritoryGeometry>>`; `listDistricts` remains unchanged. The view-level `useTerritoryReference(country, regions)` owns cancellable district and geometry reads, ID/version matching and explicit `404/409/503` presentation states. `ReferenceControls` is a separate reference selector; the fictional scenario selector never treats administrative catalogs as executable sources. `MapPanel` renders only a returned, validated reference polygon; the user-approved later navigation follow-up enables OpenStreetMap tiles by default and remembers the map camera in browser-local storage.
 
 **Contract tests:** `web/tests/reference-geometry.test.ts` checks Polygon/MultiPolygon decoding, malformed coordinates, CRS and encoded IDs. `web/tests/reference-navigation.test.tsx` checks a reference region and district, unsupported depth, missing/mismatched geometry, country switching and separation from investigation POSTs. No complete RU/BY inventory, real spatial audit, or post-import country coverage is claimed.
 
@@ -317,3 +317,49 @@ from a database. `web/tests/reference-navigation.test.tsx` checks automatic
 district loading, region switching and obsolete responses. The localized main
 heading and subtitle are updated; no route, wire DTO or runtime dependency is
 added. Acceptance remains pending verified local checks and real ADM2 import.
+
+### W01 R02 follow-up — automatic map positioning and saved camera (partial R02/A06)
+
+**Scope:** User-requested map UX refinement within the existing W01 navigation
+workstream. Map tiles are displayed without an extra toggle. The Leaflet camera
+restores the last locally saved center and zoom on browser reopen; only the
+camera is retained (rounded to 4 decimal places), not the selected apiary
+marker or investigation request. Tile requests share approximate viewport
+coordinates with OpenStreetMap, which is disclosed in RU/EN map help. Storage
+failures and malformed saved values do not block the map.
+
+**Navigation:** Existing cancellable `GET /districts?region_id=...` requests
+remain automatic on region selection. A successfully loaded, identity-checked
+ADM1/ADM2 geometry always fits the Leaflet viewport when the beekeeper changes
+the region or district, independently of an older saved camera. Switching
+territories clears old live findings and fictional plans. Missing real
+administrative geometry cannot be replaced by an invented region center:
+backend PostGIS migration 0003 and reviewed ADM1/ADM2 imports remain explicit
+prerequisites for positioning and district options.
+
+**Tests:** `web/tests/viewport.test.ts` validates stored camera parsing,
+privacy-limited serialization and storage failures. `web/e2e/workspace.spec.ts`
+checks region-to-district viewport changes, restoration on reload, an absent
+basemap checkbox, and a functioning text UI when tile requests are blocked.
+Actual browser checks and real ADM2 imports remain separate acceptance gates.
+
+### W02 geography-data preparation — explicit PostGIS import workflow (pending acceptance)
+
+**Scope:** Developer-authorized follow-up to the W01 territory navigator. The
+existing `0002`/`0003` migrations, canonical ISO seed, read-only territory
+endpoints and explicit PostGIS geometry importer remain authoritative. The
+new offline operator CLI stages one geoBoundaries gbOpen ADM1/ADM2 layer with
+source-version metadata, SHA-256, feature inventory and exact ADM1 review. An
+optional import manifest rejects changed inputs; repeated imports validate
+geometry and provenance. A read-only audit reports whether the stored version
+matches the source inventory. No boundary data is shipped in Git or loaded on
+application startup; no Saturn mapping or UX endpoint is changed.
+
+**Test oracles:** offline metadata/URL/identity validation, digest mismatch,
+non-overwrite, incorrect country/level, incomplete feature count, missing or
+ambiguous matching and read-only database inventory. Full real PostgreSQL/PostGIS
+import, matching review, source usage rights and current administrative
+accuracy remain **unverified** and are required before W02 acceptance.
+The repository `sh`-invoked formatter/check scripts use POSIX-compatible
+file checks so backend checks cannot silently be skipped on shells without
+Bash `[[ ... ]]` support; shell runner regression tests guard this behavior.
