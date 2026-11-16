@@ -123,10 +123,7 @@ h3 {
 }
 .workspace {
   display: grid;
-  grid-template-columns: minmax(265px, 312px) minmax(360px, 1fr) minmax(
-      276px,
-      334px
-    );
+  grid-template-columns: minmax(265px, 312px) minmax(0, 1fr);
   flex: 1;
   min-height: 0;
 }
@@ -140,7 +137,7 @@ h3 {
   border-right: 1px solid #e4e9e2;
 }
 .evidence-panel {
-  border-left: 1px solid #e4e9e2;
+  border-top: 1px solid #e4e9e2;
   overflow: auto;
 }
 .eyebrow {
@@ -257,6 +254,7 @@ h3 {
   padding: 27px 24px;
   background: #f4f7f2;
   min-width: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 17px;
@@ -503,7 +501,7 @@ h3 {
 }
 @media (max-width: 1160px) {
   .workspace {
-    grid-template-columns: 270px minmax(400px, 1fr);
+    grid-template-columns: 270px minmax(0, 1fr);
   }
   .evidence-panel {
     grid-column: 1/-1;
@@ -751,4 +749,24 @@ h3 {
   stroke-width: 2;
   fill: #edaf75;
   fill-opacity: 0.24;
+}
+
+/* The map, forecast and result sections use all width remaining after the controls. */
+.canvas-column > .weather-panel {
+  margin: 0;
+}
+.canvas-column > .evidence-panel {
+  border-radius: 12px;
+}
+.source-date-range {
+  margin-top: 12px;
+}
+.source-date-range .date-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.source-date-range input {
+  min-width: 0;
+  width: 100%;
 }

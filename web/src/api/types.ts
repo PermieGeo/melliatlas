@@ -133,6 +133,9 @@ export interface SaturnNoticePage {
   country: CountryCode;
   region_code: number;
   region_id: string | null;
+  district_id?: string | null;
+  date_start?: string | null;
+  date_end?: string | null;
   captured_at: string;
   page_number: number;
   next_page: number | null;

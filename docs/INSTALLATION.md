@@ -141,3 +141,30 @@ sh ./run-tests.sh
 ```
 
 Use `run-format.sh` before `run-tests.sh`; formatting modifies source files. Manual PostGIS imports and real external-source checks are not performed by the normal test suite.
+
+## Explicit Saturn district mapping after 0003 (W01)
+
+The manual selected-area workflow requires a reviewed, provider-specific
+Saturn district identifier. After loading the reviewed administrative
+boundaries via migration `0003`, create the empty mapping table:
+
+```bash
+psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 \
+  -f backend/migrations/0005_saturn_district_mapping.sql
+```
+
+For every district that an operator explicitly verified, insert a row into
+`melliatlas_source_saturn_district` containing the imported canonical
+`district_id`, the **independently observed** upstream `provider_district_code`,
+`source_uri`, and `verified_at`. Do not infer upstream IDs from geoBoundaries
+shape IDs, names, ISO codes, polygon coordinates or array indexes. Do not
+populate fake examples into a real database. The table starts empty on purpose.
+
+With `MELLIATLAS_SATURN_LIVE_ENABLED=true`, the UI will reject a district
+without an independently reviewed mapping (409), rather than requesting the
+whole oblast. The query sends provider `district`, `startDateUpdateMap`, and
+`endDateUpdateMap` values: their actual upstream semantics, rights and
+completeness require separate confirmation. Without approved mappings or
+provider permission, leave the district source read unavailable. The weather
+panel does not require a Saturn mapping: it auto-loads the 24-hour forecast
+for a validated territory point when live weather is enabled.

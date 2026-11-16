@@ -20,17 +20,17 @@ The private `starting_point` exists only in the POST body; the decoder rejects a
 
 ## Explicit live public notice read (W01 experimental addition)
 
-`listExternalSources(country)` reads the backend's enabled capability listing.
-The presence of `saturn` for `RU` enables an isolated, manual source-read panel.
-A country with no advertised Saturn capability has no Saturn UI or transport
-calls. `readSaturnPage` posts a strictly typed provider region code and page
-number, and `decodeSaturnPage` rejects malformed geography, mismatched country,
-missing attribution or claims marked synthetic. Changing country or filter
-cancels prior reads and clears prior polygons. External notices never enter
-fictional investigation result state; the map renders their field polygons as
-a visually distinct unverified source layer. Empty/failed pages cannot establish
-complete coverage or site safety. The exact provider region codes remain
-unverified and are entered manually, not inferred from administrative IDs.
+`listExternalSources(country)` discovers the explicitly enabled RU-only Saturn
+capability. `readSaturnPage` sends the selected canonical region and district,
+page number and bounded source date interval; the backend resolves provider
+IDs from separately reviewed source mappings. Invalid, unavailable and
+unmapped district scope is an error, never a region-wide fallback. A distinct
+legacy `region_code` form remains available to controlled API clients only.
+`decodeSaturnPage` rejects malformed notice records or unattributed geography;
+changing the selection cancels prior reads and clears source polygons. Source
+records never enter fictional investigation state. An empty page cannot prove
+coverage or safety, and upstream filter compatibility is not independently
+verified.
 
 ## On-demand live weather forecast
 
@@ -39,8 +39,9 @@ unverified and are entered manually, not inferred from administrative IDs.
 signal)` posts the selected coordinates in the JSON body to the same-origin API.
 The strict decoder requires 24 sequential UTC hours, nullable bounded values,
 source attribution, grid coordinates and non-empty uncertainties. An aborted or
-stale request is not a completed forecast. `WeatherPanel` has a manual button,
-does not log or persist coordinates, and includes Open-Meteo attribution using the validated `source_uri` supplied
+stale request is not a completed forecast. `WeatherPanel` automatically reads for a validated territory point, offers an
+optional refresh action, never stores private coordinates, and includes
+Open-Meteo attribution using the validated `source_uri` supplied
 by the backend; browser modules do not duplicate a provider documentation URL.
 Neither a weather forecast nor a live treatment notice modifies synthetic
 investigation results or certifies pesticide drift, exposure or placement safety.
@@ -60,4 +61,23 @@ operator tooling; the beekeeper UI does not expose it.
 
 `resolveTerritoryPoint` posts the clicked coordinate in JSON (never a URL), decodes the canonical containing region and optional district, and aborts stale lookups on another click or country/territory change. After region selection, the client only selects a district confirmed by the region's separately fetched catalog. A missing point lookup leaves the manual selector available.
 
-The area panel reads Saturn page zero after the user's Analyze action; the user may fetch additional upstream pages one at a time. The UI deduplicates fetched record IDs and displays the number of valid polygons, with an explicit camera-fit control for fetched field shapes. This is still a region-wide sample, not verified district completeness or a safety conclusion; no source crawling or district-code inference occurs.
+The area panel reads Saturn page zero after the user's Analyze action; the user may fetch additional upstream pages one at a time. The UI deduplicates fetched record IDs and displays the number of valid polygons, with an explicit camera-fit control for fetched field shapes. This is a single district-filtered page requiring a reviewed provider mapping, not verified district completeness or a safety conclusion; no source crawling or district-code inference occurs.
+
+## Restored selection, inline forecast, and district-scoped reads
+
+`geo/territoryPreference.ts` persists public country/region/district IDs only;
+`useTerritoryReference` restores each ID after the current server catalogs
+confirm the parent-child relationship. Map clicks and weather coordinates are
+not persisted. `geo/selection.ts#representativePoint` chooses a point strictly
+inside the matched geographic polygon, and the automatic Open-Meteo forecast
+appears in an inline card above the map. Without a validated boundary, no
+point forecast is automatically requested. This read does not trigger Saturn.
+
+`geo/dateRange.ts` defaults to local today through one calendar month (with a
+clamped day for short months). A user-chosen source interval must be ordered
+and no longer than 31 days. The manual Saturn action submits canonical
+`district_id`, `date_start`, and `date_end`; the response must echo all three
+before the client shows provider polygons or pages. A missing reviewed Saturn
+district mapping is 409 and must never fall back to whole-region data. The
+upstream `UpdateMap` filter keys have not been independently verified to
+represent actual treatment/application dates.

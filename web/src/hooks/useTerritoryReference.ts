@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { getTerritoryGeometry, listDistricts } from "../api/client";
 import type { CountryCode, Territory, TerritoryGeometry } from "../api/types";
 import type { TranslationKey } from "../i18n";
+import {
+  readTerritoryPreference,
+  saveTerritoryPreference,
+} from "../geo/territoryPreference";
 
 /** Reference navigation is independent of fictional scenario territories and study results. */
 export interface TerritoryNavigation {
@@ -30,7 +34,14 @@ export function useTerritoryReference(
     regionSelection.country === country ? regionSelection.regionId : "";
 
   useEffect(() => {
-    setRegionSelection({ country, regionId: "" });
+    const saved = readTerritoryPreference();
+    const regionId = saved?.country === country ? saved.regionId : "";
+    setRegionSelection({ country, regionId });
+    setPendingPointDistrict(
+      saved?.country === country && regionId && saved.districtId
+        ? { country, regionId, districtId: saved.districtId }
+        : null,
+    );
   }, [country]);
   const [districtId, setDistrictId] = useState("");
   const [pendingPointDistrict, setPendingPointDistrict] = useState<{
@@ -135,11 +146,17 @@ export function useTerritoryReference(
       districtResult.message === "referenceDistrictLoading"
     )
       return;
-    setDistrictId(
-      districts.some((item) => item.id === pendingPointDistrict.districtId)
-        ? pendingPointDistrict.districtId
-        : "",
-    );
+    const selectedId = districts.some(
+      (item) => item.id === pendingPointDistrict.districtId,
+    )
+      ? pendingPointDistrict.districtId
+      : "";
+    setDistrictId(selectedId);
+    saveTerritoryPreference({
+      country,
+      regionId: regionIdForRequest,
+      districtId: selectedId,
+    });
     setPendingPointDistrict(null);
   }, [
     country,
@@ -207,6 +224,7 @@ export function useTerritoryReference(
       setPendingPointDistrict(null);
       setRegionSelection({ country, regionId: id });
       setDistrictId("");
+      saveTerritoryPreference({ country, regionId: id, districtId: "" });
     },
     selectByPoint: (newRegionId, newDistrictId) => {
       if (
@@ -217,6 +235,11 @@ export function useTerritoryReference(
         return;
       setRegionSelection({ country, regionId: newRegionId });
       setDistrictId("");
+      saveTerritoryPreference({
+        country,
+        regionId: newRegionId,
+        districtId: newDistrictId ?? "",
+      });
       setPendingPointDistrict(
         newDistrictId
           ? {
@@ -233,13 +256,17 @@ export function useTerritoryReference(
     },
     selectDistrict: (id) => {
       setPendingPointDistrict(null);
-      if (
-        districts.some(
-          (item) => item.id === id && item.parent_id === region?.id,
-        )
+      const nextId = districts.some(
+        (item) => item.id === id && item.parent_id === region?.id,
       )
-        setDistrictId(id);
-      else setDistrictId("");
+        ? id
+        : "";
+      setDistrictId(nextId);
+      saveTerritoryPreference({
+        country,
+        regionId: regionIdForRequest,
+        districtId: nextId,
+      });
     },
   };
 }

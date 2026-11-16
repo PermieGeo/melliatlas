@@ -40,6 +40,10 @@ interface Props {
   canAnalyze: boolean;
   onAnalyze: () => void;
   analysisHint: TranslationKey;
+  sourceDateStart: string;
+  sourceDateEnd: string;
+  onSourceDateStart: (value: string) => void;
+  onSourceDateEnd: (value: string) => void;
 }
 
 /** Render source-backed choices without conflating fictional scenarios with real references. */
@@ -117,6 +121,25 @@ export function InvestigationControls(props: Props) {
             </button>
           </div>
         )}
+      </div>
+      <div className="form-group source-date-range">
+        <label>{tr("analysisDateRange")}</label>
+        <div className="date-range">
+          <input
+            aria-label={tr("analysisDateStart")}
+            type="date"
+            value={props.sourceDateStart}
+            onChange={(event) => props.onSourceDateStart(event.target.value)}
+          />
+          <span>—</span>
+          <input
+            aria-label={tr("analysisDateEnd")}
+            type="date"
+            value={props.sourceDateEnd}
+            onChange={(event) => props.onSourceDateEnd(event.target.value)}
+          />
+        </div>
+        <p className="field-help">{tr("analysisDateMeaning")}</p>
       </div>
       <button
         type="button"

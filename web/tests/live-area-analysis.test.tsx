@@ -14,33 +14,18 @@ const request: AreaAnalysisRequest = {
   sequence: 1,
   country: "RU",
   regionId: "ru:region:smo",
-  point: { latitude: 54, longitude: 32 },
-};
-const hours = Array.from({ length: 24 }, (_, index) => ({
-  time: new Date(Date.UTC(2026, 10, 16, index)).toISOString(),
-  wind_speed_kmh: 10,
-  wind_direction_degrees: 180,
-  wind_gusts_kmh: 13,
-  precipitation_mm: 0,
-}));
-const forecast = {
-  source_id: "open-meteo:forecast",
-  source_uri: "https://open-meteo.com/en/docs",
-  source_mode: "LIVE",
-  synthetic: false,
-  captured_at: "2026-11-16T00:00:00Z",
-  requested_latitude: 54,
-  requested_longitude: 32,
-  grid_latitude: 54.1,
-  grid_longitude: 32.1,
-  hours,
-  uncertainties: ["Model forecasts do not establish pesticide drift or safety"],
+  districtId: "ru:district:smolensk-test",
+  dateStart: "2026-11-16",
+  dateEnd: "2026-12-16",
 };
 const page = {
   source_id: "saturn:public-beekeeper-portal",
   country: "RU",
   region_code: 55,
   region_id: request.regionId,
+  district_id: request.districtId,
+  date_start: request.dateStart,
+  date_end: request.dateEnd,
   captured_at: "2026-11-16T00:00:00Z",
   page_number: 0,
   next_page: 1,
@@ -55,12 +40,23 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("loads RU Saturn and weather together after one analysis action", async () => {
+it("loads only a district-scoped Saturn page after analysis", async () => {
   const requests: string[] = [];
   vi.stubGlobal(
     "fetch",
-    vi.fn(async (path: string) => {
+    vi.fn(async (path: string, options?: RequestInit) => {
       requests.push(path);
+      if (path.endsWith("/saturn/treatments")) {
+        expect(JSON.parse(String(options?.body))).toEqual({
+          country: "RU",
+          region_id: request.regionId,
+          district_id: request.districtId,
+          date_start: request.dateStart,
+          date_end: request.dateEnd,
+          page_number: 0,
+        });
+        return new Response(JSON.stringify(page));
+      }
       if (path.startsWith("/api/v1/sources?"))
         return new Response(
           JSON.stringify([
@@ -82,8 +78,6 @@ it("loads RU Saturn and weather together after one analysis action", async () =>
         );
       if (path.endsWith("/saturn/treatments"))
         return new Response(JSON.stringify(page));
-      if (path.endsWith("/weather/forecast"))
-        return new Response(JSON.stringify(forecast));
       return new Response(null, { status: 404 });
     }),
   );
@@ -112,10 +106,8 @@ it("loads RU Saturn and weather together after one analysis action", async () =>
   );
   await screen.findByText(/Загружено страниц: 1/);
   expect(requests).toContain("/api/v1/sources/saturn/treatments");
-  expect(requests).toContain("/api/v1/sources/weather/forecast");
-  expect(
-    screen.getByText(/Частичная выборка не подтверждает отсутствие обработок/),
-  ).toBeTruthy();
+  expect(requests).not.toContain("/api/v1/sources/weather/forecast");
+  expect(screen.getByText(/Запрашивается только район/)).toBeTruthy();
   expect(
     screen.queryByRole("button", { name: /Загрузить одну страницу/ }),
   ).toBeNull();
@@ -139,7 +131,7 @@ it("never attempts RU-only Saturn for BY and ignores obsolete results", async ()
             },
           ]),
         );
-      return new Response(JSON.stringify(forecast));
+      return new Response(null, { status: 404 });
     }),
   );
   render(
@@ -151,7 +143,7 @@ it("never attempts RU-only Saturn for BY and ignores obsolete results", async ()
       onNotices={vi.fn()}
     />,
   );
-  await screen.findByText("Hourly weather forecast (24 h)");
+  await screen.findByText(/Saturn is not available/);
   expect(paths).not.toContain("/api/v1/sources/saturn/treatments");
 });
 
@@ -172,7 +164,7 @@ it("requires a real polygon point rather than merely its bounding box", () => {
   expect(isInsideArea({ latitude: 55.5, longitude: 30.1 }, shape)).toBe(false);
 });
 
-it("keeps weather available when a region has no reviewed Saturn mapping", async () => {
+it("never falls back to region-wide Saturn when district is unmapped", async () => {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (path: string) => {
@@ -203,8 +195,6 @@ it("keeps weather available when a region has no reviewed Saturn mapping", async
           { status: 409 },
         );
       }
-      if (path.endsWith("/weather/forecast"))
-        return new Response(JSON.stringify(forecast));
       return new Response(null, { status: 404 });
     }),
   );
@@ -218,7 +208,7 @@ it("keeps weather available when a region has no reviewed Saturn mapping", async
     />,
   );
   await screen.findByText(/нет проверенного кода Сатурна/);
-  expect(screen.getByText("Почасовой прогноз (24 ч)")).toBeTruthy();
+  expect(screen.queryByText("Почасовой прогноз (24 ч)")).toBeNull();
 });
 
 it("retrieves later pages only when requested and accumulates mapped field records", async () => {
@@ -269,7 +259,13 @@ it("retrieves later pages only when requested and accumulates mapped field recor
       if (path.endsWith("/saturn/treatments")) {
         const requestBody = JSON.parse(String(init?.body)) as {
           page_number: number;
+          district_id: string;
+          date_start: string;
+          date_end: string;
         };
+        expect(requestBody.district_id).toBe(request.districtId);
+        expect(requestBody.date_start).toBe(request.dateStart);
+        expect(requestBody.date_end).toBe(request.dateEnd);
         calls.push(requestBody.page_number);
         return new Response(
           JSON.stringify({

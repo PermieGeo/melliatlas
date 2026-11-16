@@ -75,3 +75,35 @@ export function isInsideArea(point: Position, shape: ReferenceShape): boolean {
     );
   });
 }
+
+/** A deterministic point inside imported geometry, never an inferred private apiary position. */
+export function representativePoint(shape: ReferenceShape): Position | null {
+  const overall = areaSize(shape);
+  if (overall && isInsideArea(overall.center, shape)) return overall.center;
+  const polygons =
+    shape.type === "Polygon" ? [shape.coordinates] : shape.coordinates;
+  const SEARCH_STEPS = 12;
+  for (const polygon of polygons) {
+    const ring = polygon[0];
+    if (!ring?.length) continue;
+    let left = Infinity,
+      right = -Infinity,
+      bottom = Infinity,
+      top = -Infinity;
+    for (const [x, y] of ring) {
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+      bottom = Math.min(bottom, y);
+      top = Math.max(top, y);
+    }
+    for (let row = 0; row < SEARCH_STEPS; row++)
+      for (let column = 0; column < SEARCH_STEPS; column++) {
+        const point = {
+          longitude: left + ((column + 0.5) / SEARCH_STEPS) * (right - left),
+          latitude: bottom + ((row + 0.5) / SEARCH_STEPS) * (top - bottom),
+        };
+        if (isInsideArea(point, shape)) return point;
+      }
+  }
+  return null;
+}

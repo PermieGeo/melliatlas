@@ -62,3 +62,10 @@ PostGIS geometry match. Any conflicting row rolls back the batch. The database
 verifier counts exact reference IDs, checks spatial/CRS validity and district
 parent presence, but does not certify present-day authoritative boundaries.
 
+## Independently reviewed district identity
+
+`PostgresRegionCatalog.find_district_code` reads
+`melliatlas_source_saturn_district` created by migration `0005`. This table
+is intentionally unseeded. The lookup joins existing canonical district
+geometry, its parent region and the separately verified Saturn subject ID;
+an absent mapping cannot turn into an unfiltered provider request.

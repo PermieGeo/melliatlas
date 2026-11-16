@@ -39,6 +39,17 @@ class PostgresRegionCatalog:
         WHERE saturn.region_id = %s AND region.country_code = 'RU'
     """
 
+    _DISTRICT_CODE: Final[LiteralString] = """
+        SELECT mapping.provider_district_code
+        FROM melliatlas_source_saturn_district AS mapping
+        JOIN melliatlas_admin_geometry AS district
+          ON district.territory_id = mapping.district_id AND district.kind = 'district'
+        JOIN melliatlas_source_saturn AS subject
+          ON subject.region_id = district.region_id
+        WHERE mapping.district_id = %s AND district.region_id = %s
+          AND district.country_code = 'RU'
+    """
+
     def __init__(self, connect: ConnectionFactory) -> None:
         self._connect = connect
 
@@ -123,4 +134,16 @@ class PostgresRegionCatalog:
             return None
         if len(rows) != 1 or len(rows[0]) != 1 or type(rows[0][0]) is not int:
             raise ReferenceUnavailableError("Invalid Saturn region mapping")
+        return rows[0][0]
+
+    async def find_district_code(
+        self, *, source_id: str, country: CountryCode, region_id: str, district_id: str
+    ) -> int | None:
+        if source_id != "saturn" or country is not CountryCode.RU:
+            return None
+        rows = await asyncio.to_thread(self._read, self._DISTRICT_CODE, (district_id, region_id))
+        if not rows:
+            return None
+        if len(rows) != 1 or len(rows[0]) != 1 or type(rows[0][0]) is not int:
+            raise ReferenceUnavailableError("Invalid reviewed Saturn district mapping")
         return rows[0][0]

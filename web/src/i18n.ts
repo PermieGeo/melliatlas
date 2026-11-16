@@ -14,6 +14,18 @@ const en = {
     "Fetched {pages} page(s); {records} unique notices; reported region total: {total}.",
   analysisAction: "Analyze selected area",
   analysisSelectRegion: "Select a region first.",
+  analysisSelectDistrict:
+    "Select a district for a district-scoped Saturn query.",
+  analysisInvalidDateRange:
+    "Choose an ordered source interval no longer than 31 days.",
+  analysisDateRange: "Saturn source date range",
+  analysisDateStart: "Saturn from date",
+  analysisDateEnd: "Saturn to date",
+  analysisDateMeaning:
+    "Today through one calendar month by default. Saturn's UpdateMap dates may not mean planned spray dates.",
+  weatherSelectTerritory:
+    "Select a territory with a validated boundary to load local weather automatically.",
+  weatherSourceUnavailable: "The weather provider is disabled or unavailable.",
   analysisMissingBoundary:
     "Administrative boundaries are not installed. Import a reviewed geographic dataset before analyzing this area.",
   analysisNarrowArea:
@@ -22,18 +34,18 @@ const en = {
   analysisResultsTitle: "Preliminary area findings",
   analysisAwaiting:
     "Choose an area and run the analysis to query available sources together.",
-  analysisWorking: "Retrieving treatment notices and weather…",
+  analysisWorking: "Retrieving district-scoped treatment notices…",
   analysisNoProviders: "No external data sources are enabled for this country.",
   analysisSourcesUnavailable: "Source capabilities could not be retrieved.",
   analysisPartialDisclaimer:
-    "Saturn pages cover the whole region, not necessarily your district. Loaded pages are not proof of complete coverage or pesticide safety.",
+    "Only a reviewed Saturn district ID is used. Date-filter semantics and district coverage remain unverified; loaded pages do not establish pesticide safety.",
   analysisSaturnCount:
     "{count} notices in the sampled response; {skipped} unrecognized entries.",
   analysisSaturnPartial:
-    "Source reports {total} regional records; district-specific filtering is not yet available.",
+    "Source reports {total} records for the requested filter; completeness is unverified.",
   analysisForecastHours: "Hourly weather forecast ({count} h)",
   analysisSaturnRegionUnmapped:
-    "The region has no verified Saturn mapping yet. Weather results can still be used.",
+    "The region or district has no reviewed Saturn mapping. No region-wide request was made.",
   analysisSaturnNotSupported:
     "Saturn is not available for this country or is disabled by the server.",
   analysisWeatherNotEnabled: "Weather source is disabled by the server.",
@@ -259,6 +271,17 @@ const ru: Record<keyof typeof en, string> = {
     "Загружено страниц: {pages}; уникальных сообщений: {records}; всего по области: {total}.",
   analysisAction: "Проанализировать выбранную местность",
   analysisSelectRegion: "Сначала выберите область или регион.",
+  analysisSelectDistrict:
+    "Выберите район: запрос ко всей области не выполняется.",
+  analysisInvalidDateRange: "Укажите даты по возрастанию в пределах 31 дня.",
+  analysisDateRange: "Период запроса к Сатурну",
+  analysisDateStart: "Сатурн: дата начала",
+  analysisDateEnd: "Сатурн: дата окончания",
+  analysisDateMeaning:
+    "По умолчанию — с сегодняшнего дня на календарный месяц. Даты UpdateMap могут не совпадать с датами обработок.",
+  weatherSelectTerritory:
+    "Выберите территорию с подтверждёнными границами для автоматической загрузки погоды.",
+  weatherSourceUnavailable: "Источник погоды отключён или недоступен.",
   analysisMissingBoundary:
     "Границы ещё не импортированы в географическую базу. Для анализа нужен проверенный географический слой.",
   analysisNarrowArea:
@@ -267,19 +290,19 @@ const ru: Record<keyof typeof en, string> = {
   analysisResultsTitle: "Предварительные сведения по местности",
   analysisAwaiting:
     "Выберите местность и запустите анализ для загрузки доступных источников одним действием.",
-  analysisWorking: "Получаем сообщения об обработках и прогноз погоды…",
+  analysisWorking: "Получаем сообщения об обработках для района…",
   analysisNoProviders:
     "Для выбранной страны ни один реальный источник не включён на сервере.",
   analysisSourcesUnavailable: "Не удалось узнать список доступных источников.",
   analysisPartialDisclaimer:
-    "Страницы Сатурна относятся ко всей области, а не обязательно к выбранному району. Частичная выборка не подтверждает отсутствие обработок или безопасность.",
+    "Запрашивается только район с проверенным кодом Сатурна. Даты и полнота покрытия не подтверждены; отсутствие записей не доказывает безопасность.",
   analysisSaturnCount:
     "В полученной выборке {count} сообщений, не распознано: {skipped}.",
   analysisSaturnPartial:
-    "Всего записей по области по версии источника: {total}. Фильтрация по району пока не реализована.",
+    "Источник сообщает {total} записей по выбранному фильтру; полнота не подтверждена.",
   analysisForecastHours: "Почасовой прогноз ({count} ч)",
   analysisSaturnRegionUnmapped:
-    "Для этой области пока нет проверенного кода Сатурна. Прогноз погоды остаётся доступен.",
+    "Для области или района нет проверенного кода Сатурна. Запрос на всю область не выполнялся.",
   analysisSaturnNotSupported:
     "Сатурн недоступен для выбранной страны или отключён на сервере.",
   analysisWeatherNotEnabled: "Погодный источник отключён на сервере.",

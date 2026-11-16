@@ -65,3 +65,11 @@ wire contract and source HTTP origin are not database overrides. No advection, s
 are provided. This source does not require a synthetic scenario and is usable
 independently of the country-specific Saturn notice reader.
 
+## Optional bounded district and date filtering
+
+`TreatmentNoticeReader.read_page` accepts optional provider district code,
+start date and end date. The Saturn adapter includes a verified district code
+in upstream `beekeperSearchFilter.district` and date-only bounds in
+`startDateUpdateMap` and `endDateUpdateMap`. It never infers source IDs from
+canonical district or region codes. A filtered page is partial evidence and
+its actual upstream filtering semantics have not been independently verified.

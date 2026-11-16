@@ -6,7 +6,7 @@ reuse permission. Do not follow redirects, retry, crawl, or supply credentials.
 
 import json
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timezone
 
 from melliatlas.sources.api import SourceReadError, TreatmentNoticePage
 from melliatlas.sources.providers.saturn.failures import SaturnReadFailure
@@ -27,7 +27,14 @@ class SaturnPublicTreatmentReader:
         self._transport = transport
 
     def read_page(
-        self, *, country: CountryCode, region_code: int, page_number: int
+        self,
+        *,
+        country: CountryCode,
+        region_code: int,
+        page_number: int,
+        district_code: int | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> TreatmentNoticePage:
         if country is not CountryCode.RU:
             raise ValueError("Saturn is restricted to RU")
@@ -35,13 +42,36 @@ class SaturnPublicTreatmentReader:
             raise ValueError("Saturn region code must be a positive provider identifier")
         if type(page_number) is not int or not 0 <= page_number <= MAX_PAGE:
             raise ValueError("Saturn page is outside the bounded manual range")
+        if district_code is not None and (
+            type(district_code) is not int or not 1 <= district_code <= 999999
+        ):
+            raise ValueError("Saturn district code must be a reviewed positive identifier")
+        if (start_date is None) != (end_date is None):
+            raise ValueError("Both Saturn date limits are required")
+        if start_date is not None and end_date is not None:
+            if end_date < start_date or (end_date - start_date).days > 31:
+                raise ValueError("Saturn date interval must be ordered and at most 31 days")
+        source_filter: dict[str, int | str] = {"subject": region_code}
+        if district_code is not None:
+            source_filter["district"] = district_code
+        if start_date is not None and end_date is not None:
+            source_filter["startDateUpdateMap"] = (
+                datetime.combine(start_date, time.min, tzinfo=timezone.utc)
+                .isoformat(timespec="milliseconds")
+                .replace("+00:00", "Z")
+            )
+            source_filter["endDateUpdateMap"] = (
+                datetime.combine(end_date, time(23, 59, 59, 999000), tzinfo=timezone.utc)
+                .isoformat(timespec="milliseconds")
+                .replace("+00:00", "Z")
+            )
         body = json.dumps(
             {
                 "pageNumber": page_number,
                 "pageSize": PAGE_SIZE,
                 "sortColumn": "datePublishing",
                 "sortDirection": "desc",
-                "beekeperSearchFilter": {"subject": region_code},
+                "beekeperSearchFilter": source_filter,
             },
             separators=(",", ":"),
         ).encode("utf-8")

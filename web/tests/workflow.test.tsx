@@ -58,6 +58,7 @@ vi.mock("../src/components/MapPanel", () => ({
 }));
 
 afterEach(() => {
+  window.localStorage.clear();
   cleanup();
   vi.unstubAllGlobals();
 });

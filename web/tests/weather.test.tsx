@@ -1,11 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { WeatherPanel } from "../src/components/WeatherPanel";
 import {
   decodeSources,
@@ -88,7 +82,7 @@ describe("Weather forecast boundary", () => {
     ).toThrow(WireError);
   });
 
-  it("requires a point and explicit click and displays the Open-Meteo attribution", async () => {
+  it("automatically reads a validated territory point inline and displays attribution", async () => {
     const fetchMock = vi.fn(async (path: string, options?: RequestInit) => {
       if (path.startsWith("/api/v1/sources?"))
         return new Response(JSON.stringify(weatherSource));
@@ -104,10 +98,8 @@ describe("Weather forecast boundary", () => {
     const view = render(<WeatherPanel country="BY" locale="en" point={null} />);
     await screen.findByText("Weather forecast · Open-Meteo");
     expect(
-      screen
-        .getByRole("button", { name: "Read 24-hour forecast" })
-        .hasAttribute("disabled"),
-    ).toBe(true);
+      screen.getByText(/Select a territory with a validated boundary/),
+    ).toBeTruthy();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     view.rerender(
       <WeatherPanel
@@ -115,9 +107,6 @@ describe("Weather forecast boundary", () => {
         locale="en"
         point={{ latitude: 54, longitude: 32 }}
       />,
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: "Read 24-hour forecast" }),
     );
     await screen.findByText(/Forecast grid: 54.02, 32.03/);
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -148,6 +137,8 @@ describe("Weather forecast boundary", () => {
       />,
     );
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText("Weather forecast · Open-Meteo")).toBeNull();
+    expect(
+      screen.getByText("The weather provider is disabled or unavailable."),
+    ).toBeTruthy();
   });
 });

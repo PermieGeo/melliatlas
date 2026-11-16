@@ -68,6 +68,7 @@ vi.mock("../src/components/MapPanel", () => ({
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
   vi.unstubAllGlobals();
 });
 
@@ -205,20 +206,58 @@ async function chooseRegion() {
   });
 }
 
-it("loads a reviewed region automatically and triggers the live forecast with one action", async () => {
+it("loads inline local weather automatically and only enables district-scoped analysis", async () => {
   const paths = catalogMock({ districts: "available" });
   render(<App />);
   await chooseRegion();
   await screen.findByText("ru:region:reference");
+  await screen.findByText(/Сетка прогноза:/);
+  expect(paths).toContain("/api/v1/sources/weather/forecast");
   const analyze = screen.getByRole("button", {
     name: "Проанализировать выбранную местность",
   });
+  expect(analyze.hasAttribute("disabled")).toBe(true);
+  await screen.findByRole("option", { name: "Reference district" });
+  fireEvent.change(screen.getByLabelText("Район"), {
+    target: { value: referenceDistrict.id },
+  });
+  await screen.findByText("ru:district:reference");
   await waitFor(() => expect(analyze.hasAttribute("disabled")).toBe(false));
-  expect(paths).not.toContain("/api/v1/sources/weather/forecast");
   fireEvent.click(analyze);
-  await screen.findByText("Почасовой прогноз (24 ч)");
-  expect(paths).toContain("/api/v1/sources/weather/forecast");
+  await screen.findByText(/Сатурн недоступен/);
   expect(paths).not.toContain("/api/v1/sources/saturn/treatments");
+});
+
+it("restores previous country, region and district after remount without storing a private point", async () => {
+  const paths = catalogMock({ districts: "available" });
+  const view = render(<App />);
+  await chooseRegion();
+  await screen.findByRole("option", { name: "Reference district" });
+  fireEvent.change(screen.getByLabelText("Район"), {
+    target: { value: referenceDistrict.id },
+  });
+  await screen.findByText("ru:district:reference");
+  view.unmount();
+  const before = paths.filter(
+    (path) => path === "/api/v1/sources/weather/forecast",
+  ).length;
+  render(<App />);
+  await screen.findByText("ru:district:reference");
+  expect((screen.getByLabelText("Район") as HTMLSelectElement).value).toBe(
+    referenceDistrict.id,
+  );
+  expect(
+    (screen.getByLabelText("Область / регион") as HTMLSelectElement).value,
+  ).toBe(referenceRegion.id);
+  await waitFor(() =>
+    expect(
+      paths.filter((path) => path === "/api/v1/sources/weather/forecast")
+        .length,
+    ).toBeGreaterThan(before),
+  );
+  expect(
+    window.localStorage.getItem("melliatlas.territory.selection.v1"),
+  ).not.toContain("latitude");
 });
 
 it("shows API-backed geometry, supported districts, and a separate synthetic study selector", async () => {

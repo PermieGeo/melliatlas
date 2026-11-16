@@ -89,6 +89,7 @@ else:
 app = create_app(
     territories=_catalog,
     source_region_lookup=_regions,
+    source_district_lookup=_regions,
     weather_reader_factory=_configured_weather_reader if _weather_allowed else None,
     settings=AppSettings(
         reference_snapshot_path=_reference_snapshot,

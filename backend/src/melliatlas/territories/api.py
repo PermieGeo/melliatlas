@@ -139,6 +139,14 @@ class SourceTerritoryCodeLookup(Protocol):
     ) -> int | None: ...
 
 
+class SourceDistrictCodeLookup(Protocol):
+    """Resolve a reviewed provider district ID without guessing from GeoJSON IDs."""
+
+    async def find_district_code(
+        self, *, source_id: str, country: CountryCode, region_id: str, district_id: str
+    ) -> int | None: ...
+
+
 class TerritoryImport(Protocol):
     async def validate_reference(
         self, snapshot: ReferenceSnapshot, inventory: ExpectedInventory

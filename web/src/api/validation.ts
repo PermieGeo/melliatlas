@@ -598,6 +598,18 @@ export function decodeSaturnPage(value: unknown): SaturnNoticePage {
       v.region_id === undefined
         ? null
         : maybe(v.region_id, nonEmpty, "saturnPage.region_id"),
+    district_id:
+      v.district_id === undefined
+        ? null
+        : maybe(v.district_id, nonEmpty, "saturnPage.district_id"),
+    date_start:
+      v.date_start === undefined
+        ? null
+        : maybe(v.date_start, text, "saturnPage.date_start"),
+    date_end:
+      v.date_end === undefined
+        ? null
+        : maybe(v.date_end, text, "saturnPage.date_end"),
     captured_at: nonEmpty(v.captured_at, "saturnPage.captured_at"),
     page_number: integer(v.page_number, "saturnPage.page_number"),
     next_page: maybe(v.next_page, integer, "saturnPage.next_page"),

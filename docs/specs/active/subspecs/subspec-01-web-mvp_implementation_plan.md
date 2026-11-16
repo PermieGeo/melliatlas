@@ -396,3 +396,20 @@ Bash `[[ ... ]]` support; shell runner regression tests guard this behavior.
 
 **Checks:** `backend/tests/contract/test_administrative_geometry.py` verifies parameterized point queries; `backend/tests/contract/test_territory_http.py` checks success, 404/503/422; `web/tests/reference-navigation.test.tsx` checks map click selection; `web/tests/live-area-analysis.test.tsx` checks manual pagination and polygon accumulation. Live PostGIS geography, provider field visibility and browser checks remain operator acceptance gates.
 
+## W01 follow-up — persisted geographic context and live-source scope
+
+The Web workspace restores public country/region/district IDs in order only
+after independent catalog validation; its existing camera persistence remains
+separate, and private map points are not stored. On a selected territory with
+validated geometry, choose a point strictly inside its polygon and fetch one
+24-hour Open-Meteo preview directly into the above-map panel. No automatic
+Saturn harvesting or polling is authorized. The manual selected-area action
+requires a reviewed district and a default date-only interval from local
+today through one calendar month (maximum 31 days). The server resolves the
+source-owned district ID from a new, deliberately unseeded migration `0005`
+table; 409 is preferred to region-scope fallback. Provider `UpdateMap` filter
+semantics and permission require independent verification before asserting
+complete coverage. The layout uses a full-width workspace with navigation
+sidebar rather than leaving unused right-hand space. New contract/unit tests
+cover restoration, weather auto-read, geometry/point safety and no-unmapped-
+district source calls. W01 and W02 acceptance statuses remain unchanged.

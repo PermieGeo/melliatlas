@@ -119,3 +119,13 @@ apply. The 24-hour UTC metric forecast and upstream HTTPS origin are not
 operator-configurable. The source-specific routers live in `api/providers/saturn/routes.py`
 and `api/providers/open_meteo/routes.py`; `api/routes_sources.py` only lists capabilities.
 
+## Reviewed Saturn district scope
+
+Migration `0005_saturn_district_mapping.sql` creates a deliberately empty
+mapping of canonical, imported district IDs to independently reviewed Saturn
+provider district codes. Unlike canonical territory IDs and geoBoundaries
+shape IDs, these codes must not be guessed. An area read requires a validated
+RU district belonging to its selected region and dates no longer than 31 days.
+An absent mapping returns 409 without sending a region-wide request; a
+missing configured database returns 503. Experimental `UpdateMap` date filters
+are not verified spraying dates or evidence of complete district coverage.

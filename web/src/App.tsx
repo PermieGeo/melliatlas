@@ -19,7 +19,13 @@ import { MapPanel } from "./components/MapPanel";
 import { Timeline } from "./components/Timeline";
 import { LiveAreaAnalysis } from "./components/LiveAreaAnalysis";
 import type { AreaAnalysisRequest } from "./components/LiveAreaAnalysis";
-import { areaSize, isInsideArea } from "./geo/selection";
+import { isInsideArea, representativePoint } from "./geo/selection";
+import { defaultSourceDateRange, validSourceDateRange } from "./geo/dateRange";
+import {
+  readTerritoryPreference,
+  saveTerritoryPreference,
+} from "./geo/territoryPreference";
+import { WeatherPanel } from "./components/WeatherPanel";
 import { useInvestigation } from "./hooks/useInvestigation";
 import { useTerritoryReference } from "./hooks/useTerritoryReference";
 import { t } from "./i18n";
@@ -43,6 +49,7 @@ export default function App() {
   const [scenarioId, setScenarioId] = useState("");
   const [seasonStart, setSeasonStart] = useState("");
   const [seasonEnd, setSeasonEnd] = useState("");
+  const [sourceRange, setSourceRange] = useState(defaultSourceDateRange);
   const [countryMessage, setCountryMessage] =
     useState<TranslationKey>("loadingCountries");
   const [scenariosMessage, setScenariosMessage] =
@@ -81,8 +88,11 @@ export default function App() {
         setCountryMessage(
           response.data.length === 0 ? "countriesEmpty" : "selectCountry",
         );
+        const savedCountry = readTerritoryPreference()?.country;
         setCountry(
-          response.data.find((item) => item.code === PREFERRED_COUNTRY)?.code ??
+          response.data.find((item) => item.code === savedCountry)?.code ??
+            response.data.find((item) => item.code === PREFERRED_COUNTRY)
+              ?.code ??
             response.data[0]?.code ??
             "",
         );
@@ -189,6 +199,7 @@ export default function App() {
     reset();
     setPoint(null);
     setSaturnNotices([]);
+    saveTerritoryPreference({ country: value, regionId: "", districtId: "" });
     setRegionCatalog({
       country: value,
       regions: [],
@@ -219,36 +230,51 @@ export default function App() {
     setSeasonEnd(chosen?.season_end ?? "");
   };
   const selectedBoundary = referenceNavigation.geometry?.geometry ?? null;
-  const size = selectedBoundary ? areaSize(selectedBoundary) : null;
   const pointWithinBoundary = !!(
     point &&
     selectedBoundary &&
     isInsideArea(point, selectedBoundary)
   );
+  const weatherPoint =
+    pointWithinBoundary && point
+      ? point
+      : selectedBoundary
+        ? representativePoint(selectedBoundary)
+        : null;
   const canAnalyze = !!(
     country &&
     referenceNavigation.regionId &&
-    size &&
-    (pointWithinBoundary ||
-      (size.widthKm <= 100 &&
-        size.heightKm <= 100 &&
-        selectedBoundary !== null &&
-        isInsideArea(size.center, selectedBoundary)))
+    referenceNavigation.districtId &&
+    selectedBoundary &&
+    weatherPoint &&
+    (!point || pointWithinBoundary) &&
+    validSourceDateRange(sourceRange.start, sourceRange.end)
   );
   const analysisHint: TranslationKey = !referenceNavigation.regionId
     ? "analysisSelectRegion"
-    : !selectedBoundary
-      ? "analysisMissingBoundary"
-      : point && !pointWithinBoundary
-        ? "analysisPointOutside"
-        : "analysisNarrowArea";
+    : !referenceNavigation.districtId
+      ? "analysisSelectDistrict"
+      : !selectedBoundary || !weatherPoint
+        ? "analysisMissingBoundary"
+        : !validSourceDateRange(sourceRange.start, sourceRange.end)
+          ? "analysisInvalidDateRange"
+          : point && !pointWithinBoundary
+            ? "analysisPointOutside"
+            : "analysisNarrowArea";
   const analyze = () => {
-    if (!canAnalyze || !size || !referenceNavigation.regionId) return;
+    if (
+      !canAnalyze ||
+      !referenceNavigation.regionId ||
+      !referenceNavigation.districtId
+    )
+      return;
     setAnalysisRequest({
       sequence: (analysisRequest?.sequence ?? 0) + 1,
       country,
       regionId: referenceNavigation.regionId,
-      point: pointWithinBoundary && point ? point : size.center,
+      districtId: referenceNavigation.districtId,
+      dateStart: sourceRange.start,
+      dateEnd: sourceRange.end,
     });
   };
   const chooseRegion = (id: string) => {
@@ -387,9 +413,26 @@ export default function App() {
           onSubmit={begin}
           canAnalyze={canAnalyze}
           onAnalyze={analyze}
+          sourceDateStart={sourceRange.start}
+          sourceDateEnd={sourceRange.end}
+          onSourceDateStart={(value) => {
+            setSourceRange((current) => ({ ...current, start: value }));
+            setAnalysisRequest(null);
+            setSaturnNotices([]);
+          }}
+          onSourceDateEnd={(value) => {
+            setSourceRange((current) => ({ ...current, end: value }));
+            setAnalysisRequest(null);
+            setSaturnNotices([]);
+          }}
           analysisHint={analysisHint}
         />
         <main className="canvas-column">
+          <WeatherPanel
+            country={country}
+            locale={locale}
+            point={weatherPoint}
+          />
           <section className="map-section" aria-label={tr("mapLabel")}>
             <div className="section-header">
               <div>
@@ -455,14 +498,14 @@ export default function App() {
               onSelect={investigation.setSelectedSite}
             />
           )}
+          {investigation.result && (
+            <EvidencePanel
+              locale={locale}
+              result={investigation.result}
+              selectedId={investigation.selectedSite}
+            />
+          )}
         </main>
-        {investigation.result && (
-          <EvidencePanel
-            locale={locale}
-            result={investigation.result}
-            selectedId={investigation.selectedSite}
-          />
-        )}
       </div>
       <footer className="footer-note">{tr("footer")}</footer>
     </div>

@@ -4,7 +4,7 @@ The generic source catalog never knows provider identifiers or page details.
 Only the composition root attaches this disabled-by-default live route.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal, Self
 
 from fastapi import APIRouter
@@ -20,6 +20,7 @@ from melliatlas.territories.api import (
     CountryCode,
     GeometryWgs84,
     ReferenceUnavailableError,
+    SourceDistrictCodeLookup,
     SourceTerritoryCodeLookup,
 )
 
@@ -30,11 +31,21 @@ class SaturnPageRequestDto(BaseModel):
     region_code: int | None = Field(default=None, strict=True, ge=1, le=999999)
     region_id: str | None = Field(default=None, min_length=1, max_length=128)
     page_number: int = Field(default=0, strict=True, ge=0, le=50)
+    district_id: str | None = Field(default=None, min_length=1, max_length=128)
+    date_start: date | None = None
+    date_end: date | None = None
 
     @model_validator(mode="after")
     def require_one_region_identifier(self) -> Self:
         if (self.region_code is None) == (self.region_id is None):
             raise ValueError("Specify exactly one of region_id or region_code")
+        if self.district_id is not None and self.region_id is None:
+            raise ValueError("A canonical district requires a canonical region")
+        if (self.date_start is None) != (self.date_end is None):
+            raise ValueError("Both source date limits must be supplied")
+        if self.date_start is not None and self.date_end is not None:
+            if self.date_end < self.date_start or (self.date_end - self.date_start).days > 31:
+                raise ValueError("Source date interval must not exceed 31 days")
         return self
 
 
@@ -75,6 +86,9 @@ class SaturnPageDto(BaseModel):
     notices: tuple[SaturnNoticeDto, ...]
     coverage_complete: Literal[False] = False
     region_id: str | None = None
+    district_id: str | None = None
+    date_start: date | None = None
+    date_end: date | None = None
 
 
 def saturn_capability(reader: TreatmentNoticeReader | None) -> SourceCapability:
@@ -97,6 +111,7 @@ def saturn_capability(reader: TreatmentNoticeReader | None) -> SourceCapability:
 def create_saturn_router(
     reader: TreatmentNoticeReader | None,
     region_lookup: SourceTerritoryCodeLookup | None,
+    district_lookup: SourceDistrictCodeLookup | None = None,
 ) -> APIRouter:
     router = APIRouter(prefix="/api/v1/sources", tags=["sources"])
 
@@ -146,12 +161,42 @@ def create_saturn_router(
                 )
         if region_code is None:
             return source_failure(422, ApiErrorCode.INVALID_REQUEST, "Region is required")
+        district_code: int | None = None
+        if body.district_id is not None:
+            if district_lookup is None or body.region_id is None:
+                return source_failure(
+                    503,
+                    ApiErrorCode.TERRITORY_REFERENCE_UNAVAILABLE,
+                    "Saturn district mapping is not configured",
+                )
+            try:
+                district_code = await district_lookup.find_district_code(
+                    source_id="saturn",
+                    country=body.country,
+                    region_id=body.region_id,
+                    district_id=body.district_id,
+                )
+            except ReferenceUnavailableError:
+                return source_failure(
+                    503,
+                    ApiErrorCode.TERRITORY_REFERENCE_UNAVAILABLE,
+                    "Reviewed Saturn district mapping is unavailable",
+                )
+            if district_code is None:
+                return source_failure(
+                    409,
+                    ApiErrorCode.SOURCE_REGION_UNMAPPED,
+                    "No reviewed Saturn district mapping exists; region-wide fallback is forbidden",
+                )
         try:
             page = await run_in_threadpool(
                 reader.read_page,
                 country=body.country,
                 region_code=region_code,
                 page_number=body.page_number,
+                district_code=district_code,
+                start_date=body.date_start,
+                end_date=body.date_end,
             )
         except SourceReadError:
             # Never expose upstream URLs, credentials, HTML, or provider errors.
@@ -183,6 +228,9 @@ def create_saturn_router(
             country="RU",
             region_code=page.region_code,
             region_id=body.region_id,
+            district_id=body.district_id,
+            date_start=body.date_start,
+            date_end=body.date_end,
             captured_at=page.captured_at,
             page_number=page.page_number,
             next_page=page.next_page,

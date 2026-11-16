@@ -48,7 +48,14 @@ class TreatmentNoticeReader(Protocol):
     """Explicit on-demand read with no implicit polling or synthetic fallback."""
 
     def read_page(
-        self, *, country: CountryCode, region_code: int, page_number: int
+        self,
+        *,
+        country: CountryCode,
+        region_code: int,
+        page_number: int,
+        district_code: int | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> TreatmentNoticePage: ...
 
 

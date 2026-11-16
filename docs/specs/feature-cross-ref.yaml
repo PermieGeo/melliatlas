@@ -13,6 +13,8 @@ features:
       - backend/src/melliatlas/api/routes_territories.py#create_territory_router
       - web/src/App.tsx
       - web/src/hooks/useTerritoryReference.ts
+      - web/src/geo/territoryPreference.ts
+      - web/src/geo/dateRange.ts
     test_files:
       - backend/tests/contract/test_territory_api.py
       - backend/tests/contract/test_reference_startup.py
@@ -53,6 +55,7 @@ features:
       - backend/tests/unit/test_geoboundaries_preparation.py
       - backend/tests/unit/test_navigation_diagnostics.py
       - web/tests/reference-navigation.test.tsx
+      - web/tests/territory-preference.test.ts
   - feature_id: MAP.BASEMAP
     implementation_status: planned
     stages: [MVP-01]
@@ -99,6 +102,8 @@ features:
       - backend/src/melliatlas/sources/providers/saturn/subjects.py#validate_subject_directory
       - backend/src/melliatlas/api/subject_capture.py#capture_subjects
       - backend/src/melliatlas/api/providers/saturn/routes.py#create_saturn_router
+      - backend/src/melliatlas/territories/api.py#SourceDistrictCodeLookup
+      - backend/migrations/0005_saturn_district_mapping.sql
       - web/src/components/SaturnPanel.tsx
       - web/src/components/LiveAreaAnalysis.tsx
       - web/src/components/MapPanel.tsx
@@ -106,6 +111,7 @@ features:
     test_files:
       - backend/tests/unit/test_saturn_treatment_screening.py
       - backend/tests/contract/test_saturn_live_http.py
+      - backend/tests/contract/test_saturn_district_scope.py
       - backend/tests/contract/test_saturn_probe.py
       - backend/tests/contract/test_saturn_subject_capture.py
       - backend/tests/contract/test_persistent_region_directory.py
@@ -120,9 +126,11 @@ features:
       - backend/src/melliatlas/sources/providers/open_meteo/forecast.py#OpenMeteoForecastReader
       - backend/src/melliatlas/api/providers/open_meteo/routes.py#create_weather_router
       - web/src/components/WeatherPanel.tsx
+      - web/src/geo/selection.ts
     test_files:
       - backend/tests/contract/test_open_meteo_live_http.py
       - web/tests/weather.test.tsx
+      - web/tests/territory-preference.test.ts
   - feature_id: AGRICULTURE.NOTICES
     implementation_status: partial
     stages: [MVP-01]
@@ -255,9 +263,12 @@ features:
       - web/src/components/Timeline.tsx
       - web/src/components/ReferenceControls.tsx
       - web/src/hooks/useTerritoryReference.ts
+      - web/src/geo/territoryPreference.ts
+      - web/src/geo/dateRange.ts
       - web/src/api/client.ts
     test_files:
       - web/tests/workflow.test.tsx
       - web/tests/reference-geometry.test.ts
       - web/tests/reference-navigation.test.tsx
+      - web/tests/territory-preference.test.ts
 
