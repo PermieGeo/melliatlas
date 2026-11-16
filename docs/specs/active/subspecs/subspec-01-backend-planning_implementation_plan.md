@@ -18,7 +18,7 @@ The [active backend sub-spec](subspec-01-backend-planning.md) owns normative beh
 | Territory model and catalog | [`territories/api.py`](../../../../backend/src/melliatlas/territories/api.py), [`territories/contract.md`](../../../../backend/src/melliatlas/territories/contract.md); offline validation, in-memory catalog and versioned reads | Approved complete RU/BY references, verified topology/precision, PostGIS adapter (`A02`, `A03`) |
 | Architecture guard | [`backend/tests/architecture/test_module_boundaries.py`](../../../../backend/tests/architecture/test_module_boundaries.py) | Runtime no-network, DI and integration enforcement (`A11`) |
 | Synthetic planning, fixture source, and jobs | [`planning/api.py`](../../../../backend/src/melliatlas/planning/api.py), [`sources/api.py`](../../../../backend/src/melliatlas/sources/api.py), [`jobs/api.py`](../../../../backend/src/melliatlas/jobs/api.py); synthetic V01 and optional completed-result store port | Real ecology, agent, typed DAG, durable in-flight jobs, Web and full acceptance remain pending |
-| Completed-snapshot persistence (partial) | [`persistence/api.py`](../../../../backend/src/melliatlas/persistence/api.py), [`persistence/contract.md`](../../../../backend/src/melliatlas/persistence/contract.md), [migration](../../../../backend/migrations/0001_completed_investigations.sql) | Real PostGIS migration, rollback, geometry and fresh-connection tests (`MVP01-BE-A09`) |
+| Completed-snapshot persistence (partial) | [`persistence/api.py`](../../../../backend/src/melliatlas/persistence/api.py), [`persistence/postgis_store.py`](../../../../backend/src/melliatlas/persistence/postgis_store.py), [`persistence/contract.md`](../../../../backend/src/melliatlas/persistence/contract.md), [migration](../../../../backend/migrations/0001_completed_investigations.sql) | Real PostGIS migration, rollback, geometry and fresh-connection tests (`MVP01-BE-A09`) |
 
 Implemented APIs are defined by their linked Python source and `contract.md`, **not** by future design notes. `create_app(*, settings=..., territories=..., investigations=...)` retains its earlier `settings`, `territories` and `investigations` keyword arguments. Opt-in reference-file paths are configured through `AppSettings` and validated on startup. Territory URLs include `/api/v1/territories/districts?region_id=...` and `/api/v1/territories/geometry/{territory_id}`. No real complete geography has been imported. No acceptance test may infer complete regional coverage from the synthetic fixtures.
 
@@ -35,6 +35,13 @@ Implemented APIs are defined by their linked Python source and `contract.md`, **
 | `jobs` | Investigation request, status, results and lifecycle | `agent`, `engine`, `planning`, `territories` |
 | `persistence` | Concrete database stores and migrations | `jobs`, `territories` |
 | `api` | HTTP DTOs, routes, errors, composition | Public APIs of other modules |
+
+The W01 structural refactoring follow-up keeps `api.py` restricted to public declarations,
+including reusable structural `Protocol` ports. Concrete adapters are available through
+explicit package facades only at composition/integration boundaries. Synthetic fixtures
+are split by scenario capability and PostGIS store SQL lives in `persistence/postgis_store.py`.
+AST regression checks enforce the declaration-only boundary across every capability
+`api.py`; HTTP contracts and feature acceptance are unchanged.
 
 The automated import matrix lives in `backend/tests/architecture/import_policy.py`. Peer modules may import only exposed `api.py` interfaces or deliberate public package facades. Domain logic must not import FastAPI, SQL implementations or network clients; `api` is a composition boundary. No cycles, hidden service locators, arbitrary submitted DAG definitions or live public-web/Saturn I/O in `MVP-01`. Explicitly inject I/O collaborators. For the names `forage`, `ecology` and `season`, **planning owns domain policy**, **analyzers owns calculations**, and **agent owns decisions about re-evaluation**. Do not create a `common` package without independently identified consumers.
 
@@ -207,3 +214,4 @@ Apply the shared [SDD convergence rules](../../AGENTS.md) to the selected task; 
 3. For V03, record the exact normalized reference and independent inventory identities, the failed-startup tests, runtime HTTP results and remaining external source/license approvals. Synthetic inventory success does not establish real RU/BY completeness.
 4. Keep V02 PostGIS acceptance pending until `BE-T040`–`BE-T044` run against a real approved database. Update feature traceability only after implementation review, with separate human acceptance decisions.
 5. If an actual reference validation or database check fails, record the offending input/migration, failing assertion and recovery before claiming any acceptance evidence.
+

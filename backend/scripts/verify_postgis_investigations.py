@@ -24,9 +24,9 @@ from melliatlas.jobs import (
     InvestigationStatus,
     InvestigationStorageError,
 )
-from melliatlas.persistence.api import PostgisCompletedInvestigationStore
+from melliatlas.persistence import PostgisCompletedInvestigationStore
 from melliatlas.planning import TimeWindow
-from melliatlas.sources.providers.synthetic.api import (
+from melliatlas.sources.providers.synthetic import (
     SYNTHETIC_SCENARIO_ID,
     SyntheticFixtureProvider,
 )

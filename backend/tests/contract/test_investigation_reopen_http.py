@@ -12,7 +12,7 @@ from melliatlas.jobs import (
     InvestigationSnapshot,
     InvestigationStorageError,
 )
-from melliatlas.sources.providers.synthetic.api import (
+from melliatlas.sources.providers.synthetic import (
     SYNTHETIC_SCENARIO_ID,
     SyntheticFixtureProvider,
 )

@@ -14,7 +14,7 @@ from melliatlas.jobs import (
     InvestigationStatus,
 )
 from melliatlas.planning import TimeWindow
-from melliatlas.sources.providers.synthetic.api import (
+from melliatlas.sources.providers.synthetic import (
     SYNTHETIC_ECOLOGY_SCENARIO_ID,
     SYNTHETIC_SCENARIO_ID,
     SyntheticFixtureProvider,

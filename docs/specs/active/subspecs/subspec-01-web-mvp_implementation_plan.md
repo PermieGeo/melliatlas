@@ -73,7 +73,7 @@ The first slice uses only existing POST/GET operations and additive nullable res
 
 **Requirement IDs:** `MVP01-WEB-R02`, `R04`, `R08`–`R10`. **Acceptance remains pending.**
 
-**Public contracts and integration design:** `sources.providers.synthetic.api.SyntheticFixtureProvider.list_scenarios(country)` advertises only executable fictional sources and their supported `TimeWindow`. `api.routes_investigations` maps these records to a `ScenarioListingDto` with stable `id`, `name`, `country`, `territory_id`, `territory_name`, `source_mode`, `season_start`, `season_end`, `is_default`. `GET /api/v1/investigations/scenarios?country=...` returns `200` and an empty array for countries with no scenario, and the existing `422/INVALID_REQUEST` response for unsupported country codes. For explicitly injected custom investigation services, no synthetic source is advertised without an injected scenario listing.
+**Public contracts and integration design:** `sources.providers.synthetic.SyntheticFixtureProvider.list_scenarios(country)` advertises only executable fictional sources and their supported `TimeWindow`. `api.routes_investigations` maps these records to a `ScenarioListingDto` with stable `id`, `name`, `country`, `territory_id`, `territory_name`, `source_mode`, `season_start`, `season_end`, `is_default`. `GET /api/v1/investigations/scenarios?country=...` returns `200` and an empty array for countries with no scenario, and the existing `422/INVALID_REQUEST` response for unsupported country codes. For explicitly injected custom investigation services, no synthetic source is advertised without an injected scenario listing.
 
 `web/src/api/` validates the response before any scenario can be selected. The UI country code is an open ISO alpha-2 string validated at the network boundary; backend support is still governed by its declared current country catalog. The default preference is RU when offered, otherwise the first API country. Switching country aborts stale results and reloads both actual regions and executable scenarios. Scenario boundaries set the initial dates and constrain user input. An unavailable catalog is never represented as validated geography; fictional options are clearly labeled. UI-controlled text lives in a typed RU/EN dictionary, while provider-authored source claims remain unmodified for provenance.
 
@@ -105,7 +105,7 @@ No generic frontend state framework, map drawing engine, Admin workspace or spec
 ### W01 additional user-authorized task — RU-only public Saturn preview
 
 **Public contracts and integration design:** `sources.api.TreatmentNoticeReader`
-abstracts on-demand page reading, `sources.providers.saturn.api` exposes the
+abstracts on-demand page reading, `sources.providers.saturn` exports the
 pure decoder and bounded read adapter, and the only permitted network transport
 is `sources.providers.saturn.http`. The composition root enables this **independently** of
 `SourceProviderMode` with `AppSettings.saturn_live_enabled` / the exact
@@ -137,7 +137,7 @@ existing live-source panel without changing W01 acceptance or synthetic study
 results. This is an independent source observation, not a new planning engine.
 
 **Boundary:** `sources.api.WeatherForecastReader` and typed `WeatherForecast`
-use `sources.providers.open_meteo.api.OpenMeteoForecastReader` through
+use `sources.providers.open_meteo.OpenMeteoForecastReader` through
 `api.composition.compose_weather_reader`. `sources.providers.open_meteo.http` is the sole
 fixed-origin transport; it requests 24 UTC hours, has strict time/size bounds,
 and never follows redirects. `AppSettings.weather_live_enabled=False` and
@@ -395,3 +395,4 @@ Bash `[[ ... ]]` support; shell runner regression tests guard this behavior.
 **Saturn preview:** A completed manual area action still reads only source page zero. The user can request later pages one at a time, within the existing provider page cap. The browser deduplicates record IDs, clears stale pages on territory changes and draws any valid source polygons; a map control fits the camera to fetched fields. Counts distinguish available polygons from notices, and region-wide pagination is never represented as complete district inventory. The provider district-code mapping and complete district-scoped collection remain outside this increment pending separate source-contract and mapping review.
 
 **Checks:** `backend/tests/contract/test_administrative_geometry.py` verifies parameterized point queries; `backend/tests/contract/test_territory_http.py` checks success, 404/503/422; `web/tests/reference-navigation.test.tsx` checks map click selection; `web/tests/live-area-analysis.test.tsx` checks manual pagination and polygon accumulation. Live PostGIS geography, provider field visibility and browser checks remain operator acceptance gates.
+

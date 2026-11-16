@@ -33,7 +33,7 @@ from melliatlas.planning import (
     TreatmentScreening,
     assess_ecology,
 )
-from melliatlas.sources.providers.synthetic.api import (
+from melliatlas.sources.providers.synthetic import (
     SYNTHETIC_COMBINED_SCENARIO_ID,
     SyntheticFixtureProvider,
 )

@@ -158,15 +158,25 @@ def test_concrete_provider_import_is_only_allowed_in_composition_root(tmp_path: 
         for issue in _violations(
             tmp_path,
             "api",
-            "from melliatlas.sources.providers.synthetic.api import SyntheticFixtureProvider",
+            "from melliatlas.sources.providers.synthetic import SyntheticFixtureProvider",
         )
     )
     composition = tmp_path / "melliatlas" / "api" / "composition.py"
     composition.parent.mkdir(parents=True, exist_ok=True)
     composition.write_text(
-        "from melliatlas.sources.providers.synthetic.api import SyntheticFixtureProvider\n",
+        "from melliatlas.sources.providers.synthetic import SyntheticFixtureProvider\n",
         encoding="utf-8",
     )
     violations = find_violations(tmp_path)
     assert any("api/api.py" in issue and "private module" in issue for issue in violations)
     assert all("composition.py" not in issue for issue in violations)
+
+
+def test_provider_facade_is_not_public_to_unrelated_routes(tmp_path: Path) -> None:
+    for provider in ("synthetic", "saturn", "open_meteo"):
+        issues = _violations(
+            tmp_path,
+            "api",
+            f"from melliatlas.sources.providers.{provider} import ConcreteReader",
+        )
+        assert any("imports private module" in issue for issue in issues)

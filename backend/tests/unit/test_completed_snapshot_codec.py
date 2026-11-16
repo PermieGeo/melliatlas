@@ -15,7 +15,7 @@ from melliatlas.jobs import (
     serialize_completed_snapshot,
 )
 from melliatlas.planning import TimeWindow
-from melliatlas.sources.providers.synthetic.api import (
+from melliatlas.sources.providers.synthetic import (
     SYNTHETIC_SCENARIO_ID,
     SyntheticFixtureProvider,
 )
@@ -118,7 +118,7 @@ def _completed_ecology() -> InvestigationSnapshot:
         SyntheticScenario,
         assess_ecology,
     )
-    from melliatlas.sources.providers.synthetic.api import SYNTHETIC_ECOLOGY_SCENARIO_ID
+    from melliatlas.sources.providers.synthetic import SYNTHETIC_ECOLOGY_SCENARIO_ID
 
     def factory(scenario: SyntheticScenario) -> DeterministicPlanner:
         def inspect(site: CandidateSite) -> SiteAssessment:
@@ -208,7 +208,7 @@ def test_ecology_completed_snapshot_roundtrips_through_completed_store_port() ->
         SyntheticScenario,
         assess_ecology,
     )
-    from melliatlas.sources.providers.synthetic.api import SYNTHETIC_ECOLOGY_SCENARIO_ID
+    from melliatlas.sources.providers.synthetic import SYNTHETIC_ECOLOGY_SCENARIO_ID
 
     class SerializedStore:
         def __init__(self) -> None:

@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from melliatlas.api.public import ApiErrorCode, ErrorResponse
 from melliatlas.api.routes_sources import SourceCapability, SourceListingDto, source_failure
 from melliatlas.sources.api import SourceReadError, TreatmentNoticeReader
-from melliatlas.sources.providers.saturn.api import MAX_PAGE_RECORDS
+from melliatlas.sources.providers.saturn import MAX_PAGE_RECORDS
 from melliatlas.territories.api import (
     CountryCode,
     GeometryWgs84,

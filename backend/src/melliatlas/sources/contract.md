@@ -25,8 +25,8 @@ root may choose a provider explicitly and inject its collaborators into jobs; or
 peer capabilities must depend on `sources.api` contracts rather than concrete adapters.
 The current `disabled` provider mode returns no scenarios and never silently falls back
 to synthetic evidence. Provider-specific behavior and limitations are documented
-in the module docstrings of `providers/synthetic/api.py` and
-`providers/saturn/api.py`. No network or PostGIS source ingestion is enabled by
+in `providers/synthetic/provider.py` and
+`providers/saturn/api.py`; concrete adapters are exported from their provider package facades. No network or PostGIS source ingestion is enabled by
 this refactoring.
 
 ## Opt-in public treatment-notice reads (experimental)
@@ -64,3 +64,4 @@ flag are both configured; missing configuration fails closed. The 24-hour UTC
 wire contract and source HTTP origin are not database overrides. No advection, spray drift, safety rating, automatic refresh or cached forecasts
 are provided. This source does not require a synthetic scenario and is usable
 independently of the country-specific Saturn notice reader.
+

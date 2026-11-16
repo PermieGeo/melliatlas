@@ -14,7 +14,7 @@ from melliatlas.jobs import (
 )
 from melliatlas.jobs import memory as job_memory
 from melliatlas.planning import TimeWindow, build_season_plan
-from melliatlas.sources.providers.synthetic.api import SyntheticFixtureProvider
+from melliatlas.sources.providers.synthetic import SyntheticFixtureProvider
 from melliatlas.territories.api import CountryCode
 
 

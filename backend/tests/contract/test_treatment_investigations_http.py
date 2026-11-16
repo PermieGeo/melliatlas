@@ -34,7 +34,7 @@ from melliatlas.planning import (
     TreatmentProximity,
     TreatmentScreening,
 )
-from melliatlas.sources.providers.synthetic.api import (
+from melliatlas.sources.providers.synthetic import (
     SYNTHETIC_TREATMENT_SCENARIO_ID,
     SyntheticFixtureProvider,
 )

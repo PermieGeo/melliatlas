@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from melliatlas.api.public import ApiErrorCode, ErrorResponse
 from melliatlas.api.routes_sources import SourceCapability, SourceListingDto, source_failure
 from melliatlas.sources.api import SourceReadError, WeatherForecastReader
-from melliatlas.sources.providers.open_meteo.api import FORECAST_HOURS
+from melliatlas.sources.providers.open_meteo import FORECAST_HOURS
 from melliatlas.territories.api import CountryCode
 
 

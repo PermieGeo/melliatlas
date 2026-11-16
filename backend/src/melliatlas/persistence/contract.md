@@ -1,6 +1,6 @@
 # PostGIS Completed Investigation Store Contract — V02 (partial)
 
-`PostgisCompletedInvestigationStore` implements the jobs-owned `CompletedInvestigationStore` protocol. A caller injects a DB-API-compatible PostgreSQL connection factory; the adapter does not import a driver, read credentials, open implicit connections at application startup, or install dependencies. Each operation owns and closes its connection and cursor.
+`persistence/postgis_store.py` owns `PostgisCompletedInvestigationStore`, which implements the jobs-owned `CompletedInvestigationStore` protocol. A caller injects a DB-API-compatible PostgreSQL connection factory; the adapter does not import a driver, read credentials, open implicit connections at application startup, or install dependencies. Each operation owns and closes its connection and cursor.
 
 `save` accepts only `COMPLETED` snapshots with a domain outcome, inserts the immutable JSONB payload and the selected stop points as an `EPSG:4326` PostGIS `MULTIPOINT` geometry, and commits once. A duplicate UUID cannot overwrite history. A failed insert or commit is rolled back; the jobs service then reports `FAILED` rather than exposing a completed response. `load` returns a validated typed snapshot from a fresh connection or `None` for a missing UUID. Database errors are wrapped as `InvestigationStorageError`, without leaking SQL or credentials through HTTP.
 
@@ -61,3 +61,4 @@ reference identity, region parent, name, provenance, validity anchor and actual
 PostGIS geometry match. Any conflicting row rolls back the batch. The database
 verifier counts exact reference IDs, checks spatial/CRS validity and district
 parent presence, but does not certify present-day authoritative boundaries.
+

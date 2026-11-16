@@ -10,8 +10,8 @@ The default ASGI entry point serves the bundled, pinned ISO name-only RU/BY regi
 
 - `src/melliatlas/api/` owns HTTP composition and file-deserialization boundaries; see its [contract](src/melliatlas/api/contract.md).
 - `src/melliatlas/territories/` owns geographic identity, validation, and the in-memory catalog; see its [contract](src/melliatlas/territories/contract.md).
-- `src/melliatlas/planning/`, `sources/`, and `jobs/` contain narrow public interfaces and synthetic-only tests; each has a capability contract. `sources/providers/saturn/api.py` exports the offline decoder; `sources/providers/saturn/legacy_treatment.py` decodes the historically observed `/planapplybees` treatment-page format into explicit RU fixture-only notice claims; it does not fetch from a provider, store immutable raw pages or prove legal reuse rights.
-- `src/melliatlas/sources/providers/synthetic/` implements the explicit offline fixture source; `sources/api.py` contains only the protocol and provider-neutral types.
+- `src/melliatlas/planning/`, `sources/`, and `jobs/` contain narrow public interfaces and synthetic-only tests; each has a capability contract. `sources/providers/saturn/` exports the offline decoder from its package facade; `sources/providers/saturn/legacy_treatment.py` decodes the historically observed `/planapplybees` treatment-page format into explicit RU fixture-only notice claims; it does not fetch from a provider, store immutable raw pages or prove legal reuse rights.
+- `src/melliatlas/sources/providers/synthetic/` implements the explicit offline fixture source through `provider.py`, with separate scenario builders in `fixtures.py`, `ecology.py`, `treatment_scenarios.py`, and `combined.py`; `sources/api.py` contains only the protocol and provider-neutral types.
 - `src/melliatlas/analyzers/` contains pure fictional ecology checks and a conservative offline treatment-notice site screening operation (approximate distance, temporal overlap, unknown coverage, no wind model); `planning` owns the separate demo eligibility policy.
 - `src/melliatlas/agent/` contains bounded deterministic ecology and treatment-aware fictional planning loops; it uses injected inspectors and never claims real-world eligibility. Its [contract](src/melliatlas/agent/contract.md) explicitly excludes V01 HTTP/jobs integration.
 - `src/melliatlas/persistence/` implements optional PostGIS completed-result persistence. The SQL migration is in `migrations/`; driver approval and real PostGIS testing remain required. See its [contract](src/melliatlas/persistence/contract.md).
@@ -118,3 +118,4 @@ silently reverting to defaults. Without a configured database, fixed safe defaul
 apply. The 24-hour UTC metric forecast and upstream HTTPS origin are not
 operator-configurable. The source-specific routers live in `api/providers/saturn/routes.py`
 and `api/providers/open_meteo/routes.py`; `api/routes_sources.py` only lists capabilities.
+
