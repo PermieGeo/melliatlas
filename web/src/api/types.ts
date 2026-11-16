@@ -41,6 +41,10 @@ export type ReferenceMultiPolygon = {
   coordinates: GeoPosition[][][];
 };
 export type ReferenceShape = ReferencePolygon | ReferenceMultiPolygon;
+export interface TerritoryAtPoint {
+  region_id: string;
+  district_id: string | null;
+}
 export interface TerritoryGeometry {
   territory_id: string;
   reference_id: string;

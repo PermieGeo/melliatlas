@@ -9,6 +9,10 @@ features:
       - backend/src/melliatlas/territories/region_directory.py#RegionDirectoryCatalog
       - backend/src/melliatlas/persistence/regions.py#PostgresRegionCatalog
       - backend/src/melliatlas/persistence/geography.py#PostgisTerritoryCatalog
+      - backend/src/melliatlas/territories/api.py#TerritoryPointLocator
+      - backend/src/melliatlas/api/routes_territories.py#create_territory_router
+      - web/src/App.tsx
+      - web/src/hooks/useTerritoryReference.ts
     test_files:
       - backend/tests/contract/test_territory_api.py
       - backend/tests/contract/test_reference_startup.py
@@ -41,11 +45,14 @@ features:
       - backend/scripts/prepare_all_geoboundaries.py#prepare_all
       - backend/scripts/import_admin_boundaries.py#import_boundaries
       - backend/scripts/verify_admin_boundaries.py#verify
+      - backend/scripts/diagnose_admin_navigation.py#audit_regions
     test_files:
       - backend/tests/contract/test_territory_api.py
       - backend/tests/contract/test_reference_startup.py
       - backend/tests/contract/test_administrative_geometry.py
       - backend/tests/unit/test_geoboundaries_preparation.py
+      - backend/tests/unit/test_navigation_diagnostics.py
+      - web/tests/reference-navigation.test.tsx
   - feature_id: MAP.BASEMAP
     implementation_status: planned
     stages: [MVP-01]
@@ -93,6 +100,8 @@ features:
       - backend/src/melliatlas/api/subject_capture.py#capture_subjects
       - backend/src/melliatlas/api/routes_sources.py#create_source_router
       - web/src/components/SaturnPanel.tsx
+      - web/src/components/LiveAreaAnalysis.tsx
+      - web/src/components/MapPanel.tsx
       - backend/src/melliatlas/persistence/regions.py#PostgresRegionCatalog
     test_files:
       - backend/tests/unit/test_saturn_treatment_screening.py
@@ -101,6 +110,7 @@ features:
       - backend/tests/contract/test_saturn_subject_capture.py
       - backend/tests/contract/test_persistent_region_directory.py
       - web/tests/saturn.test.tsx
+      - web/tests/live-area-analysis.test.tsx
   - feature_id: SOURCES.WEATHER_FORECAST
     implementation_status: partial
     stages: [MVP-01]

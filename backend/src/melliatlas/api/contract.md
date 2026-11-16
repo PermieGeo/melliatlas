@@ -131,3 +131,8 @@ The response includes `region_id` for a canonical-ID request, or null for the
 legacy code. Country BY is still rejected before mapping and transport.
 No source-specific identifier is leaked into the independent region catalog.
 
+
+
+## Optional map point lookup (W01 R02 partial)
+
+`POST /api/v1/territories/resolve-point` accepts `country`, `longitude`, and `latitude` in a JSON body, validated as finite WGS84. It calls the optional `TerritoryPointLocator` port and returns `{region_id, district_id}` using canonical IDs. No hit is `404/TERRITORY_NOT_FOUND`; missing/ambiguous PostGIS coverage is `503/TERRITORY_REFERENCE_UNAVAILABLE`; bad coordinates are `422/INVALID_REQUEST`. The route is read-only, does not log point data, and does not fabricate containment in synthetic or name-only catalogs.

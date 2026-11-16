@@ -8,6 +8,7 @@ interface Props {
   regions: Territory[];
   navigation: TerritoryNavigation;
   catalogMessage: TranslationKey;
+  onRetryRegions: () => void;
 }
 
 /** Navigate only API-backed administrative references, separate from synthetic studies. */
@@ -16,6 +17,7 @@ export function ReferenceControls({
   regions,
   navigation,
   catalogMessage,
+  onRetryRegions,
 }: Props) {
   const tr = (key: Parameters<typeof t>[1]) => t(locale, key);
   return (
@@ -29,6 +31,12 @@ export function ReferenceControls({
         <p className="field-help" role="status">
           {tr(catalogMessage)}
         </p>
+      )}
+      {(catalogMessage === "regionsFailure" ||
+        catalogMessage === "unavailableRegions") && (
+        <button type="button" onClick={onRetryRegions}>
+          {tr("referenceRetryRegions")}
+        </button>
       )}
       <div className="form-group">
         <label htmlFor="reference-region">{tr("referenceRegion")}</label>
@@ -66,6 +74,11 @@ export function ReferenceControls({
             <p className="field-help" role="status">
               {tr(navigation.districtMessage)}
             </p>
+          )}
+          {navigation.districtMessage === "referenceDistrictUnavailable" && (
+            <button type="button" onClick={navigation.retryDistricts}>
+              {tr("referenceRetryDistricts")}
+            </button>
           )}
         </div>
       )}

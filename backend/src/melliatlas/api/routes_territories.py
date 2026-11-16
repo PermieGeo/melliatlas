@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse
 from melliatlas.territories.api import (
@@ -16,6 +16,7 @@ from melliatlas.territories.api import (
     TerritoryGeometry,
     TerritoryKind,
     TerritoryNotFound,
+    TerritoryPointLocator,
     TerritoryReferenceError,
 )
 
@@ -36,6 +37,18 @@ class TerritoryResponse(BaseModel):
     reference_id: str
     valid_on: str
     geometry_status: GeometryStatus
+
+
+class ResolvePointRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    country: CountryCode
+    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
+
+
+class ResolvePointResponse(BaseModel):
+    region_id: str
+    district_id: str | None
 
 
 class GeometryResponse(BaseModel):
@@ -140,6 +153,50 @@ def create_territory_router(catalog: TerritoryCatalog | None) -> APIRouter:
             TerritoryReferenceError,
         ) as exc:
             return _catalog_failure(exc)
+
+    @router.post(
+        "/resolve-point",
+        response_model=ResolvePointResponse,
+        responses={
+            404: {"model": ErrorResponse},
+            422: {"model": ErrorResponse},
+            503: {"model": ErrorResponse},
+        },
+    )
+    async def resolve_point(body: ResolvePointRequest) -> ResolvePointResponse | JSONResponse:
+        if catalog is None or not isinstance(catalog, TerritoryPointLocator):
+            return _failure(
+                503,
+                ApiErrorCode.TERRITORY_REFERENCE_UNAVAILABLE,
+                "Point lookup needs imported PostGIS boundaries",
+            )
+        try:
+            located = await catalog.locate_point(
+                country=body.country, longitude=body.longitude, latitude=body.latitude
+            )
+        except ReferenceUnavailableError:
+            return _failure(
+                503,
+                ApiErrorCode.TERRITORY_REFERENCE_UNAVAILABLE,
+                "Point lookup is ambiguous or unavailable",
+            )
+        if located is None:
+            return _failure(
+                404,
+                ApiErrorCode.TERRITORY_NOT_FOUND,
+                "No imported region contains the selected point",
+            )
+        prefix = body.country.value.lower()
+        if not located.region_id.startswith(f"{prefix}:region:") or (
+            located.district_id is not None
+            and not located.district_id.startswith(f"{prefix}:district:")
+        ):
+            return _failure(
+                503,
+                ApiErrorCode.TERRITORY_REFERENCE_UNAVAILABLE,
+                "Invalid spatial reference identity",
+            )
+        return ResolvePointResponse(region_id=located.region_id, district_id=located.district_id)
 
     @router.get(
         "/geometry/{territory_id}",

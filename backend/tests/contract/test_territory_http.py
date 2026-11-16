@@ -12,6 +12,8 @@ from melliatlas.territories.api import (
     ExpectedInventory,
     GeometryStatus,
     ReferenceSnapshot,
+    ReferenceUnavailableError,
+    TerritoryAtPoint,
 )
 from melliatlas.territories.validation import snapshot_checksum
 
@@ -175,3 +177,47 @@ def test_geometry_missing_has_documented_error_shape(
     response = asyncio.run(_request(catalog, "/api/v1/territories/geometry/RU"))
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "TERRITORY_GEOMETRY_MISSING"
+
+
+class PointCatalog(InMemoryTerritoryCatalog):
+    def __init__(self, result: TerritoryAtPoint | None, fail: bool = False) -> None:
+        super().__init__()
+        self.result = result
+        self.fail = fail
+
+    async def locate_point(
+        self, *, country: CountryCode, longitude: float, latitude: float
+    ) -> TerritoryAtPoint | None:
+        assert country == CountryCode.RU
+        assert longitude == 32.0
+        assert latitude == 54.0
+        if self.fail:
+            raise ReferenceUnavailableError("Overlapping source boundaries")
+        return self.result
+
+
+async def _resolve_point(
+    catalog: InMemoryTerritoryCatalog | None, payload: dict[str, object]
+) -> httpx.Response:
+    app = create_app(territories=catalog)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        return await client.post("/api/v1/territories/resolve-point", json=payload)
+
+
+def test_click_lookup_returns_only_validated_canonical_ids() -> None:
+    payload: dict[str, object] = {"country": "RU", "longitude": 32.0, "latitude": 54.0}
+    catalog = PointCatalog(TerritoryAtPoint("ru:region:smo", "ru:district:abc"))
+    response = asyncio.run(_resolve_point(catalog, payload))
+    assert response.status_code == 200
+    assert response.json() == {"region_id": "ru:region:smo", "district_id": "ru:district:abc"}
+    assert asyncio.run(_resolve_point(PointCatalog(None), payload)).status_code == 404
+    invalid_identity = PointCatalog(TerritoryAtPoint("by:region:vi", "by:district:one"))
+    assert asyncio.run(_resolve_point(invalid_identity, payload)).status_code == 503
+    ambiguous = asyncio.run(_resolve_point(PointCatalog(None, fail=True), payload))
+    assert ambiguous.status_code == 503
+    assert asyncio.run(_resolve_point(None, payload)).status_code == 503
+    invalid = asyncio.run(_resolve_point(catalog, {**payload, "latitude": 91}))
+    assert invalid.status_code == 422
+    assert invalid.json()["error"]["code"] == "INVALID_REQUEST"

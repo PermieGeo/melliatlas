@@ -1,5 +1,10 @@
-import { useEffect, useState } from "react";
-import { listCountries, listRegions, listScenarios } from "./api/client";
+import { useEffect, useRef, useState } from "react";
+import {
+  listCountries,
+  listRegions,
+  listScenarios,
+  resolveTerritoryPoint,
+} from "./api/client";
 import type {
   Country,
   CountryCode,
@@ -27,7 +32,12 @@ export default function App() {
   const [locale, setLocale] = useState<Locale>("ru");
   const [countries, setCountries] = useState<Country[]>([]);
   const [country, setCountry] = useState<CountryCode>("");
-  const [regions, setRegions] = useState<Territory[]>([]);
+  const [regionCatalog, setRegionCatalog] = useState<{
+    country: CountryCode;
+    regions: Territory[];
+    message: TranslationKey;
+  }>({ country: "", regions: [], message: "loadingRegions" });
+  const [regionRequestVersion, setRegionRequestVersion] = useState(0);
   const [scenarios, setScenarios] = useState<ScenarioListing[]>([]);
   const [territory, setTerritory] = useState("");
   const [scenarioId, setScenarioId] = useState("");
@@ -35,15 +45,24 @@ export default function App() {
   const [seasonEnd, setSeasonEnd] = useState("");
   const [countryMessage, setCountryMessage] =
     useState<TranslationKey>("loadingCountries");
-  const [referenceMessage, setReferenceMessage] =
-    useState<TranslationKey>("loadingRegions");
   const [scenariosMessage, setScenariosMessage] =
     useState<TranslationKey>("loadingScenarios");
   const [point, setPoint] = useState<Position | null>(null);
+  const pointLookup = useRef<AbortController | null>(null);
+  const [mapPointMessage, setMapPointMessage] = useState<TranslationKey | null>(
+    null,
+  );
+  useEffect(() => () => pointLookup.current?.abort(), []);
   const [saturnNotices, setSaturnNotices] = useState<SaturnNotice[]>([]);
   const [analysisRequest, setAnalysisRequest] =
     useState<AreaAnalysisRequest | null>(null);
   const investigation = useInvestigation();
+  const regions =
+    regionCatalog.country === country ? regionCatalog.regions : [];
+  const referenceMessage: TranslationKey =
+    regionCatalog.country === country
+      ? regionCatalog.message
+      : "loadingRegions";
   const referenceNavigation = useTerritoryReference(country, regions);
   const { reset } = investigation;
   const tr = (key: TranslationKey, values?: Record<string, string | number>) =>
@@ -78,8 +97,7 @@ export default function App() {
 
   useEffect(() => {
     const controller = new AbortController();
-    setRegions([]);
-    setReferenceMessage("loadingRegions");
+    setRegionCatalog({ country, regions: [], message: "loadingRegions" });
     if (!country) return () => controller.abort();
     void listRegions(country, controller.signal).then((response) => {
       if (controller.signal.aborted) return;
@@ -89,21 +107,26 @@ export default function App() {
             (item) => item.country !== country || item.kind !== "region",
           )
         ) {
-          setReferenceMessage("regionsFailure");
+          setRegionCatalog({ country, regions: [], message: "regionsFailure" });
           return;
         }
-        setRegions(response.data);
-        setReferenceMessage(
-          response.data.length === 0 ? "emptyRegions" : "availableRegions",
-        );
+        setRegionCatalog({
+          country,
+          regions: response.data,
+          message:
+            response.data.length === 0 ? "emptyRegions" : "availableRegions",
+        });
       } else {
-        setReferenceMessage(
-          response.status === 503 ? "unavailableRegions" : "regionsFailure",
-        );
+        setRegionCatalog({
+          country,
+          regions: [],
+          message:
+            response.status === 503 ? "unavailableRegions" : "regionsFailure",
+        });
       }
     });
     return () => controller.abort();
-  }, [country]);
+  }, [country, regionRequestVersion]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -159,11 +182,18 @@ export default function App() {
     seasonStart <= seasonEnd;
 
   const chooseCountry = (value: CountryCode) => {
+    pointLookup.current?.abort();
+    setMapPointMessage(null);
     setAnalysisRequest(null);
     if (!countries.some((item) => item.code === value)) return;
     reset();
     setPoint(null);
     setSaturnNotices([]);
+    setRegionCatalog({
+      country: value,
+      regions: [],
+      message: "loadingRegions",
+    });
     setCountry(value);
     setTerritory("");
     setScenarioId("");
@@ -222,6 +252,8 @@ export default function App() {
     });
   };
   const chooseRegion = (id: string) => {
+    pointLookup.current?.abort();
+    setMapPointMessage(null);
     reset();
     setAnalysisRequest(null);
     setSaturnNotices([]);
@@ -229,11 +261,43 @@ export default function App() {
     referenceNavigation.selectRegion(id);
   };
   const chooseDistrict = (id: string) => {
+    pointLookup.current?.abort();
+    setMapPointMessage(null);
     reset();
     setAnalysisRequest(null);
     setSaturnNotices([]);
     setPoint(null);
     referenceNavigation.selectDistrict(id);
+  };
+  const selectMapPoint = (position: Position) => {
+    pointLookup.current?.abort();
+    setPoint(position);
+    setMapPointMessage(null);
+    setAnalysisRequest(null);
+    setSaturnNotices([]);
+    if (!country || regions.length === 0) return;
+    const controller = new AbortController();
+    pointLookup.current = controller;
+    void resolveTerritoryPoint(country, position, controller.signal).then(
+      (result) => {
+        if (controller.signal.aborted) return;
+        if (result.kind === "error") {
+          setMapPointMessage(
+            result.status === 404 ? "mapPointOutside" : "mapPointUnavailable",
+          );
+          return;
+        }
+        if (!regions.some((item) => item.id === result.data.region_id)) {
+          setMapPointMessage("mapPointUnavailable");
+          return;
+        }
+        reset();
+        referenceNavigation.selectByPoint(
+          result.data.region_id,
+          result.data.district_id,
+        );
+      },
+    );
   };
   const begin = () => {
     if (!canSubmit || !selectedScenario) return;
@@ -304,6 +368,9 @@ export default function App() {
           canSubmit={canSubmit}
           countryMessage={countryMessage}
           referenceMessage={referenceMessage}
+          onRetryRegions={() =>
+            setRegionRequestVersion((version) => version + 1)
+          }
           scenariosMessage={scenariosMessage}
           onCountry={chooseCountry}
           onTerritory={chooseTerritory}
@@ -338,12 +405,14 @@ export default function App() {
               referenceGeometry={referenceNavigation.geometry}
               saturnNotices={saturnNotices}
               onSelect={investigation.setSelectedSite}
-              onPoint={(position) => {
-                setPoint(position);
-                setAnalysisRequest(null);
-              }}
+              onPoint={selectMapPoint}
             />
           </section>
+          {mapPointMessage && (
+            <p role="status" className="field-help">
+              {tr(mapPointMessage)}
+            </p>
+          )}
           {investigation.notice && (
             <div
               className={`message message-${investigation.notice.kind}`}

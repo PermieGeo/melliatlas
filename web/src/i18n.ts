@@ -2,6 +2,16 @@
 export type Locale = "ru" | "en";
 
 const en = {
+  mapPointOutside: "No imported administrative region contains this point.",
+  mapPointUnavailable: "Could not identify a district at the selected point.",
+  mapShowSaturnFields: "Zoom to fetched fields",
+  analysisSaturnLoadNext: "Load next 10 records",
+  analysisSaturnLoadingNext: "Loading another Saturn page…",
+  analysisSaturnGeometryCount: "Field polygons in fetched records: {count}.",
+  analysisSaturnNoGeometry:
+    "No usable field polygons in the fetched records; the map has nothing to draw.",
+  analysisSaturnPageProgress:
+    "Fetched {pages} page(s); {records} unique notices; reported region total: {total}.",
   analysisAction: "Analyze selected area",
   analysisSelectRegion: "Select a region first.",
   analysisMissingBoundary:
@@ -16,11 +26,11 @@ const en = {
   analysisNoProviders: "No external data sources are enabled for this country.",
   analysisSourcesUnavailable: "Source capabilities could not be retrieved.",
   analysisPartialDisclaimer:
-    "Preliminary source inspection only. Saturn returns a region-wide first page, not verified complete coverage of the chosen area. No pesticide drift or safety assessment has been performed.",
+    "Saturn pages cover the whole region, not necessarily your district. Loaded pages are not proof of complete coverage or pesticide safety.",
   analysisSaturnCount:
     "{count} notices in the sampled response; {skipped} unrecognized entries.",
   analysisSaturnPartial:
-    "Reported regional total: {total}. Further pages and local filtering have not been assessed.",
+    "Source reports {total} regional records; district-specific filtering is not yet available.",
   analysisForecastHours: "Hourly weather forecast ({count} h)",
   analysisSaturnRegionUnmapped:
     "The region has no verified Saturn mapping yet. Weather results can still be used.",
@@ -43,6 +53,8 @@ const en = {
   referenceRegion: "Region",
   referenceDistrict: "District",
   referenceSelectRegion: "Select a region",
+  referenceRetryRegions: "Retry loading regions",
+  referenceRetryDistricts: "Retry loading districts",
   referenceSelectDistrict: "No district selected",
   referenceDistrictLoading: "Loading districts…",
   referenceDistrictUnsupported:
@@ -225,6 +237,18 @@ const en = {
 } as const;
 
 const ru: Record<keyof typeof en, string> = {
+  mapPointOutside:
+    "Для этой точки нет импортированной административной территории.",
+  mapPointUnavailable: "Не удалось определить район по выбранной точке.",
+  mapShowSaturnFields: "Показать загруженные поля",
+  analysisSaturnLoadNext: "Загрузить следующие 10 записей",
+  analysisSaturnLoadingNext: "Загружается следующая страница Сатурна…",
+  analysisSaturnGeometryCount:
+    "Контуров полей среди загруженных записей: {count}.",
+  analysisSaturnNoGeometry:
+    "Среди загруженных записей нет пригодных контуров. На карте пока нечего показывать.",
+  analysisSaturnPageProgress:
+    "Загружено страниц: {pages}; уникальных сообщений: {records}; всего по области: {total}.",
   analysisAction: "Проанализировать выбранную местность",
   analysisSelectRegion: "Сначала выберите область или регион.",
   analysisMissingBoundary:
@@ -240,11 +264,11 @@ const ru: Record<keyof typeof en, string> = {
     "Для выбранной страны ни один реальный источник не включён на сервере.",
   analysisSourcesUnavailable: "Не удалось узнать список доступных источников.",
   analysisPartialDisclaimer:
-    "Предварительные сведения. Сатурн возвращает только первую страницу по всей области, а не полное покрытие выбранной местности. Перенос пестицидов и безопасность не рассчитаны.",
+    "Страницы Сатурна относятся ко всей области, а не обязательно к выбранному району. Частичная выборка не подтверждает отсутствие обработок или безопасность.",
   analysisSaturnCount:
     "В полученной выборке {count} сообщений, не распознано: {skipped}.",
   analysisSaturnPartial:
-    "Всего записей по области по версии источника: {total}. Остальные страницы и фильтрация по местности ещё не проверены.",
+    "Всего записей по области по версии источника: {total}. Фильтрация по району пока не реализована.",
   analysisForecastHours: "Почасовой прогноз ({count} ч)",
   analysisSaturnRegionUnmapped:
     "Для этой области пока нет проверенного кода Сатурна. Прогноз погоды остаётся доступен.",
@@ -267,6 +291,8 @@ const ru: Record<keyof typeof en, string> = {
   referenceRegion: "Область / регион",
   referenceDistrict: "Район",
   referenceSelectRegion: "Выберите регион",
+  referenceRetryRegions: "Повторить загрузку регионов",
+  referenceRetryDistricts: "Повторить загрузку районов",
   referenceSelectDistrict: "Без выбора района",
   referenceDistrictLoading: "Загрузка районов…",
   referenceDistrictUnsupported:

@@ -50,6 +50,19 @@ export function LiveAreaAnalysis({
   const [sourceError, setSourceError] = useState(false);
   const [report, setReport] = useState<Report | null>(null);
   const [busy, setBusy] = useState(false);
+  const [morePages, setMorePages] = useState<{
+    sequence: number;
+    country: CountryCode;
+    regionId: string;
+    pages: SaturnNoticePage[];
+  } | null>(null);
+  const [pagingBusy, setPagingBusy] = useState(false);
+  const [pagingError, setPagingError] = useState<string | null>(null);
+  const pagingController = useRef<AbortController | null>(null);
+  useEffect(
+    () => () => pagingController.current?.abort(),
+    [country, regionId, request],
+  );
   const noticesRef = useRef(onNotices);
   noticesRef.current = onNotices;
   const tr = (key: TranslationKey, values?: Record<string, string | number>) =>
@@ -77,6 +90,9 @@ export function LiveAreaAnalysis({
   useEffect(() => {
     const controller = new AbortController();
     setReport(null);
+    setMorePages(null);
+    setPagingError(null);
+    setPagingBusy(false);
     setBusy(false);
     noticesRef.current([]);
     if (
@@ -133,8 +149,79 @@ export function LiveAreaAnalysis({
     report.request.sequence === request?.sequence
       ? report
       : null;
+  const extraPages =
+    morePages?.sequence === request?.sequence &&
+    morePages?.country === country &&
+    morePages?.regionId === regionId
+      ? morePages.pages
+      : [];
   const forecast = shown?.weather?.kind === "ok" ? shown.weather.data : null;
   const page = shown?.saturn?.kind === "ok" ? shown.saturn.data : null;
+  const pages = page ? [page, ...extraPages] : [];
+  const uniqueNotices = [
+    ...new Map(
+      pages
+        .flatMap((entry) => entry.notices)
+        .map((notice) => [notice.record_id, notice] as const),
+    ).values(),
+  ];
+  const lastPage = pages[pages.length - 1] ?? null;
+  const geometryCount = uniqueNotices.filter(
+    (notice) => notice.geometry !== null,
+  ).length;
+  const loadNextPage = () => {
+    if (
+      !page ||
+      !lastPage ||
+      lastPage.next_page === null ||
+      pagingBusy ||
+      !request
+    )
+      return;
+    const nextNumber = lastPage.next_page;
+    const controller = new AbortController();
+    pagingController.current?.abort();
+    pagingController.current = controller;
+    setPagingBusy(true);
+    setPagingError(null);
+    void readSaturnPage(country, regionId, nextNumber, controller.signal).then(
+      (response) => {
+        if (controller.signal.aborted) return;
+        setPagingBusy(false);
+        if (response.kind === "error") {
+          setPagingError(response.code);
+          return;
+        }
+        if (
+          response.data.country !== country ||
+          response.data.region_id !== regionId ||
+          response.data.page_number !== nextNumber ||
+          response.data.total_elements !== page.total_elements ||
+          response.data.source_id !== page.source_id ||
+          (response.data.next_page !== null &&
+            response.data.next_page <= nextNumber)
+        ) {
+          setPagingError("INVALID_RESPONSE");
+          return;
+        }
+        const loaded = [...extraPages, response.data];
+        setMorePages({
+          sequence: request.sequence,
+          country,
+          regionId,
+          pages: loaded,
+        });
+        const merged = [
+          ...new Map(
+            [page, ...loaded]
+              .flatMap((entry) => entry.notices)
+              .map((notice) => [notice.record_id, notice] as const),
+          ).values(),
+        ];
+        noticesRef.current(merged);
+      },
+    );
+  };
   return (
     <section className="live-analysis" aria-label={tr("analysisResultsTitle")}>
       <h2>{tr("analysisResultsTitle")}</h2>
@@ -158,17 +245,24 @@ export function LiveAreaAnalysis({
             <div className="analysis-source-result">
               <h3>{tr("saturnTitle")}</h3>
               <p>
-                {tr("analysisSaturnCount", {
-                  count: page.notices.length,
-                  skipped: page.unidentified_records,
+                {tr("analysisSaturnPageProgress", {
+                  pages: pages.length,
+                  records: uniqueNotices.length,
+                  total: page.total_elements ?? tr("saturnMissing"),
                 })}
               </p>
+              <p className="field-help">
+                {tr("analysisSaturnGeometryCount", { count: geometryCount })}
+              </p>
+              {geometryCount === 0 && (
+                <p className="field-help">{tr("analysisSaturnNoGeometry")}</p>
+              )}
               <p className="field-help">
                 {tr("analysisSaturnPartial", {
                   total: page.total_elements ?? tr("saturnMissing"),
                 })}
               </p>
-              {page.notices.slice(0, 20).map((notice) => (
+              {uniqueNotices.slice(0, 20).map((notice) => (
                 <details key={notice.record_id} className="saturn-record">
                   <summary>
                     {tr("saturnField", {
@@ -195,6 +289,34 @@ export function LiveAreaAnalysis({
                   ))}
                 </details>
               ))}
+              {uniqueNotices.length > 20 && (
+                <p className="field-help">
+                  {tr("analysisSaturnCount", {
+                    count: uniqueNotices.length,
+                    skipped: pages.reduce(
+                      (sum, entry) => sum + entry.unidentified_records,
+                      0,
+                    ),
+                  })}
+                </p>
+              )}
+              {pagingError && (
+                <p role="alert">{tr("saturnError", { reason: pagingError })}</p>
+              )}
+              {lastPage?.next_page !== null &&
+                lastPage?.next_page !== undefined && (
+                  <button
+                    type="button"
+                    disabled={pagingBusy}
+                    onClick={loadNextPage}
+                  >
+                    {tr(
+                      pagingBusy
+                        ? "analysisSaturnLoadingNext"
+                        : "analysisSaturnLoadNext",
+                    )}
+                  </button>
+                )}
             </div>
           )}
           {shown.weather?.kind === "error" && (

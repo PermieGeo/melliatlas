@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { LiveAreaAnalysis } from "../src/components/LiveAreaAnalysis";
 import type { AreaAnalysisRequest } from "../src/components/LiveAreaAnalysis";
@@ -104,11 +110,11 @@ it("loads RU Saturn and weather together after one analysis action", async () =>
       onNotices={onNotices}
     />,
   );
-  await screen.findByText(/В полученной выборке 0 сообщений/);
+  await screen.findByText(/Загружено страниц: 1/);
   expect(requests).toContain("/api/v1/sources/saturn/treatments");
   expect(requests).toContain("/api/v1/sources/weather/forecast");
   expect(
-    screen.getByText(/не полное покрытие выбранной местности/),
+    screen.getByText(/Частичная выборка не подтверждает отсутствие обработок/),
   ).toBeTruthy();
   expect(
     screen.queryByRole("button", { name: /Загрузить одну страницу/ }),
@@ -213,4 +219,90 @@ it("keeps weather available when a region has no reviewed Saturn mapping", async
   );
   await screen.findByText(/нет проверенного кода Сатурна/);
   expect(screen.getByText("Почасовой прогноз (24 ч)")).toBeTruthy();
+});
+
+it("retrieves later pages only when requested and accumulates mapped field records", async () => {
+  const calls: number[] = [];
+  const field = {
+    record_id: "field-1",
+    plan_id: "plan-1",
+    country: "RU",
+    source_id: page.source_id,
+    source_uri: "https://bee.fgis-saturn.ru/",
+    source_mode: "LIVE",
+    synthetic: false,
+    captured_at: page.captured_at,
+    published_at: null,
+    scheduled_start: null,
+    scheduled_end: null,
+    revised: false,
+    cadastral_number: null,
+    geometry: {
+      type: "Polygon",
+      coordinates: [
+        [
+          [32, 54],
+          [33, 54],
+          [33, 55],
+          [32, 54],
+        ],
+      ],
+    },
+    products: [],
+    uncertainties: [],
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (path: string, init?: RequestInit) => {
+      if (path.startsWith("/api/v1/sources?"))
+        return new Response(
+          JSON.stringify([
+            {
+              id: "saturn",
+              country: "RU",
+              kind: "TREATMENT_NOTICE",
+              mode: "LIVE",
+              status: "EXPERIMENTAL",
+            },
+          ]),
+        );
+      if (path.endsWith("/saturn/treatments")) {
+        const requestBody = JSON.parse(String(init?.body)) as {
+          page_number: number;
+        };
+        calls.push(requestBody.page_number);
+        return new Response(
+          JSON.stringify({
+            ...page,
+            page_number: requestBody.page_number,
+            next_page: requestBody.page_number === 0 ? 1 : null,
+            total_elements: 11,
+            notices: requestBody.page_number === 0 ? [] : [field],
+          }),
+        );
+      }
+      return new Response(null, { status: 404 });
+    }),
+  );
+  const onNotices = vi.fn();
+  render(
+    <LiveAreaAnalysis
+      country="RU"
+      regionId={request.regionId}
+      locale="en"
+      request={request}
+      onNotices={onNotices}
+    />,
+  );
+  await screen.findByText(/Fetched 1 page/);
+  expect(calls).toEqual([0]);
+  fireEvent.click(screen.getByRole("button", { name: "Load next 10 records" }));
+  await screen.findByText(/Field polygons in fetched records: 1/);
+  expect(calls).toEqual([0, 1]);
+  expect(onNotices).toHaveBeenLastCalledWith([
+    expect.objectContaining({ record_id: "field-1" }),
+  ]);
+  expect(
+    screen.queryByRole("button", { name: "Load next 10 records" }),
+  ).toBeNull();
 });

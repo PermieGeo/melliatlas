@@ -43,6 +43,14 @@ export function MapPanel({
   const boundaryLayer = useRef<L.GeoJSON | null>(null);
   const treatmentLayer = useRef<L.LayerGroup | null>(null);
   const pointCallback = useRef(onPoint);
+  const focusTreatment = () => {
+    const instance = map.current;
+    const layer = treatmentLayer.current;
+    if (!instance || !layer || layer.getLayers().length === 0) return;
+    const bounds = L.featureGroup(layer.getLayers()).getBounds();
+    if (bounds.isValid())
+      instance.fitBounds(bounds, { animate: false, maxZoom: 13 });
+  };
   pointCallback.current = onPoint;
 
   useEffect(() => {
@@ -176,6 +184,9 @@ export function MapPanel({
         },
       });
       polygon.bindTooltip(`${notice.source_id} / ${notice.record_id}`);
+      polygon.on("click", (event: L.LeafletMouseEvent) =>
+        L.DomEvent.stopPropagation(event),
+      );
       group.addLayer(polygon);
     }
     if (
@@ -205,7 +216,13 @@ export function MapPanel({
         <span className="legend-dot legend-selected" />{" "}
         {t(locale, "mapSelected")}
         {saturnNotices.some((notice) => notice.geometry !== null) && (
-          <> · {t(locale, "saturnTitle")}</>
+          <>
+            {" · "}
+            {t(locale, "saturnTitle")}
+            <button type="button" onClick={focusTreatment}>
+              {t(locale, "mapShowSaturnFields")}
+            </button>
+          </>
         )}
       </div>
       <p className="map-note">{t(locale, "mapNote")}</p>
