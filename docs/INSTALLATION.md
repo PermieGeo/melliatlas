@@ -84,23 +84,48 @@ database; large geometry files and their review manifests stay outside Git.
 
 ```bash
 export MELLIATLAS_BOUNDARIES_DIR="$HOME/melliatlas-boundaries"
-python backend/scripts/prepare_geoboundaries.py --country RU --level ADM1 --output-dir "$MELLIATLAS_BOUNDARIES_DIR"
-python backend/scripts/prepare_geoboundaries.py --country RU --level ADM2 --output-dir "$MELLIATLAS_BOUNDARIES_DIR"
-python backend/scripts/prepare_geoboundaries.py --country BY --level ADM1 --output-dir "$MELLIATLAS_BOUNDARIES_DIR"
-python backend/scripts/prepare_geoboundaries.py --country BY --level ADM2 --output-dir "$MELLIATLAS_BOUNDARIES_DIR"
+python backend/scripts/prepare_all_geoboundaries.py --output-dir "$MELLIATLAS_BOUNDARIES_DIR"
 ```
 
-Each command fetches pinned API metadata followed by the provider's **simplified**
-GeoJSON, validates all feature identities and the advertised unit count, and
-writes `<boundaryID>.geojson` and a sibling `.manifest.json` containing source
-ID, license, vintage, download URL, file digest and capture time. ADM1 also
-writes `.review.json` containing names, ISO codes and **exact-only proposed**
-canonical matches. Review the unmatched entries and create a separate mapping
-JSON of verified `shapeID -> region_id` entries if necessary. Never automatically
-assign unmatched names or assume that a source dataset is an authoritative
-current boundary inventory. The files are never silently replaced; repeat
-captures need a new output directory. GitHub LFS download failures are reported
-rather than mistaken for valid GeoJSON.
+Run this command from the repository root. It stages **RU ADM1, RU ADM2,
+BY ADM1 and BY ADM2** in that order and prints download progress (MiB, and
+expected size when available), each layer's status and a final JSON report.
+It checks any existing matching dataset **locally before making a network
+request**. Intact captures are reused after validating SHA-256, source identity,
+file size, feature inventory and the ADM1 review file. Only missing layers are
+downloaded; corrupt, incomplete or multiple versions for a layer cause an
+explicit error rather than an overwrite. Re-run the exact command after a
+network interruption. An interrupted in-memory download of a missing layer
+starts that layer over; it does not resume individual HTTP byte ranges. A newer
+upstream dataset must be reviewed and staged in a separate directory.
+
+The provider's simplified GeoJSON may not contain the same number of features
+as its `admUnitCount` metadata (observed while staging RU ADM2). The command
+**does not silently ignore the discrepancy or invent missing districts**:
+`unit_count` records the actual downloaded feature count,
+`advertised_unit_count` records the source claim and
+`review_status: inventory_mismatch` blocks ordinary import. The batch stages
+all possible layers and exits **2** if any discrepancy requires review, **1**
+if any layer could not be staged, or **0** when no discrepancy was observed.
+An exit status of 2 is not a corrupted download: inspect the reported counts
+and compare the downloaded dataset with the source before deciding whether a
+partial historical snapshot is suitable. No import into PostgreSQL occurs
+in this staging command.
+
+Each staged layer writes `<boundaryID>.geojson` and a sibling
+`.manifest.json` containing source ID, license, vintage, download URL,
+SHA-256, capture time and both counts. ADM1 also writes `.review.json`
+containing names, ISO codes and **exact-only proposed** canonical matches.
+Review unmatched entries and create a mapping JSON of verified
+`shapeID -> region_id` entries if necessary. A staged count mismatch remains
+explicitly unapproved: if, after independent review, you choose to import the
+available historical subset, pass `--acknowledge-inventory-mismatch` together
+with `--manifest` to `import_admin_boundaries.py`. Without that flag the
+importer refuses the mismatch before opening a database connection. The flag
+acknowledges *only the source inventory discrepancy*, not missing/ambiguous
+parent regions or use permissions. Never interpret a matching PostGIS count as
+proof of full provider coverage or current administrative boundaries. GitHub
+LFS download failures are reported instead of treated as valid GeoJSON.
 
 For example, after reviewing the **current** downloaded manifest and ADM1
 matching report, import RU ADM1 and then RU ADM2 with their actual filenames
@@ -144,7 +169,9 @@ python backend/scripts/verify_admin_boundaries.py --country RU \
 ```
 
 The verification uses read-only SQL, requires matching version counts and
-reports invalid geometries, orphaned districts and other-version rows.
+reports invalid geometries, orphaned districts, other-version rows and any
+advertised-versus-downloaded source inventory discrepancy. A successful
+snapshot match does not resolve that provider discrepancy.
 A failure means the imported data is incomplete **relative to this source
 snapshot**. It does not independently validate current jurisdiction boundaries.
 Restart the API with `MELLIATLAS_DATABASE_URL` configured to serve the stored

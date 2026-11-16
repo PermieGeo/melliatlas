@@ -33,7 +33,27 @@ def manifest_summary(path: Path, country: str, level: str) -> tuple[str, int]:
         )
     ):
         raise ValueError("Boundary manifest does not match the requested country and level")
+    advertised = document.get("advertised_unit_count")
+    if advertised is not None and (
+        type(advertised) is not int
+        or not 1 <= advertised <= 5000
+        or document.get("inventory_matches_metadata") is not (advertised == count)
+    ):
+        raise ValueError("Invalid provider inventory fields in boundary manifest")
     return reference_id, count
+
+
+def advertised_inventory(path: Path, observed: int) -> int:
+    """Return the source count separately from the downloaded feature inventory."""
+    document: object = json.loads(path.read_bytes())
+    if not _is_object(document):
+        raise ValueError("Invalid boundary manifest")
+    advertised = document.get("advertised_unit_count")
+    if advertised is None:
+        return observed
+    if not isinstance(advertised, int) or isinstance(advertised, bool):
+        raise ValueError("Invalid advertised source inventory")
+    return advertised
 
 
 def verify(
@@ -101,6 +121,12 @@ def verify(
         "adm1_expected": first_count,
         "adm2_from_manifest": actual_second,
         "adm2_expected": second_count,
+        "adm1_source_advertised": advertised_inventory(adm1_manifest, first_count),
+        "adm2_source_advertised": advertised_inventory(adm2_manifest, second_count),
+        "provider_inventory_matches": (
+            advertised_inventory(adm1_manifest, first_count) == first_count
+            and advertised_inventory(adm2_manifest, second_count) == second_count
+        ),
         "other_geometry_rows": other,
         "invalid_geometry_rows": int(invalid_row[0]),
         "detached_district_rows": int(detached_row[0]),

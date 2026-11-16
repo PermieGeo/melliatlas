@@ -67,8 +67,9 @@ def test_prepares_verified_local_files_and_review_report(
         "https://www.geoboundaries.org/api/current/gbOpen/BLR/ADM1/",
         "CC BY 3.0",
     )
-    with pytest.raises(FileExistsError):
-        preparation.prepare("BY", "ADM1", tmp_path)
+    reused = preparation.prepare("BY", "ADM1", tmp_path)
+    assert reused["reused"] is True
+    assert reused["sha256"] == manifest["sha256"]
     source.write_text("changed", encoding="utf-8")
     with pytest.raises(ValueError, match="changed since"):
         importer.manifest_provenance(metadata_path, source, "BY", "ADM1")
@@ -272,3 +273,213 @@ def test_reimport_checks_existing_geometry_and_rolls_back_conflicts(
     with pytest.raises(ValueError, match="Existing boundary differs"):
         importer.import_boundaries(*common)
     assert connection.failed
+
+
+def test_mismatched_source_inventory_is_staged_but_import_requires_review(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def fetch(_url: str, _limit: int, *, metadata: bool) -> bytes:
+        if metadata:
+            return json.dumps({**METADATA, "admUnitCount": "2"}).encode()
+        return json.dumps(GEOMETRY).encode()
+
+    monkeypatch.setattr(preparation, "_read_url", fetch)
+    manifest = preparation.prepare("BY", "ADM1", tmp_path)
+    assert manifest["unit_count"] == 1
+    assert manifest["advertised_unit_count"] == 2
+    assert manifest["inventory_matches_metadata"] is False
+    assert manifest["review_status"] == "inventory_mismatch"
+    assert "advertises 2 units" in capsys.readouterr().err
+    source = tmp_path / str(manifest["file_name"])
+    metadata = tmp_path / f"{source.name}.manifest.json"
+    with pytest.raises(ValueError, match="Source inventory differs"):
+        importer.manifest_provenance(metadata, source, "BY", "ADM1")
+    provenance = importer.manifest_provenance(
+        metadata, source, "BY", "ADM1", acknowledge_inventory_mismatch=True
+    )
+    assert provenance[0] == "geoboundaries:BLR-ADM1-45462678"
+    reused = preparation.prepare("BY", "ADM1", tmp_path)
+    assert reused["reused"] is True
+    assert reused["review_status"] == "inventory_mismatch"
+
+
+def test_corrupted_cached_capture_fails_closed_without_redownloading(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fetch(_url: str, _limit: int, *, metadata: bool) -> bytes:
+        return json.dumps(METADATA if metadata else GEOMETRY).encode()
+
+    monkeypatch.setattr(preparation, "_read_url", fetch)
+    manifest = preparation.prepare("BY", "ADM1", tmp_path)
+    (tmp_path / str(manifest["file_name"])).write_text("corrupted", encoding="utf-8")
+
+    def cannot_fetch(_url: str, _limit: int, *, metadata: bool) -> bytes:
+        raise AssertionError("Corrupt cached data must not trigger a remote download")
+
+    monkeypatch.setattr(preparation, "_read_url", cannot_fetch)
+    with pytest.raises(ValueError, match="changed since"):
+        preparation.prepare("BY", "ADM1", tmp_path)
+
+
+def test_incomplete_capture_is_not_treated_as_reusable(tmp_path: Path) -> None:
+    (tmp_path / "BLR-ADM2-123.geojson").write_text("partial", encoding="utf-8")
+    with pytest.raises(ValueError, match="Incomplete or ambiguous"):
+        preparation.prepare("BY", "ADM2", tmp_path)
+
+
+def test_metadata_count_and_review_fields_cannot_be_edited_to_bypass_review(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fetch(_url: str, _limit: int, *, metadata: bool) -> bytes:
+        if metadata:
+            return json.dumps({**METADATA, "admUnitCount": "2"}).encode()
+        return json.dumps(GEOMETRY).encode()
+
+    monkeypatch.setattr(preparation, "_read_url", fetch)
+    result = preparation.prepare("BY", "ADM1", tmp_path)
+    source = tmp_path / str(result["file_name"])
+    manifest = tmp_path / f"{source.name}.manifest.json"
+    original = json.loads(manifest.read_text(encoding="utf-8"))
+    for tampered in (
+        {**original, "inventory_matches_metadata": True},
+        {**original, "review_status": "pending"},
+    ):
+        manifest.write_text(json.dumps(tampered), encoding="utf-8")
+        with pytest.raises(ValueError, match="Inconsistent"):
+            importer.manifest_provenance(
+                manifest, source, "BY", "ADM1", acknowledge_inventory_mismatch=True
+            )
+
+
+def test_batch_stages_missing_layers_and_reuses_verified_captures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import prepare_all_geoboundaries as batch
+
+    calls: list[tuple[str, str]] = []
+
+    def capture(country: str, level: str, _output: Path) -> dict[str, object]:
+        calls.append((country, level))
+        return {
+            "country": country,
+            "level": level,
+            "unit_count": 1,
+            "review_status": (
+                "inventory_mismatch" if country == "RU" and level == "ADM2" else "pending"
+            ),
+            "reused": country == "RU" and level == "ADM1",
+        }
+
+    monkeypatch.setattr(batch, "prepare", capture)
+    reports, errors = batch.prepare_all(tmp_path)
+    assert calls == list(batch.LAYERS)
+    assert errors == []
+    assert len(reports) == 4
+    assert reports[1]["review_status"] == "inventory_mismatch"
+    assert reports[0]["reused"] is True
+
+
+def test_batch_reports_failed_layer_without_silencing_remaining_attempts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import prepare_all_geoboundaries as batch
+
+    attempts: list[str] = []
+
+    def capture(country: str, level: str, _output: Path) -> dict[str, object]:
+        attempts.append(f"{country}/{level}")
+        if country == "RU" and level == "ADM2":
+            raise ValueError("provider unavailable")
+        return {"country": country, "level": level, "unit_count": 1, "review_status": "pending"}
+
+    monkeypatch.setattr(batch, "prepare", capture)
+    reports, errors = batch.prepare_all(tmp_path)
+    assert attempts == ["RU/ADM1", "RU/ADM2", "BY/ADM1", "BY/ADM2"]
+    assert len(reports) == 3
+    assert errors == ["RU/ADM2: provider unavailable"]
+
+
+def test_existing_capture_requires_matching_adm1_review_entries(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fetch(_url: str, _limit: int, *, metadata: bool) -> bytes:
+        return json.dumps(METADATA if metadata else GEOMETRY).encode()
+
+    monkeypatch.setattr(preparation, "_read_url", fetch)
+    manifest = preparation.prepare("BY", "ADM1", tmp_path)
+    review = tmp_path / f"{manifest['file_name']}.review.json"
+    review.write_text("[]", encoding="utf-8")
+    with pytest.raises(ValueError, match="review does not cover"):
+        preparation.prepare("BY", "ADM1", tmp_path)
+
+
+def test_verifier_retains_provider_count_as_separate_audit_field(tmp_path: Path) -> None:
+    from verify_admin_boundaries import advertised_inventory, manifest_summary
+
+    path = tmp_path / "adm2.manifest.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "country": "RU",
+                "level": "ADM2",
+                "reference_id": "geoboundaries:RUS-ADM2-50074027",
+                "unit_count": 2200,
+                "advertised_unit_count": 2328,
+                "inventory_matches_metadata": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert manifest_summary(path, "RU", "ADM2")[1] == 2200
+    assert advertised_inventory(path, 2200) == 2328
+    metadata: dict[str, object] = json.loads(path.read_text(encoding="utf-8"))
+    metadata["inventory_matches_metadata"] = True
+    path.write_text(json.dumps(metadata), encoding="utf-8")
+    with pytest.raises(ValueError, match="provider inventory"):
+        manifest_summary(path, "RU", "ADM2")
+
+
+def test_staging_prints_download_progress_with_a_bounded_http_response(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from urllib.request import Request
+
+    geometry_bytes = json.dumps(GEOMETRY).encode() + b" " * (2 * 1024 * 1024)
+    metadata_bytes = json.dumps(METADATA).encode()
+
+    class Response:
+        def __init__(self, data: bytes) -> None:
+            self.data = data
+            self.offset = 0
+            self.headers = {"Content-Length": str(len(data))}
+
+        def __enter__(self) -> "Response":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            pass
+
+        def read(self, count: int) -> bytes:
+            result = self.data[self.offset : self.offset + count]
+            self.offset += len(result)
+            return result
+
+    class Opener:
+        def open(self, request: Request, *, timeout: int) -> Response:
+            assert timeout == 45
+            if request.full_url.endswith("/BLR/ADM1/"):
+                return Response(metadata_bytes)
+            assert request.full_url == METADATA["simplifiedGeometryGeoJSON"]
+            return Response(geometry_bytes)
+
+    def fake_opener(*_handlers: object) -> Opener:
+        return Opener()
+
+    monkeypatch.setattr(preparation, "build_opener", fake_opener)
+    result = preparation.prepare("BY", "ADM1", tmp_path)
+    assert result["unit_count"] == 1
+    output = capsys.readouterr().err
+    assert "BY/ADM1: downloading" in output
+    assert "Downloaded 2.0 MiB" in output
+    assert "Download completed" in output

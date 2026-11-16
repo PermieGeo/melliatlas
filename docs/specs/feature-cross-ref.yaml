@@ -38,6 +38,7 @@ features:
       - backend/src/melliatlas/territories/api.py#TerritoryImport
       - backend/src/melliatlas/persistence/geography.py#PostgisTerritoryCatalog
       - backend/scripts/prepare_geoboundaries.py#prepare
+      - backend/scripts/prepare_all_geoboundaries.py#prepare_all
       - backend/scripts/import_admin_boundaries.py#import_boundaries
       - backend/scripts/verify_admin_boundaries.py#verify
     test_files:

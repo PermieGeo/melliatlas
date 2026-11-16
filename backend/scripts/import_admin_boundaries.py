@@ -238,7 +238,12 @@ def import_boundaries(
 
 
 def manifest_provenance(
-    manifest_path: Path, path: Path, country: str, level: str
+    manifest_path: Path,
+    path: Path,
+    country: str,
+    level: str,
+    *,
+    acknowledge_inventory_mismatch: bool = False,
 ) -> tuple[str, str, str]:
     """Bind imported file bytes and provenance to the reviewed download manifest."""
     metadata = _object(_load_json(manifest_path))
@@ -268,6 +273,22 @@ def manifest_provenance(
         or metadata.get("unit_count") != len(_features(path, country, level))
     ):
         raise ValueError("Unexpected boundary manifest source or inventory")
+    advertised = metadata.get("advertised_unit_count")
+    if advertised is not None:
+        if type(advertised) is not int or not 1 <= advertised <= MAX_FEATURES:
+            raise ValueError("Invalid advertised administrative unit count")
+        actual = metadata.get("unit_count")
+        matches = advertised == actual
+        if metadata.get("inventory_matches_metadata") is not matches:
+            raise ValueError("Inconsistent source inventory discrepancy in manifest")
+        expected_review = "pending" if matches else "inventory_mismatch"
+        if metadata.get("review_status") != expected_review:
+            raise ValueError("Inconsistent source inventory review status")
+        if not matches and not acknowledge_inventory_mismatch:
+            raise ValueError(
+                "Source inventory differs from downloaded GeoJSON; review the discrepancy "
+                "and explicitly pass --acknowledge-inventory-mismatch to import"
+            )
     return reference_id, reference_uri, license_id
 
 
@@ -285,12 +306,21 @@ def main() -> None:
     parser.add_argument("--valid-on", type=date.fromisoformat, required=True)
     parser.add_argument("--mapping", type=Path)
     parser.add_argument("--allow-partial", action="store_true")
+    parser.add_argument("--acknowledge-inventory-mismatch", action="store_true")
     args = parser.parse_args()
     if args.manifest is not None:
         if any((args.reference_id, args.source_uri, args.license)):
             parser.error("Use either --manifest or explicit provenance fields")
-        provenance = manifest_provenance(args.manifest, args.file, args.country, args.level)
+        provenance = manifest_provenance(
+            args.manifest,
+            args.file,
+            args.country,
+            args.level,
+            acknowledge_inventory_mismatch=args.acknowledge_inventory_mismatch,
+        )
     else:
+        if args.acknowledge_inventory_mismatch:
+            parser.error("--acknowledge-inventory-mismatch requires --manifest")
         if not all((args.reference_id, args.source_uri, args.license)):
             parser.error("Provide --manifest or all three provenance fields")
         provenance = (args.reference_id, args.source_uri, args.license)

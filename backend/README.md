@@ -90,10 +90,14 @@ remain in the separate source mapping table.
 
 ## Explicit geoBoundaries staging and database verification
 
-`backend/scripts/prepare_geoboundaries.py` downloads one RU/BY ADM1/ADM2
-geoBoundaries gbOpen layer per invocation into a user-chosen directory outside
-the repository. It verifies metadata, feature counts and a SHA-256 manifest;
-ADM1 also emits exact-match review information against the pinned ISO directory.
+`backend/scripts/prepare_all_geoboundaries.py` stages all missing RU/BY
+ADM1/ADM2 geoBoundaries gbOpen layers into a user-chosen directory outside the
+repository, with network progress and SHA-256 verified reuse on repeat runs.
+`prepare_geoboundaries.py` remains the single-layer entry point. Metadata
+feature-count discrepancies are explicitly recorded and must be acknowledged
+before any affected manifest can authorize an import; incomplete source
+inventories are never reported as authoritative coverage. ADM1 also emits
+exact-match review information against the pinned ISO directory.
 The existing offline PostGIS importer accepts `--manifest` to bind provenance
 and file bytes at import time, and rejects conflicting repeat imports including
 changed geometry. `backend/scripts/verify_admin_boundaries.py` checks the

@@ -349,9 +349,12 @@ Actual browser checks and real ADM2 imports remain separate acceptance gates.
 existing `0002`/`0003` migrations, canonical ISO seed, read-only territory
 endpoints and explicit PostGIS geometry importer remain authoritative. The
 new offline operator CLI stages one geoBoundaries gbOpen ADM1/ADM2 layer with
-source-version metadata, SHA-256, feature inventory and exact ADM1 review. An
-optional import manifest rejects changed inputs; repeated imports validate
-geometry and provenance. A read-only audit reports whether the stored version
+source-version metadata, SHA-256, feature inventory and exact ADM1 review. A
+repeatable four-layer CLI skips digest-verified staged files, prints network
+progress, and stages source count mismatches as explicit pending review rather
+than treating an incomplete source inventory as complete. An optional import
+manifest rejects changed inputs or unacknowledged count mismatches; repeated
+imports validate geometry and provenance. A read-only audit reports whether the stored version
 matches the source inventory. No boundary data is shipped in Git or loaded on
 application startup; no Saturn mapping or UX endpoint is changed.
 
