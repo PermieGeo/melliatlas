@@ -20,6 +20,7 @@ from melliatlas.territories.api import (
     PolygonWgs84,
     ReferenceUnavailableError,
     Territory,
+    TerritoryAtPoint,
     TerritoryGeometry,
     TerritoryKind,
     TerritoryNotFound,
@@ -111,6 +112,18 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
         FROM melliatlas_admin_geometry
         WHERE territory_id = %s AND kind = 'district'
     """
+    _CONTAINING_REGIONS: Final[LiteralString] = """
+        SELECT territory_id FROM melliatlas_admin_geometry
+        WHERE country_code = %s AND kind = 'region'
+          AND ST_Covers(boundary, ST_SetSRID(ST_MakePoint(%s, %s), 4326))
+        LIMIT 2
+    """
+    _CONTAINING_DISTRICTS: Final[LiteralString] = """
+        SELECT territory_id FROM melliatlas_admin_geometry
+        WHERE region_id = %s AND kind = 'district'
+          AND ST_Covers(boundary, ST_SetSRID(ST_MakePoint(%s, %s), 4326))
+        LIMIT 2
+    """
     _GEOMETRY: Final[LiteralString] = """
         SELECT reference_id, ST_AsGeoJSON(ST_SimplifyPreserveTopology(boundary, 0.002), 5)
         FROM melliatlas_admin_geometry WHERE territory_id = %s
@@ -160,6 +173,44 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
             valid_on=row[5],
             geometry_status=GeometryStatus.AVAILABLE,
         )
+
+    async def locate_point(
+        self, *, country: CountryCode, longitude: float, latitude: float
+    ) -> TerritoryAtPoint | None:
+        if (
+            not isfinite(longitude)
+            or not isfinite(latitude)
+            or not -180 <= longitude <= 180
+            or not -90 <= latitude <= 90
+        ):
+            raise ValueError("Invalid WGS84 point")
+        regions = await asyncio.to_thread(
+            self._read, self._CONTAINING_REGIONS, (country.value, longitude, latitude)
+        )
+        if not regions:
+            return None
+        if len(regions) != 1 or len(regions[0]) != 1 or not isinstance(regions[0][0], str):
+            raise ReferenceUnavailableError("Overlapping or invalid region reference at point")
+        region_id = regions[0][0]
+        districts = await asyncio.to_thread(
+            self._read, self._CONTAINING_DISTRICTS, (region_id, longitude, latitude)
+        )
+        if len(districts) > 1:
+            raise ReferenceUnavailableError("Overlapping or invalid district reference at point")
+        district_id: str | None = None
+        if districts:
+            district_row = districts[0]
+            if len(district_row) != 1:
+                raise ReferenceUnavailableError(
+                    "Overlapping or invalid district reference at point"
+                )
+            district_value = district_row[0]
+            if not isinstance(district_value, str):
+                raise ReferenceUnavailableError(
+                    "Overlapping or invalid district reference at point"
+                )
+            district_id = district_value
+        return TerritoryAtPoint(region_id=region_id, district_id=district_id)
 
     async def list_regions(self, country: CountryCode) -> tuple[Territory, ...]:
         rows = await asyncio.to_thread(self._read, self._COUNTRY_REGIONS, (country.value,))

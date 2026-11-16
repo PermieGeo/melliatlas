@@ -28,6 +28,7 @@ interface Props {
   canSubmit: boolean;
   countryMessage: TranslationKey;
   referenceMessage: TranslationKey;
+  onRetryRegions: () => void;
   scenariosMessage: TranslationKey;
   onCountry: (value: CountryCode) => void;
   onTerritory: (value: string) => void;
@@ -98,6 +99,7 @@ export function InvestigationControls(props: Props) {
         regions={regions}
         navigation={props.referenceNavigation}
         catalogMessage={props.referenceMessage}
+        onRetryRegions={props.onRetryRegions}
       />
       <div className="form-group">
         <label>{tr("startingPoint")}</label>

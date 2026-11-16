@@ -13,6 +13,8 @@ export interface TerritoryNavigation {
   geometry: TerritoryGeometry | null;
   selectRegion: (id: string) => void;
   selectDistrict: (id: string) => void;
+  selectByPoint: (regionId: string, districtId: string | null) => void;
+  retryDistricts: () => void;
 }
 
 /** Own cancellable country-scoped district and geometry reads, without caching private positions. */
@@ -20,8 +22,23 @@ export function useTerritoryReference(
   country: CountryCode,
   regions: Territory[],
 ): TerritoryNavigation {
-  const [regionId, setRegionId] = useState("");
+  const [regionSelection, setRegionSelection] = useState<{
+    country: CountryCode;
+    regionId: string;
+  }>({ country: "", regionId: "" });
+  const regionId =
+    regionSelection.country === country ? regionSelection.regionId : "";
+
+  useEffect(() => {
+    setRegionSelection({ country, regionId: "" });
+  }, [country]);
   const [districtId, setDistrictId] = useState("");
+  const [pendingPointDistrict, setPendingPointDistrict] = useState<{
+    country: CountryCode;
+    regionId: string;
+    districtId: string;
+  } | null>(null);
+  const [districtRequestVersion, setDistrictRequestVersion] = useState(0);
   const [districtResult, setDistrictResult] = useState<{
     regionId: string;
     districts: Territory[];
@@ -107,7 +124,30 @@ export function useTerritoryReference(
       },
     );
     return () => controller.abort();
-  }, [country, regionIdForRequest]);
+  }, [country, regionIdForRequest, districtRequestVersion]);
+
+  useEffect(() => {
+    if (
+      !pendingPointDistrict ||
+      pendingPointDistrict.country !== country ||
+      pendingPointDistrict.regionId !== regionIdForRequest ||
+      districtResult.regionId !== regionIdForRequest ||
+      districtResult.message === "referenceDistrictLoading"
+    )
+      return;
+    setDistrictId(
+      districts.some((item) => item.id === pendingPointDistrict.districtId)
+        ? pendingPointDistrict.districtId
+        : "",
+    );
+    setPendingPointDistrict(null);
+  }, [
+    country,
+    regionIdForRequest,
+    districtResult,
+    districts,
+    pendingPointDistrict,
+  ]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -164,10 +204,35 @@ export function useTerritoryReference(
         ? loadedGeometry
         : null,
     selectRegion: (id) => {
-      setRegionId(id);
+      setPendingPointDistrict(null);
+      setRegionSelection({ country, regionId: id });
       setDistrictId("");
     },
+    selectByPoint: (newRegionId, newDistrictId) => {
+      if (
+        !regions.some(
+          (item) => item.id === newRegionId && item.country === country,
+        )
+      )
+        return;
+      setRegionSelection({ country, regionId: newRegionId });
+      setDistrictId("");
+      setPendingPointDistrict(
+        newDistrictId
+          ? {
+              country,
+              regionId: newRegionId,
+              districtId: newDistrictId,
+            }
+          : null,
+      );
+    },
+    retryDistricts: () => {
+      if (regionIdForRequest)
+        setDistrictRequestVersion((version) => version + 1);
+    },
     selectDistrict: (id) => {
+      setPendingPointDistrict(null);
       if (
         districts.some(
           (item) => item.id === id && item.parent_id === region?.id,

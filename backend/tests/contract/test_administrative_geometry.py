@@ -33,7 +33,14 @@ class GeographyConnection:
 
     def execute(self, query: LiteralString, params: Sequence[object] = ()) -> None:
         self.db.sql.append(query)
-        if "FROM melliatlas_source_saturn" in query:
+        if "ST_Covers(boundary" in query:
+            if "kind = 'region'" in query:
+                self.rows = (("by:region:vi",),) if params == ("BY", 27.5, 55.5) else ()
+            else:
+                self.rows = (
+                    (("by:district:abc123",),) if params == ("by:region:vi", 27.5, 55.5) else ()
+                )
+        elif "FROM melliatlas_source_saturn" in query:
             self.rows = ((55,),)
         elif "ST_AsGeoJSON" in query:
             geometry = self.db.geometry_response
@@ -134,3 +141,20 @@ def test_empty_or_missing_region_is_explicit() -> None:
     with pytest.raises(ReferenceUnavailableError):
         asyncio.run(store.list_regions(CountryCode.RU))
     assert asyncio.run(store.get("by:district:other")) is None
+
+
+def test_point_lookup_uses_imported_geometry_and_returns_canonical_district() -> None:
+    db = GeographyDatabase()
+    catalog = PostgisTerritoryCatalog(db.connect)
+    found = asyncio.run(catalog.locate_point(country=CountryCode.BY, longitude=27.5, latitude=55.5))
+    assert found is not None
+    assert found.region_id == "by:region:vi"
+    assert found.district_id == "by:district:abc123"
+    assert sum("ST_Covers" in statement for statement in db.sql) == 2
+    assert (
+        asyncio.run(catalog.locate_point(country=CountryCode.BY, longitude=20, latitude=50)) is None
+    )
+    with pytest.raises(ValueError):
+        asyncio.run(
+            catalog.locate_point(country=CountryCode.BY, longitude=float("nan"), latitude=55)
+        )

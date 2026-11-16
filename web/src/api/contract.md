@@ -54,3 +54,9 @@ requests and clear prior notices. `SOURCE_REGION_UNMAPPED` is an explicit
 no-data-source-mapping state, not a negative treatment finding. The numeric
 `region_code` request is retained only for older API clients and controlled
 operator tooling; the beekeeper UI does not expose it.
+
+## Point-to-district selection and incremental Saturn display
+
+`resolveTerritoryPoint` posts the clicked coordinate in JSON (never a URL), decodes the canonical containing region and optional district, and aborts stale lookups on another click or country/territory change. After region selection, the client only selects a district confirmed by the region's separately fetched catalog. A missing point lookup leaves the manual selector available.
+
+The area panel reads Saturn page zero after the user's Analyze action; the user may fetch additional upstream pages one at a time. The UI deduplicates fetched record IDs and displays the number of valid polygons, with an explicit camera-fit control for fetched field shapes. This is still a region-wide sample, not verified district completeness or a safety conclusion; no source crawling or district-code inference occurs.

@@ -343,6 +343,28 @@ checks region-to-district viewport changes, restoration on reload, an absent
 basemap checkbox, and a functioning text UI when tile requests are blocked.
 Actual browser checks and real ADM2 imports remain separate acceptance gates.
 
+### W01 R02 follow-up — country-switch reference recovery (partial)
+
+**Scope:** isolate the loaded region catalog by country, invalidate selected
+reference identities across country switches, and offer explicit retries for
+failed region and district requests. Keep the existing HTTP DTOs and GeoJSON validation;
+no geography is invented and no database mutation or automatic reimport occurs.
+Per-region ADM2 distribution remains an operator inspection rather than a
+claim inferred from the country-wide inventory check.
+
+**Regression:** `web/tests/reference-navigation.test.tsx` exercises RU → BY →
+RU with both district catalogs, failures followed by same-country or
+same-region retries, and a delayed obsolete RU response after switching to BY. Manual verification
+against an imported PostGIS dataset and browser/server logs remains necessary
+before declaring the reported RU district issue resolved. W01/W02 acceptance
+remains pending.
+
+### W01 R02 follow-up — RU district availability diagnosis (partial)
+
+**Scope:** The existing PostGIS catalog reads districts by canonical `region_id` for both countries. A complete ADM2 country count does not prove per-region coverage or browser/API consistency. `backend/scripts/diagnose_admin_navigation.py` compares imported region-level counts with the running local `/regions` and `/districts` responses, rejects cross-country or duplicate identities, and reports empty regions without changing the database. This is a diagnostic increment, not a claim that missing RU districts have been repaired.
+
+**Tests:** `backend/tests/unit/test_navigation_diagnostics.py` covers matching, missing, cross-country and scoped checks. Real RU PostGIS and browser-network comparison remains a local verification gate under `MVP01-WEB-R02/A06`.
+
 ### W02 geography-data preparation — explicit PostGIS import workflow (pending acceptance)
 
 **Scope:** Developer-authorized follow-up to the W01 territory navigator. The
@@ -366,3 +388,11 @@ accuracy remain **unverified** and are required before W02 acceptance.
 The repository `sh`-invoked formatter/check scripts use POSIX-compatible
 file checks so backend checks cannot silently be skipped on shells without
 Bash `[[ ... ]]` support; shell runner regression tests guard this behavior.
+
+### W01 R02/R11 follow-up — click-to-district and explicit Saturn page expansion (partial)
+
+**Public contracts and integration design:** `TerritoryPointLocator.locate_point` is an optional read-only geographic capability, implemented by the PostGIS adapter with `ST_Covers` against imported WGS84 ADM1/ADM2 boundaries. `POST /api/v1/territories/resolve-point` takes country and WGS84 coordinates in a JSON body; it returns canonical region and optional district IDs, `404` outside imported regions, `503` for unavailable/ambiguous geometry, `422` for invalid points. No point is logged or persisted by this operation. The browser validates the response, aborts obsolete clicks and waits for the region's district list before selecting a returned district. No synthetic or Saturn identity is involved.
+
+**Saturn preview:** A completed manual area action still reads only source page zero. The user can request later pages one at a time, within the existing provider page cap. The browser deduplicates record IDs, clears stale pages on territory changes and draws any valid source polygons; a map control fits the camera to fetched fields. Counts distinguish available polygons from notices, and region-wide pagination is never represented as complete district inventory. The provider district-code mapping and complete district-scoped collection remain outside this increment pending separate source-contract and mapping review.
+
+**Checks:** `backend/tests/contract/test_administrative_geometry.py` verifies parameterized point queries; `backend/tests/contract/test_territory_http.py` checks success, 404/503/422; `web/tests/reference-navigation.test.tsx` checks map click selection; `web/tests/live-area-analysis.test.tsx` checks manual pagination and polygon accumulation. Live PostGIS geography, provider field visibility and browser checks remain operator acceptance gates.

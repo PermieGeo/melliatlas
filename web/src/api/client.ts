@@ -7,6 +7,7 @@ import {
   decodeScenarios,
   decodeTerritories,
   decodeTerritoryGeometry,
+  decodeTerritoryAtPoint,
   WireError,
 } from "./validation";
 import type {
@@ -21,6 +22,7 @@ import type {
   ScenarioListing,
   Territory,
   TerritoryGeometry,
+  TerritoryAtPoint,
 } from "./types";
 
 export type ApiResult<T> =
@@ -153,6 +155,28 @@ export function listDistricts(
     decodeTerritories,
   );
 }
+/** Keep private map click coordinates in a POST body, never the URL. */
+export function resolveTerritoryPoint(
+  country: CountryCode,
+  point: Position,
+  signal: AbortSignal,
+): Promise<ApiResult<TerritoryAtPoint>> {
+  return request(
+    "/api/v1/territories/resolve-point",
+    signal,
+    decodeTerritoryAtPoint,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        country,
+        longitude: point.longitude,
+        latitude: point.latitude,
+      }),
+    },
+  );
+}
+
 /** Read a validated WGS84 reference shape; no synthetic fallbacks. */
 export function getTerritoryGeometry(
   territoryId: string,

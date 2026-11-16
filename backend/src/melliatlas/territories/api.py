@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import StrEnum
-from typing import Literal, Protocol, TypeAlias, TypedDict
+from typing import Literal, Protocol, TypeAlias, TypedDict, runtime_checkable
 
 
 class CountryCode(StrEnum):
@@ -116,6 +116,19 @@ class TerritoryCatalog(Protocol):
     async def list_districts(self, region_id: str) -> tuple[Territory, ...]: ...
     async def get(self, territory_id: str) -> Territory | None: ...
     async def get_geometry(self, territory_id: str) -> TerritoryGeometry | None: ...
+
+
+@dataclass(frozen=True)
+class TerritoryAtPoint:
+    region_id: str
+    district_id: str | None
+
+
+@runtime_checkable
+class TerritoryPointLocator(Protocol):
+    async def locate_point(
+        self, *, country: CountryCode, longitude: float, latitude: float
+    ) -> TerritoryAtPoint | None: ...
 
 
 class SourceTerritoryCodeLookup(Protocol):

@@ -551,6 +551,25 @@ function saturnNotice(value: unknown, field: string): SaturnNotice {
 }
 
 /** Reject cross-country/mismatched pages before exposing real field geometries. */
+export function decodeTerritoryAtPoint(value: unknown): {
+  region_id: string;
+  district_id: string | null;
+} {
+  const v = record(value, "territoryAtPoint");
+  const regionId = nonEmpty(v.region_id, "territoryAtPoint.region_id");
+  const districtId = maybe(
+    v.district_id,
+    nonEmpty,
+    "territoryAtPoint.district_id",
+  );
+  if (
+    !regionId.includes(":region:") ||
+    (districtId !== null && !districtId.includes(":district:"))
+  )
+    throw new WireError("territoryAtPoint identity");
+  return { region_id: regionId, district_id: districtId };
+}
+
 export function decodeSaturnPage(value: unknown): SaturnNoticePage {
   const v = record(value, "saturnPage");
   if (v.coverage_complete !== false)
