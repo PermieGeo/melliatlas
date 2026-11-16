@@ -111,3 +111,26 @@ numeric Saturn code is entered. Regions with no verified Saturn mapping return
 `409/SOURCE_REGION_UNMAPPED` without contacting the provider. The initial seed
 contains only the archived Smolensk source mapping. Region borders and pilot
 districts are not included in the name-only seed; their absence is explicit.
+
+
+## Area-first beekeeper workflow (W01 partial)
+
+Select a country, then an independently seeded region and optional reviewed
+district. The map fits the selected **imported** territory geometry. Large
+regions require a more local district or a click inside the reviewed boundary
+before the **Analyze selected area** action becomes available.
+
+The one action fetches enabled, country-scoped live sources: RU-only Saturn
+and a point-specific Open-Meteo forecast. The result is explicitly preliminary:
+Saturn currently returns only **one region-wide page**, not a full inventory
+for the selected square, and no drift or safety model is executed. An empty
+provider response must not be interpreted as proof of safety. The old direct
+source-page and weather buttons, UUID lookup, and source-jump link are not
+shown in the main user workflow; the fictional scenario remains collapsed and
+opt-in. No private coordinates are persisted in the browser.
+
+The API cannot manufacture administrative geography: run the PostgreSQL
+`0002` seed and the separately reviewed `0003` ADM1/ADM2 boundary imports
+from `docs/INSTALLATION.md` before evaluating map zoom, district selectors,
+or the area action. Without these imports the form explains that the required
+reference data is missing rather than falling back to synthetic geography.

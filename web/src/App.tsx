@@ -12,8 +12,9 @@ import { InvestigationControls } from "./components/InvestigationControls";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { MapPanel } from "./components/MapPanel";
 import { Timeline } from "./components/Timeline";
-import { SaturnPanel } from "./components/SaturnPanel";
-import { WeatherPanel } from "./components/WeatherPanel";
+import { LiveAreaAnalysis } from "./components/LiveAreaAnalysis";
+import type { AreaAnalysisRequest } from "./components/LiveAreaAnalysis";
+import { areaSize, isInsideArea } from "./geo/selection";
 import { useInvestigation } from "./hooks/useInvestigation";
 import { useTerritoryReference } from "./hooks/useTerritoryReference";
 import { t } from "./i18n";
@@ -41,7 +42,8 @@ export default function App() {
   const [point, setPoint] = useState<Position | null>(null);
   const [showTiles, setShowTiles] = useState(false);
   const [saturnNotices, setSaturnNotices] = useState<SaturnNotice[]>([]);
-  const [reopenId, setReopenId] = useState("");
+  const [analysisRequest, setAnalysisRequest] =
+    useState<AreaAnalysisRequest | null>(null);
   const investigation = useInvestigation();
   const referenceNavigation = useTerritoryReference(country, regions);
   const { reset } = investigation;
@@ -158,6 +160,7 @@ export default function App() {
     seasonStart <= seasonEnd;
 
   const chooseCountry = (value: CountryCode) => {
+    setAnalysisRequest(null);
     if (!countries.some((item) => item.code === value)) return;
     reset();
     setPoint(null);
@@ -185,6 +188,51 @@ export default function App() {
     setScenarioId(chosen?.id ?? "");
     setSeasonStart(chosen?.season_start ?? "");
     setSeasonEnd(chosen?.season_end ?? "");
+  };
+  const selectedBoundary = referenceNavigation.geometry?.geometry ?? null;
+  const size = selectedBoundary ? areaSize(selectedBoundary) : null;
+  const pointWithinBoundary = !!(
+    point &&
+    selectedBoundary &&
+    isInsideArea(point, selectedBoundary)
+  );
+  const canAnalyze = !!(
+    country &&
+    referenceNavigation.regionId &&
+    size &&
+    (pointWithinBoundary ||
+      (size.widthKm <= 100 &&
+        size.heightKm <= 100 &&
+        selectedBoundary !== null &&
+        isInsideArea(size.center, selectedBoundary)))
+  );
+  const analysisHint: TranslationKey = !referenceNavigation.regionId
+    ? "analysisSelectRegion"
+    : !selectedBoundary
+      ? "analysisMissingBoundary"
+      : point && !pointWithinBoundary
+        ? "analysisPointOutside"
+        : "analysisNarrowArea";
+  const analyze = () => {
+    if (!canAnalyze || !size || !referenceNavigation.regionId) return;
+    setAnalysisRequest({
+      sequence: (analysisRequest?.sequence ?? 0) + 1,
+      country,
+      regionId: referenceNavigation.regionId,
+      point: pointWithinBoundary && point ? point : size.center,
+    });
+  };
+  const chooseRegion = (id: string) => {
+    setAnalysisRequest(null);
+    setSaturnNotices([]);
+    setPoint(null);
+    referenceNavigation.selectRegion(id);
+  };
+  const chooseDistrict = (id: string) => {
+    setAnalysisRequest(null);
+    setSaturnNotices([]);
+    setPoint(null);
+    referenceNavigation.selectDistrict(id);
   };
   const begin = () => {
     if (!canSubmit || !selectedScenario) return;
@@ -239,7 +287,11 @@ export default function App() {
           countries={countries}
           country={country}
           regions={regions}
-          referenceNavigation={referenceNavigation}
+          referenceNavigation={{
+            ...referenceNavigation,
+            selectRegion: chooseRegion,
+            selectDistrict: chooseDistrict,
+          }}
           scenarios={scenarios}
           territory={territory}
           scenarioId={scenarioId}
@@ -252,7 +304,6 @@ export default function App() {
           countryMessage={countryMessage}
           referenceMessage={referenceMessage}
           scenariosMessage={scenariosMessage}
-          reopenId={reopenId}
           onCountry={chooseCountry}
           onTerritory={chooseTerritory}
           onScenario={chooseScenario}
@@ -266,8 +317,9 @@ export default function App() {
           }}
           onClearPoint={() => setPoint(null)}
           onSubmit={begin}
-          onReopenId={setReopenId}
-          onReopen={() => void investigation.begin(reopenId.trim())}
+          canAnalyze={canAnalyze}
+          onAnalyze={analyze}
+          analysisHint={analysisHint}
         />
         <main className="canvas-column">
           <section className="map-section" aria-label={tr("mapLabel")}>
@@ -297,7 +349,10 @@ export default function App() {
               referenceGeometry={referenceNavigation.geometry}
               saturnNotices={saturnNotices}
               onSelect={investigation.setSelectedSite}
-              onPoint={setPoint}
+              onPoint={(position) => {
+                setPoint(position);
+                setAnalysisRequest(null);
+              }}
             />
           </section>
           {investigation.notice && (
@@ -323,40 +378,33 @@ export default function App() {
                     })
                   : (investigation.result.outcome ?? tr("awaiting"))}
               </span>
-              <span className="result-id">ID: {investigation.result.id}</span>
             </div>
           )}
-          <section
-            id="live-sources"
-            className="live-sources-section"
-            aria-label={tr("liveSourcesHeading")}
-          >
-            <h2>{tr("liveSourcesHeading")}</h2>
-            <p className="field-help">{tr("liveSourcesAvailability")}</p>
-            <SaturnPanel
-              locale={locale}
-              country={country}
-              regionId={referenceNavigation.regionId}
-              onNotices={setSaturnNotices}
-            />
-            <WeatherPanel locale={locale} country={country} point={point} />
-          </section>
-          <Timeline
+          <LiveAreaAnalysis
             locale={locale}
-            stops={stops}
-            seasonStart={
-              investigation.result?.request.season_start ?? seasonStart
-            }
-            seasonEnd={investigation.result?.request.season_end ?? seasonEnd}
-            selectedId={investigation.selectedSite}
-            onSelect={investigation.setSelectedSite}
+            country={country}
+            regionId={referenceNavigation.regionId}
+            request={analysisRequest}
+            onNotices={setSaturnNotices}
           />
+          {investigation.result && (
+            <Timeline
+              locale={locale}
+              stops={stops}
+              seasonStart={investigation.result.request.season_start}
+              seasonEnd={investigation.result.request.season_end}
+              selectedId={investigation.selectedSite}
+              onSelect={investigation.setSelectedSite}
+            />
+          )}
         </main>
-        <EvidencePanel
-          locale={locale}
-          result={investigation.result}
-          selectedId={investigation.selectedSite}
-        />
+        {investigation.result && (
+          <EvidencePanel
+            locale={locale}
+            result={investigation.result}
+            selectedId={investigation.selectedSite}
+          />
+        )}
       </div>
       <footer className="footer-note">{tr("footer")}</footer>
     </div>

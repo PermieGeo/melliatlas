@@ -27,8 +27,8 @@ The `uvicorn` command requires an ASGI server. FastAPI's development installatio
 
 ## Preload independent RU/BY regions into PostgreSQL (optional)
 
-The optional database path holds **first-order administrative names and IDs**,
-not real polygon boundaries. PostgreSQL 15+ is recommended. Install the
+The optional database path holds **first-order administrative names and IDs**.
+Approved boundaries and districts can be imported separately after the region seed. PostgreSQL 15+ is recommended. Install the
 opt-in `postgres` extra (also included in `backend[dev]`) and create a local
 database through your normal PostgreSQL administration. The region directory is independent of the older completed-result/PostGIS
 migration. Apply `0001` separately only if you also use completed-result
@@ -49,6 +49,75 @@ conflicting existing rows. It includes the 83 RU / 7 BY subdivisions identified
 in `iso-codes` 4.18.0, and only the archived Smolensk Saturn subject mapping.
 No coverage of disputed/other regions, municipal districts or valid borders is
 claimed. With no database configured, the previous explicit `503` remains.
+
+### Import independent administrative boundaries and districts (manual, reviewed)
+
+MelliAtlas owns the country-scoped region directory separately from external
+Saturn IDs. After the `0002` migration and `bootstrap_regions.py` step above,
+install the PostGIS extension on the PostgreSQL server and apply the additive
+geometry migration:
+
+```bash
+psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0003_administrative_boundaries.sql
+```
+
+The first-order region names become available immediately after the independent
+seed. Boundaries and the district selector require **separately reviewed**
+ADM1/ADM2 GeoJSON from an approved geographic source. An example candidate
+is geoBoundaries gbOpen, with provider metadata at:
+
+- `https://www.geoboundaries.org/api/current/gbOpen/RUS/ADM1/`
+- `https://www.geoboundaries.org/api/current/gbOpen/RUS/ADM2/`
+- `https://www.geoboundaries.org/api/current/gbOpen/BLR/ADM1/`
+- `https://www.geoboundaries.org/api/current/gbOpen/BLR/ADM2/`
+
+Inspect each source's collection date, boundaries, attribution and license;
+these historical files do **not** establish current administrative authority.
+Original source licenses differ by geography: RU is ODbL-sourced and BY is
+CC BY-sourced in the published provider metadata. Obtain a **reviewed**
+`FeatureCollection` for each country/level and keep the downloaded GeoJSON
+outside the repository. The importer recognizes `shapeID`, `shapeName`,
+`shapeGroup`, `shapeType` and optional `shapeISO`. ADM1 matches the independent
+region identity only by exact ISO code, exact normalized name or a reviewed
+operator-supplied `shapeID -> region_id` mapping. Unmatched records fail the
+transaction unless `--allow-partial` was explicitly chosen. Never guess
+parent regions from numeric Saturn IDs.
+
+Example for an operator-approved RU ADM1 capture:
+
+```bash
+python backend/scripts/import_admin_boundaries.py \
+  --country RU --level ADM1 \
+  --file /path/to/reviewed-RUS-ADM1.geojson \
+  --reference-id geoboundaries:RUS-ADM1:reviewed-2026-11 \
+  --source-uri https://www.geoboundaries.org/api/current/gbOpen/RUS/ADM1/ \
+  --license ODbL-1.0 --valid-on 2017-01-01 \
+  --mapping /path/to/reviewed-region-mapping.json
+```
+
+`--reference-id` and `--valid-on` above are placeholders: replace them with
+the documented source **version** and actual data vintage; never use the
+execution date as an invented boundary validity date. A reviewed mapping file
+is a JSON object, for example `{"provider-shape-id": "ru:region:smo"}`;
+omit `--mapping` if all identities match exactly without review. If using
+`--allow-partial`, review the reported unmatched count rather than treating
+partial coverage as complete.
+
+Import ADM1 first. Then import the same country's ADM2 file using
+`--level ADM2` and the corresponding captured provenance. ADM2 parent regions
+are derived **spatially from the imported ADM1 geometry**, only if exactly one
+parent covers a representative point and at least 95% of the district polygon.
+Otherwise the import refuses ambiguous membership; `--allow-partial` permits
+explicitly incomplete coverage. Every import is transactional and checks
+existing shape/version conflicts. Repeat the process separately for BY.
+
+The application never downloads or imports boundaries on startup. With
+`MELLIATLAS_DATABASE_URL` configured, region names come from the database;
+choosing a region whose reviewed geometry is present automatically loads and
+fits its polygon in the map. Districts appear only after an approved ADM2
+import. If a geometry is missing, the corresponding map analysis remains
+disabled with an explicit explanation. No checked-in geoBoundaries datasets,
+complete-coverage claims, or unapproved source access are part of this PATCH.
 
 ### One-shot Saturn subject-directory capture and mapping review
 
@@ -136,7 +205,7 @@ python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000
 
 Use the Web client with country `RU`; the server advertises `saturn` only there.
 Select a country and a preloaded region in the left panel, then click
-**Read one live page**. The server resolves a verified numeric Saturn subject
+**Analyze selected area**. The server resolves a verified numeric Saturn subject
 code from its separate mapping table; missing mappings return HTTP 409. The request sends one bounded POST to a pinned
 legacy public URL; status 403/404, changed response shape or inaccessible site
 returns an explicit error, never fabricated data. `BY` never offers or contacts

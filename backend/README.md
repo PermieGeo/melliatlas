@@ -75,3 +75,14 @@ when public source access is authorized, review its local JSON output, and then
 run the separate offline `import_saturn_subjects.py`. Neither script runs at
 application startup. The capture is bounded, exclusive and never committed.
 See [installation](../docs/INSTALLATION.md) and the territory/persistence contracts.
+
+
+## Independent administrative boundary imports
+
+Region names and IDs are preseeded independently of provider data. The
+operator may additionally import reviewed ADM1/ADM2 GeoJSON into PostGIS with
+`backend/migrations/0003_administrative_boundaries.sql` and
+`backend/scripts/import_admin_boundaries.py`. See `docs/INSTALLATION.md` for
+provenance review, mapping, order of operations, and attribution requirements.
+The server never fetches geographic boundaries on startup. Saturn subject IDs
+remain in the separate source mapping table.

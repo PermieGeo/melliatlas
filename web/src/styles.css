@@ -703,3 +703,34 @@ h3 {
   margin: 0;
   font-size: 1.1rem;
 }
+
+.analysis-action {
+  width: 100%;
+  margin: 16px 0 8px;
+}
+.synthetic-workflow {
+  border-top: 1px solid #e2e8df;
+  padding-top: 14px;
+  margin-top: 20px;
+}
+.synthetic-workflow > summary,
+.analysis-source-result summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 6px 0;
+}
+.live-analysis {
+  background: #fff;
+  border: 1px solid #e2e8df;
+  border-radius: 14px;
+  padding: 22px;
+  margin-top: 20px;
+}
+.analysis-findings {
+  display: grid;
+  gap: 16px;
+}
+.analysis-source-result {
+  border-top: 1px solid #e2e8df;
+  padding-top: 14px;
+}

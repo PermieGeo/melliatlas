@@ -254,3 +254,36 @@ validation, privacy, byte budgets, exclusive capture and mocked transport
 failures; existing region mapping tests and backend import architecture checks
 remain required. W01/W02 acceptance remains pending PostgreSQL integration,
 source inspection and verified region identifiers.
+
+
+### W01 user-authorized follow-up — beekeeper-first area navigation (partial R02)
+
+**Intent:** replace operator-oriented source actions with one beekeeper
+workflow: country -> independent administrative region -> optional reviewed
+district -> map -> one explicit *Analyze selected area* action. Keep synthetic
+scenario execution hidden under optional details; remove the UUID reopen field
+and provider-specific one-page/weather buttons from the primary interface.
+Country changes and region changes must invalidate stale data and requests.
+
+**Geographic boundary:** new `melliatlas_admin_geometry` in PostGIS stores
+reviewed ADM1/ADM2 MultiPolygons independently of the canonical `melliatlas_region`
+and the `melliatlas_source_saturn` mapping. `PostgisTerritoryCatalog` exposes the
+existing typed territory API; no new browser wire endpoint is required. Import
+is a deliberate offline operator action with original attribution and vintage
+recorded, exact ADM1 matching, unambiguous spatial ADM2 parent assignment and
+transactional conflict handling. No bulk provider data is bundled; a complete
+RU/BY verified spatial inventory remains **pending**.
+
+**Live-source boundary:** one browser click may request an attributed,
+**first region-wide Saturn page (RU only)** and a point forecast in parallel.
+The selected polygon bounds the UI interaction, not Saturn's server-side query;
+this is explicitly a preliminary source inspection, not a complete spatial
+query, treatment inventory, safety decision or pesticide drift estimate. Missing
+territories/geometries block the main analysis and display an actionable state.
+
+**Tests:** `backend/tests/contract/test_administrative_geometry.py` validates
+the read adapter and invalid geometry; `web/tests/live-area-analysis.test.tsx`
+checks one trigger, country gating and area selection. Existing W01 tests must
+remain green. PostgreSQL/PostGIS migrations, real ADM1/ADM2 loads, full
+React/Vitest/browser checks, actual Saturn compatibility and geography
+completeness are **not yet accepted**. W02 and W03 remain distinct future stages.

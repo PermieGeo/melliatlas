@@ -22,6 +22,11 @@ const jointScenario = {
 };
 
 async function waitForDemo() {
+  const summary = screen.getByText(
+    "Необязательное демонстрационное исследование",
+  );
+  const details = summary.closest("details");
+  if (details && !details.open) fireEvent.click(summary);
   await waitFor(() =>
     expect(
       screen
@@ -111,9 +116,10 @@ function mockApi() {
 it("runs the joint fixture, shows attributed findings and synchronizes map/timeline selection", async () => {
   const calls = mockApi();
   render(<App />);
-  expect(await screen.findByText(/Только вымышленные данные/)).toBeTruthy();
+  await waitForDemo();
+  expect(screen.getByText(/Только вымышленные данные/)).toBeTruthy();
   expect(
-    await screen.findByText(/Границы и перечень регионов пока не загружены/),
+    await screen.findByText(/Справочник регионов ещё не загружен в PostgreSQL/),
   ).toBeTruthy();
   await waitForDemo();
   fireEvent.click(
@@ -166,34 +172,17 @@ it("sends a selected coordinate only in the body, never in URLs or browser stora
   expect(window.location.search).toBe("");
 });
 
-it("reopens a completed result and shows a distinct missing-ID error", async () => {
-  const calls = mockApi();
+it("keeps technical investigation IDs off the beekeeper-facing screen", async () => {
+  mockApi();
   render(<App />);
-  fireEvent.change(screen.getByLabelText("Открыть по ID"), {
-    target: { value: fixture.id },
-  });
-  fireEvent.click(screen.getByRole("button", { name: "Открыть" }));
+  await screen.findByLabelText("Страна");
+  expect(screen.queryByLabelText("Открыть по ID")).toBeNull();
+  expect(screen.queryByText("Перейти к реальным источникам")).toBeNull();
   expect(
-    await screen.findByText(/Предварительный план сформирован/),
-  ).toBeTruthy();
-  expect(calls.some((entry) => entry.path.endsWith(fixture.id))).toBe(true);
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async (input: string) =>
-      input.startsWith("/api/v1/investigations/")
-        ? new Response(
-            JSON.stringify({
-              error: { code: "INVESTIGATION_NOT_FOUND", message: "not found" },
-            }),
-            { status: 404 },
-          )
-        : new Response(JSON.stringify([])),
-    ),
-  );
-  fireEvent.click(screen.getByRole("button", { name: "Открыть" }));
-  expect(
-    await screen.findByText(/Результат в памяти сервера мог исчезнуть/),
-  ).toBeTruthy();
+    screen
+      .getByRole("button", { name: "Проанализировать выбранную местность" })
+      .hasAttribute("disabled"),
+  ).toBe(true);
 });
 
 it("disables an unsupported BY demonstration and ignores a stale result after country switch", async () => {
@@ -213,10 +202,8 @@ it("disables an unsupported BY demonstration and ignores a stale result after co
     screen.queryByRole("button", { name: /Исследовать размещение/ }),
   ).toBeNull();
   expect(
-    screen
-      .getByRole("link", { name: "Перейти к реальным источникам" })
-      .getAttribute("href"),
-  ).toBe("#live-sources");
+    screen.queryByRole("link", { name: "Перейти к реальным источникам" }),
+  ).toBeNull();
 });
 
 it("ignores a delayed completed response after the user changes country", async () => {
@@ -380,13 +367,7 @@ it("uses server-supplied country, scenario, territory and season without RU-spec
     }),
   );
   render(<App />);
-  await waitFor(() =>
-    expect(
-      screen
-        .getByRole("button", { name: /Исследовать размещение/ })
-        .hasAttribute("disabled"),
-    ).toBe(false),
-  );
+  await waitForDemo();
   expect(screen.getByLabelText("Страна")).toHaveProperty("value", "PL");
   expect(screen.getByLabelText("Начало сезона")).toHaveProperty(
     "value",
@@ -464,41 +445,29 @@ it("keeps RU Saturn and RU/BY weather accessible without synthetic scenarios or 
   render(<App />);
   expect(
     await screen.findByRole("heading", {
-      level: 2,
-      name: "Реальные источники данных",
+      name: "Предварительные сведения по местности",
     }),
   ).toBeTruthy();
-  await screen.findByRole("heading", {
-    name: "Сатурн: сообщения об обработках",
-  });
-  await screen.findByRole("heading", { name: /Прогноз погоды/ });
   expect(screen.queryByLabelText("Территория")).toBeNull();
   expect(
-    screen
-      .getByRole("link", { name: "Перейти к реальным источникам" })
-      .getAttribute("href"),
-  ).toBe("#live-sources");
+    screen.queryByRole("link", { name: "Перейти к реальным источникам" }),
+  ).toBeNull();
   expect(
-    screen.getByLabelText("Проверенный регион").hasAttribute("disabled"),
+    screen.getByLabelText("Область / регион").hasAttribute("disabled"),
   ).toBe(true);
-  fireEvent.click(screen.getByText("Выбрать исходную точку"));
   expect(
-    screen
-      .getByRole("button", { name: "Загрузить прогноз на 24 часа" })
-      .hasAttribute("disabled"),
-  ).toBe(false);
+    screen.queryByRole("button", { name: "Загрузить прогноз на 24 часа" }),
+  ).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Загрузить одну страницу" }),
+  ).toBeNull();
   fireEvent.change(screen.getByLabelText("Страна"), {
     target: { value: "BY" },
   });
-  await waitFor(() =>
-    expect(
-      screen.queryByRole("heading", {
-        name: "Сатурн: сообщения об обработках",
-      }),
-    ).toBeNull(),
-  );
   expect(
-    await screen.findByRole("heading", { name: /Прогноз погоды/ }),
+    await screen.findByRole("heading", {
+      name: "Предварительные сведения по местности",
+    }),
   ).toBeTruthy();
   expect(
     calls.filter((url) => url === "/api/v1/sources/saturn/treatments"),

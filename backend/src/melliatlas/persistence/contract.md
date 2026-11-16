@@ -31,3 +31,17 @@ matching only. Conflicting mappings fail instead of being overwritten.
 Database connections are opt-in through `MELLIATLAS_DATABASE_URL` and the
 `postgres` optional dependency; no migration, seeding or fetching occurs on
 ordinary API startup. Real Postgres integration checks remain required.
+
+
+## Reviewed administrative geometry (additive)
+
+`PostgisTerritoryCatalog` extends the independent PostgreSQL region directory
+with read-only PostGIS polygons and districts from `melliatlas_admin_geometry`.
+That table contains provenance, source shape identity, country code, canonical
+parent region, and WGS84 MultiPolygon, but no Saturn identifiers. The importer
+runs explicitly outside application startup, checks country and ADM level,
+rejects ambiguous ADM1 identities and ADM2 parent assignments, and uses a
+transaction per review batch. Country/region independence remains mandatory:
+Saturn mappings are resolved only through `melliatlas_source_saturn`. A region
+with no approved geometry is still a valid region, but not an analyzable map
+boundary. Imported geometry/district coverage is not assumed complete.

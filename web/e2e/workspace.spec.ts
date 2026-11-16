@@ -73,9 +73,10 @@ test("shows a fictional map/timeline investigation without external map tiles", 
       external.push(request.url());
   });
   await page.goto("/");
+  await page.getByText("Необязательное демонстрационное исследование").click();
   await expect(page.getByText(/Только вымышленные данные/)).toBeVisible();
   await expect(
-    page.getByText(/Границы и перечень регионов пока не загружены/),
+    page.getByText(/Справочник регионов ещё не загружен в PostgreSQL/),
   ).toBeVisible();
   await page.getByRole("button", { name: /Исследовать размещение/ }).click();
   await expect(
@@ -94,7 +95,7 @@ test("works as a readable narrow-screen workflow", async ({ page }) => {
     page.getByRole("heading", { name: /Изучение данных вокруг пасеки/ }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /Исследовать размещение/ }),
+    page.getByRole("button", { name: "Проанализировать выбранную местность" }),
   ).toBeVisible();
-  await expect(page.getByLabel("Сезонная шкала стоянок")).toBeVisible();
+  await expect(page.getByLabel("Сезонная шкала стоянок")).toHaveCount(0);
 });

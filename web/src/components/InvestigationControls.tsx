@@ -29,7 +29,6 @@ interface Props {
   countryMessage: TranslationKey;
   referenceMessage: TranslationKey;
   scenariosMessage: TranslationKey;
-  reopenId: string;
   onCountry: (value: CountryCode) => void;
   onTerritory: (value: string) => void;
   onScenario: (value: string) => void;
@@ -37,8 +36,9 @@ interface Props {
   onSeasonEnd: (value: string) => void;
   onClearPoint: () => void;
   onSubmit: () => void;
-  onReopenId: (value: string) => void;
-  onReopen: () => void;
+  canAnalyze: boolean;
+  onAnalyze: () => void;
+  analysisHint: TranslationKey;
 }
 
 /** Render source-backed choices without conflating fictional scenarios with real references. */
@@ -93,14 +93,6 @@ export function InvestigationControls(props: Props) {
           </p>
         )}
       </div>
-      <section
-        className="live-source-navigation"
-        aria-label={tr("liveSourcesHeading")}
-      >
-        <h3>{tr("liveSourcesHeading")}</h3>
-        <p className="field-help">{tr("liveSourcesHelp")}</p>
-        <a href="#live-sources">{tr("liveSourcesJump")}</a>
-      </section>
       <ReferenceControls
         locale={locale}
         regions={regions}
@@ -124,11 +116,21 @@ export function InvestigationControls(props: Props) {
           </div>
         )}
       </div>
-      <section
-        className="synthetic-workflow"
-        aria-label={tr("demoWorkflowHeading")}
+      <button
+        type="button"
+        className="primary-button analysis-action"
+        disabled={!props.canAnalyze}
+        onClick={props.onAnalyze}
       >
-        <h3>{tr("demoWorkflowHeading")}</h3>
+        {tr("analysisAction")}
+      </button>
+      {!props.canAnalyze && (
+        <p className="field-help" role="status">
+          {tr(props.analysisHint)}
+        </p>
+      )}
+      <details className="synthetic-workflow">
+        <summary>{tr("demoWorkflowHeading")}</summary>
         {scenarios.length === 0 ? (
           <p className="field-help" role="status">
             {props.scenariosMessage === "noScenarios"
@@ -224,26 +226,7 @@ export function InvestigationControls(props: Props) {
             )}
           </>
         )}
-      </section>
-      <div className="reopen">
-        <label htmlFor="reopen-id">{tr("reopen")}</label>
-        <div className="reopen-row">
-          <input
-            id="reopen-id"
-            placeholder={tr("reopenPlaceholder")}
-            value={props.reopenId}
-            onChange={(event) => props.onReopenId(event.target.value)}
-          />
-          <button
-            type="button"
-            disabled={busy || !/^[0-9a-fA-F-]{36}$/.test(props.reopenId.trim())}
-            onClick={props.onReopen}
-          >
-            {tr("open")}
-          </button>
-        </div>
-        <p className="field-help">{tr("reopenHelp")}</p>
-      </div>
+      </details>
     </aside>
   );
 }

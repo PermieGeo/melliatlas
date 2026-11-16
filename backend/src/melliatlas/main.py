@@ -5,7 +5,7 @@ from pathlib import Path
 
 from melliatlas.api.app import AppSettings, create_app
 from melliatlas.api.composition import SourceProviderMode
-from melliatlas.persistence.regions import PostgresRegionCatalog
+from melliatlas.persistence.geography import PostgisTerritoryCatalog
 
 
 def _optional_path(env_name: str) -> Path | None:
@@ -38,7 +38,7 @@ def _weather_enabled() -> bool:
     return raw == "true"
 
 
-def _database_regions() -> PostgresRegionCatalog | None:
+def _database_regions() -> PostgisTerritoryCatalog | None:
     """Use only an explicitly configured, preseeded persistent region directory."""
     dsn = os.environ.get("MELLIATLAS_DATABASE_URL")
     if dsn is None:
@@ -47,7 +47,7 @@ def _database_regions() -> PostgresRegionCatalog | None:
         raise ValueError("MELLIATLAS_DATABASE_URL must not be empty")
     from melliatlas.persistence.postgres import connection_factory
 
-    return PostgresRegionCatalog(connection_factory(dsn))
+    return PostgisTerritoryCatalog(connection_factory(dsn))
 
 
 _regions = _database_regions()
