@@ -201,3 +201,24 @@ def test_transport_rejects_upstream_403_without_returning_body(
     with pytest.raises(SourceReadError, match="Public subject directory request failed") as info:
         saturn_http.get_public_subject_directory()
     assert "PRIVATE" not in str(info.value)
+
+
+def test_smolensk_district_capture_is_one_bounded_fixed_get(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    district_json = json.dumps(
+        [{"id": 1524, "name": "Велижский муниципальный район"}],
+        ensure_ascii=False,
+    ).encode("utf-8")
+    fake = FakeOpener(FakeResponse(district_json))
+
+    def builder(handler: object) -> FakeOpener:
+        assert isinstance(handler, HTTPRedirectHandler)
+        return fake
+
+    monkeypatch.setattr(http_transport, "build_opener", builder)
+    assert saturn_http.get_smolensk_district_directory() == district_json
+    assert len(fake.requests) == 1
+    assert fake.requests[0].get_method() == "GET"
+    assert fake.requests[0].full_url == ("https://bee-saturn.ru/backend/beemaster/district/55")
+    assert fake.requests[0].data is None

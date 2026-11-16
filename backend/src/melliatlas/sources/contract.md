@@ -79,3 +79,18 @@ source records; at most pages 0 through 9 can be read, giving a maximum of 100
 source records per explicit filter. The HTTP result signals a provider count
 above the cap or an additional page past the cap. It never claims complete
 coverage from a capped response or deduplicated notice count.
+
+## One-shot Smolensk district directory review
+
+`providers/saturn/districts.py` validates a bounded JSON array of source-owned
+`id` and `name` pairs from the historical `beemaster/district/55` endpoint.
+`providers/saturn/http.py` pins that endpoint and offers a single manual GET
+with a size limit, no redirects or retries. The operator saves the bytes once
+using `capture_saturn_districts.py`, then reviews a separate, read-only
+`import_saturn_districts.py` mapping proposal against imported PostGIS ADM2
+districts. No network operation is triggered by ordinary territory navigation.
+A provider ID enters the durable source-specific mapping only after explicit
+operator approval of the captured bytes; no source ID is inferred from a
+canonical territory ID. The existing Saturn reader then sends the approved
+source ID as `beekeperSearchFilter.district` for the user's manual request.
+External endpoint compatibility and use rights remain independently gated.

@@ -103,6 +103,9 @@ features:
       - backend/src/melliatlas/sources/providers/saturn/live.py#SaturnPublicTreatmentReader
       - backend/src/melliatlas/sources/providers/saturn/diagnostics.py#probe_one_page
       - backend/src/melliatlas/sources/providers/saturn/subjects.py#validate_subject_directory
+      - backend/src/melliatlas/sources/providers/saturn/districts.py#validate_district_directory
+      - backend/scripts/capture_saturn_districts.py#main
+      - backend/scripts/import_saturn_districts.py#run_import
       - backend/src/melliatlas/api/subject_capture.py#capture_subjects
       - backend/src/melliatlas/api/providers/saturn/routes.py#create_saturn_router
       - backend/src/melliatlas/territories/api.py#SourceDistrictCodeLookup
@@ -117,6 +120,7 @@ features:
       - backend/tests/contract/test_saturn_district_scope.py
       - backend/tests/contract/test_saturn_probe.py
       - backend/tests/contract/test_saturn_subject_capture.py
+      - backend/tests/unit/test_saturn_district_mapping.py
       - backend/tests/contract/test_persistent_region_directory.py
       - web/tests/saturn.test.tsx
       - web/tests/live-area-analysis.test.tsx

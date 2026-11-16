@@ -70,6 +70,17 @@ is intentionally unseeded. The lookup joins existing canonical district
 geometry, its parent region and the separately verified Saturn subject ID;
 an absent mapping cannot turn into an unfiltered provider request.
 
+A Smolensk-only operator workflow captures the provider directory using one
+bounded read of `beemaster/district/55` and separately previews imported
+canonical ADM2 IDs against the captured district IDs and names. The preview
+is read-only; insertion requires an explicit capture SHA-256 approval. The
+importer accepts only unique one-to-one exact-normalized names or separately
+reviewed explicit overrides, checks the subject mapping (`55`) and rejects
+conflicting existing rows. Unmatched entries remain unmapped. No mapping
+is generated from a geoBoundaries `shapeID` or a guessed name/code, and no
+remote lookups occur during application startup or source reads. Without a
+successful reviewed import, the existing source route continues to fail closed.
+
 ## Optional district display localization
 
 Migration `0006_smolensk_district_names.sql` adds a nullable `name_ru` column

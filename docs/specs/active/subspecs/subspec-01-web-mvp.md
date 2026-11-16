@@ -88,3 +88,14 @@ inside the one-calendar-year backend limit. Russian display labels for imported
 Smolensk districts may come from optional reviewed `name_ru`; missing labels
 fall back to the original imported name. A honey-orange, grey and charcoal
 palette changes only presentation, not source semantics or readiness.
+
+## W01 follow-up — operator-reviewed Smolensk Saturn district mappings
+
+The local administrator may explicitly capture one public Saturn directory
+response for subject 55 and review a proposed Smolensk ADM2 district-to-source
+identity mapping. Only a separately approved capture digest authorizes an
+insert into the existing source-specific mapping table. Unmatched and ambiguous
+districts remain unavailable, preserving the district-only scope requirement
+and the 100-record manual page limit. Historical source examples do not
+establish current provider operation, complete district coverage or permission
+to collect; the workflow performs no implicit network request on startup.

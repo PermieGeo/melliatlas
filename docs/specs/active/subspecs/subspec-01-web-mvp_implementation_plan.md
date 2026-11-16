@@ -446,3 +446,29 @@ reports when the source provides more. No automatic harvesting is authorized.
 manual date edits, compact forecast and explicit empty responses. Full local
 frontend checks, a real migrated PostGIS schema, and browser behavior require
 operator verification. W01/W02 acceptance statuses remain unchanged.
+
+### W01 follow-up — reviewed Saturn Smolensk district directory bootstrap
+
+**Scope:** close the operator setup gap for the already implemented
+district-only Saturn preview without enabling region-wide fallback or automatic
+collection. The source contract is the historically observed one-shot
+`beemaster/district/55` directory; its current live compatibility and reuse
+rights remain unverified. No browser API, persisted canonical territory
+identifier, date filter or 100-record retrieval bound changes.
+
+**Implementation:** `backend/src/melliatlas/sources/providers/saturn/districts.py`
+validates bounded district ID/name entries and
+`sources/providers/saturn/http.py` pins the manual public GET.
+`backend/scripts/capture_saturn_districts.py` saves one unmodified source
+response exclusively for review; `backend/scripts/import_saturn_districts.py`
+produces an offline PostGIS matching report and requires a reviewed source
+digest before writing verified pairs to the existing `0005` table. A missing
+or ambiguous district remains unmapped rather than invoking regional Saturn
+reads. No database migration is introduced by this task.
+
+**Checks:** `backend/tests/unit/test_saturn_district_mapping.py` verifies
+validation, name matching, explicit overrides, idempotency and conflicts;
+`backend/tests/contract/test_saturn_subject_capture.py` verifies the fixed,
+bounded single GET. The existing district HTTP contract and 100-record tests
+remain authoritative. Manual live capture, real PostGIS import and source
+permission are deployment gates, not outcomes of the fixture tests.
