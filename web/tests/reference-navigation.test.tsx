@@ -34,8 +34,9 @@ const referenceGeometry = {
     coordinates: [
       [
         [32, 54],
-        [33, 54],
-        [33, 55],
+        [32.05, 54],
+        [32.05, 54.05],
+        [32, 54.05],
         [32, 54],
       ],
     ],
@@ -68,7 +69,7 @@ function catalogMock(
   const paths: string[] = [];
   vi.stubGlobal(
     "fetch",
-    vi.fn(async (input: string) => {
+    vi.fn(async (input: string, requestOptions?: RequestInit) => {
       paths.push(input);
       if (input === "/api/v1/territories/countries") {
         return new Response(
@@ -76,6 +77,49 @@ function catalogMock(
             { code: "RU", name: "Russia" },
             { code: "BY", name: "Belarus" },
           ]),
+        );
+      }
+      if (input.startsWith("/api/v1/sources?")) {
+        return new Response(
+          JSON.stringify([
+            {
+              id: "open-meteo",
+              country: "RU",
+              kind: "WEATHER_FORECAST",
+              mode: "LIVE",
+              status: "EXPERIMENTAL",
+            },
+          ]),
+        );
+      }
+      if (input === "/api/v1/sources/weather/forecast") {
+        const requested = JSON.parse(String(requestOptions?.body)) as {
+          latitude: number;
+          longitude: number;
+        };
+        const hours = Array.from({ length: 24 }, (_, index) => ({
+          time: new Date(Date.UTC(2026, 10, 16, index)).toISOString(),
+          wind_speed_kmh: 10,
+          wind_direction_degrees: 220,
+          wind_gusts_kmh: 14,
+          precipitation_mm: 0,
+        }));
+        return new Response(
+          JSON.stringify({
+            source_id: "open-meteo:forecast",
+            source_uri: "https://open-meteo.com/en/docs",
+            source_mode: "LIVE",
+            synthetic: false,
+            captured_at: "2026-11-16T00:00:00Z",
+            requested_latitude: requested.latitude,
+            requested_longitude: requested.longitude,
+            grid_latitude: requested.latitude,
+            grid_longitude: requested.longitude,
+            hours,
+            uncertainties: [
+              "Model forecasts do not establish pesticide drift or safety",
+            ],
+          }),
         );
       }
       if (input.startsWith("/api/v1/territories/regions?")) {
@@ -128,14 +172,29 @@ function catalogMock(
 async function chooseRegion() {
   await waitFor(() =>
     expect(
-      (screen.getByLabelText("Проверенный регион") as HTMLSelectElement)
-        .disabled,
+      (screen.getByLabelText("Область / регион") as HTMLSelectElement).disabled,
     ).toBe(false),
   );
-  fireEvent.change(screen.getByLabelText("Проверенный регион"), {
+  fireEvent.change(screen.getByLabelText("Область / регион"), {
     target: { value: referenceRegion.id },
   });
 }
+
+it("loads a reviewed region automatically and triggers the live forecast with one action", async () => {
+  const paths = catalogMock({ districts: "available" });
+  render(<App />);
+  await chooseRegion();
+  await screen.findByText("ru:region:reference");
+  const analyze = screen.getByRole("button", {
+    name: "Проанализировать выбранную местность",
+  });
+  await waitFor(() => expect(analyze.hasAttribute("disabled")).toBe(false));
+  expect(paths).not.toContain("/api/v1/sources/weather/forecast");
+  fireEvent.click(analyze);
+  await screen.findByText("Почасовой прогноз (24 ч)");
+  expect(paths).toContain("/api/v1/sources/weather/forecast");
+  expect(paths).not.toContain("/api/v1/sources/saturn/treatments");
+});
 
 it("shows API-backed geometry, supported districts, and a separate synthetic study selector", async () => {
   const paths = catalogMock({ districts: "available" });
@@ -146,7 +205,7 @@ it("shows API-backed geometry, supported districts, and a separate synthetic stu
     referenceRegion.id,
   );
   await screen.findByRole("option", { name: "Reference district" });
-  fireEvent.change(screen.getByLabelText("Поддерживаемый район"), {
+  fireEvent.change(screen.getByLabelText("Район"), {
     target: { value: referenceDistrict.id },
   });
   await screen.findByText("ru:district:reference");
@@ -161,7 +220,9 @@ it("does not draw missing or mismatched reference geometry and distinguishes uns
   render(<App />);
   await chooseRegion();
   expect(
-    await screen.findByText(/Районы этого региона не поддерживаются/),
+    await screen.findByText(
+      /Районы для этой области пока не загружены в географический справочник/,
+    ),
   ).toBeTruthy();
   expect(
     await screen.findByText(/Невозможно загрузить проверенную границу/),

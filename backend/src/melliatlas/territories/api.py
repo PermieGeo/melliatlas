@@ -118,6 +118,14 @@ class TerritoryCatalog(Protocol):
     async def get_geometry(self, territory_id: str) -> TerritoryGeometry | None: ...
 
 
+class SourceTerritoryCodeLookup(Protocol):
+    """Resolve a source-specific numeric identifier from a canonical territory ID."""
+
+    async def find_code(
+        self, *, source_id: str, country: CountryCode, region_id: str
+    ) -> int | None: ...
+
+
 class TerritoryImport(Protocol):
     async def validate_reference(
         self, snapshot: ReferenceSnapshot, inventory: ExpectedInventory

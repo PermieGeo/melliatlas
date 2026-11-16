@@ -112,3 +112,21 @@ The coordinates are passed to Open-Meteo only after an explicit user action.
 The free endpoint is non-commercial with CC BY 4.0 attribution; commercial use
 requires separate terms. Upstream live responses and rights must be rechecked
 before acceptance or public release.
+
+## Optional persistent region directory and Saturn translation
+
+With a preseeded `MELLIATLAS_DATABASE_URL`, the application injects a PostgreSQL
+implementation of the existing territory catalog. `GET /api/v1/territories/regions`
+then returns independently keyed RU/BY subdivision names even when no polygon
+reference snapshot is loaded. Geometry remains `missing`; requests for
+unsupported districts return `409`. Without database or file references,
+region reads retain the explicit `503` state.
+
+The Saturn manual read accepts either a canonical `region_id` or the legacy
+numeric `region_code`, **never both**. With `region_id`, the server resolves
+`melliatlas_source_saturn` before any provider HTTP access. `409` with
+`SOURCE_REGION_UNMAPPED` means no reviewed mapping exists, not that the source
+reported no treatments; `503` means the region mapping database is unavailable.
+The response includes `region_id` for a canonical-ID request, or null for the
+legacy code. Country BY is still rejected before mapping and transport.
+No source-specific identifier is leaked into the independent region catalog.

@@ -4,7 +4,7 @@
 
 - Python 3.12 or newer.
 - A local virtual environment and an installable development toolchain.
-- PostgreSQL/PostGIS will be required in later MVP-01 implementation steps; the initial health endpoint does not use a database.
+- PostgreSQL/PostGIS is optional for health and isolated tests, but required for durable preloaded administrative regions.
 
 From the repository root:
 
@@ -24,6 +24,135 @@ python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000
 ```
 
 The `uvicorn` command requires an ASGI server. FastAPI's development installation does not necessarily install it; install an ASGI server separately only after its dependency is approved, or run the included FastAPI ASGI tests without starting an external server. No public deployment is configured.
+
+## Preload independent RU/BY regions into PostgreSQL (optional)
+
+The optional database path holds **first-order administrative names and IDs**.
+Approved boundaries and districts can be imported separately after the region seed. PostgreSQL 15+ is recommended. Install the
+opt-in `postgres` extra (also included in `backend[dev]`) and create a local
+database through your normal PostgreSQL administration. The region directory is independent of the older completed-result/PostGIS
+migration. Apply `0001` separately only if you also use completed-result
+persistence. For a new empty PostgreSQL database, the region setup is:
+
+```bash
+python -m pip install -e './backend[postgres]'
+export MELLIATLAS_DATABASE_URL='postgresql://user:password@127.0.0.1:5432/melliatlas'
+psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0002_region_directory.sql
+python backend/scripts/bootstrap_regions.py
+export MELLIATLAS_SOURCE_PROVIDER=disabled
+export MELLIATLAS_SATURN_LIVE_ENABLED=true
+python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Use your own local credentials and **do not commit connection strings**. Apply migration 0002 and seed once; subsequent runs validate the same entries. The region seed is safe to rerun and rejects
+conflicting existing rows. It includes the 83 RU / 7 BY subdivisions identified
+in `iso-codes` 4.18.0, and only the archived Smolensk Saturn subject mapping.
+No coverage of disputed/other regions, municipal districts or valid borders is
+claimed. With no database configured, the previous explicit `503` remains.
+
+### Import independent administrative boundaries and districts (manual, reviewed)
+
+MelliAtlas owns the country-scoped region directory separately from external
+Saturn IDs. After the `0002` migration and `bootstrap_regions.py` step above,
+install the PostGIS extension on the PostgreSQL server and apply the additive
+geometry migration:
+
+```bash
+psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0003_administrative_boundaries.sql
+```
+
+The first-order region names become available immediately after the independent
+seed. Boundaries and the district selector require **separately reviewed**
+ADM1/ADM2 GeoJSON from an approved geographic source. An example candidate
+is geoBoundaries gbOpen, with provider metadata at:
+
+- `https://www.geoboundaries.org/api/current/gbOpen/RUS/ADM1/`
+- `https://www.geoboundaries.org/api/current/gbOpen/RUS/ADM2/`
+- `https://www.geoboundaries.org/api/current/gbOpen/BLR/ADM1/`
+- `https://www.geoboundaries.org/api/current/gbOpen/BLR/ADM2/`
+
+Inspect each source's collection date, boundaries, attribution and license;
+these historical files do **not** establish current administrative authority.
+Original source licenses differ by geography: RU is ODbL-sourced and BY is
+CC BY-sourced in the published provider metadata. Obtain a **reviewed**
+`FeatureCollection` for each country/level and keep the downloaded GeoJSON
+outside the repository. The importer recognizes `shapeID`, `shapeName`,
+`shapeGroup`, `shapeType` and optional `shapeISO`. ADM1 matches the independent
+region identity only by exact ISO code, exact normalized name or a reviewed
+operator-supplied `shapeID -> region_id` mapping. Unmatched records fail the
+transaction unless `--allow-partial` was explicitly chosen. Never guess
+parent regions from numeric Saturn IDs.
+
+Example for an operator-approved RU ADM1 capture:
+
+```bash
+python backend/scripts/import_admin_boundaries.py \
+  --country RU --level ADM1 \
+  --file /path/to/reviewed-RUS-ADM1.geojson \
+  --reference-id geoboundaries:RUS-ADM1:reviewed-2026-11 \
+  --source-uri https://www.geoboundaries.org/api/current/gbOpen/RUS/ADM1/ \
+  --license ODbL-1.0 --valid-on 2017-01-01 \
+  --mapping /path/to/reviewed-region-mapping.json
+```
+
+`--reference-id` and `--valid-on` above are placeholders: replace them with
+the documented source **version** and actual data vintage; never use the
+execution date as an invented boundary validity date. A reviewed mapping file
+is a JSON object, for example `{"provider-shape-id": "ru:region:smo"}`;
+omit `--mapping` if all identities match exactly without review. If using
+`--allow-partial`, review the reported unmatched count rather than treating
+partial coverage as complete.
+
+Import ADM1 first. Then import the same country's ADM2 file using
+`--level ADM2` and the corresponding captured provenance. ADM2 parent regions
+are derived **spatially from the imported ADM1 geometry**, only if exactly one
+parent covers a representative point and at least 95% of the district polygon.
+Otherwise the import refuses ambiguous membership; `--allow-partial` permits
+explicitly incomplete coverage. Every import is transactional and checks
+existing shape/version conflicts. Repeat the process separately for BY.
+
+The application never downloads or imports boundaries on startup. With
+`MELLIATLAS_DATABASE_URL` configured, region names come from the database;
+choosing a region whose reviewed geometry is present automatically loads and
+fits its polygon in the map. Districts appear only after an approved ADM2
+import. If a geometry is missing, the corresponding map analysis remains
+disabled with an explicit explanation. No checked-in geoBoundaries datasets,
+complete-coverage claims, or unapproved source access are part of this PATCH.
+
+### One-shot Saturn subject-directory capture and mapping review
+
+The independent RU/BY region seed never fetches Saturn. For an explicitly
+reviewed, operator-authorized check of the *historically observed* public
+endpoint, capture one bounded GET response to a **new local file outside the
+repository** (no scheduled collection, credentials or browser automation):
+
+```bash
+python backend/scripts/capture_saturn_subjects.py --output /tmp/melliatlas-saturn-subjects.json
+```
+
+The command requires a new path, refuses overwrites, caps the response at
+256 KiB, requires 80–150 structurally valid and uniquely identified subjects,
+and writes the raw capture as a local `0600` file. It prints only entry count,
+SHA-256 and the **actual UTC capture timestamp**, not raw region records.
+`HTTP 403`, redirects, changed schemas or timeouts fail without a stored file.
+The reported 86 subjects in the dated historical research are not a guarantee
+of the provider's current availability, contractual stability or completeness.
+Do not commit the captured JSON or use it to claim approved reuse rights.
+
+After reviewing the locally captured names and provider codes, supply the
+**printed timestamp** to the existing offline importer:
+
+```bash
+python backend/scripts/import_saturn_subjects.py --file /tmp/melliatlas-saturn-subjects.json --captured-at 2026-11-16T00:00:00+00:00
+```
+
+The timestamp above is an **example only**; replace it with the capture output.
+The importer uses existing independent region names for unique exact normalized
+matches, retains distinct provider IDs in `melliatlas_source_saturn`, and
+rolls back conflicting entries. Unmatched names are counted for human review;
+they are never fuzzy-matched or assigned guessed IDs. Capture and import are
+explicit operations, never startup behavior. Confirm source access and reuse
+permission before real deployment.
 
 ## Optional local reference loading (V03 partial)
 
@@ -75,9 +204,9 @@ python -m uvicorn melliatlas.main:app --host 127.0.0.1 --port 8000
 ```
 
 Use the Web client with country `RU`; the server advertises `saturn` only there.
-Enter the provider's own numeric subject identifier as seen in its portal and
-click **Read one live page**. No source-specific region code is inferred from
-MelliAtlas administrative IDs. The request sends one bounded POST to a pinned
+Select a country and a preloaded region in the left panel, then click
+**Analyze selected area**. The server resolves a verified numeric Saturn subject
+code from its separate mapping table; missing mappings return HTTP 409. The request sends one bounded POST to a pinned
 legacy public URL; status 403/404, changed response shape or inaccessible site
 returns an explicit error, never fabricated data. `BY` never offers or contacts
 Saturn. No automatic polling, rate-intensive scanning, scheduled crawling or

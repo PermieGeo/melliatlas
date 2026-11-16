@@ -155,3 +155,135 @@ source discovery, manual requests, schema rejection, attribution and state
 clearing. Full local typecheck, lint, Vitest, browser and real provider
 compatibility remain acceptance gates. Current live-source reading does not
 establish legal/commercial reuse eligibility or forecast accuracy.
+
+### W01 follow-up — usable live sources without fictional catalog entries
+
+**Scope and requirement:** W01 source discovery and explicit `503` catalog handling,
+not new geographic coverage or an accepted live Saturn mapping.
+
+The country selector is the entry to real provider capabilities. The left
+navigation links directly to on-demand live sources, while the synthetic
+territory/scenario/season form is shown only when the backend advertises
+executable fictional scenarios. A disabled synthetic provider must not leave
+an apparently mandatory empty territory picker or block direct live reads.
+The independent reference region selector continues to indicate unloaded
+validated geography; it must never silently supply guessed Saturn subject IDs.
+
+**Regression:** `web/tests/workflow.test.tsx` exercises the live-only RU/BY
+workflow with an unavailable reference catalog and no synthetic scenarios,
+including source discovery, manual selection of a weather point, and RU-only
+Saturn visibility. Existing synthetic-plan and browser tests remain required.
+**Acceptance:** local frontend checks and a real, permitted provider response
+remain outstanding; no new actual regional catalog was imported.
+
+### W01 follow-up — persistent region names and source-specific Saturn mapping (R02, partial)
+
+**Authorization:** developer requested preloaded country-owned regions in a
+shared database table, with a separate Saturn mapping table and a single
+country/region selection in the browser. The geography catalog is independent
+of every provider. W01 acceptance remains pending; W02 district/boundary
+coverage is **not** implied.
+
+#### Public contracts and integration design
+
+- `TerritoryCatalog` and new `SourceTerritoryCodeLookup` in
+  `backend/src/melliatlas/territories/api.py`: typed async, canonical region IDs,
+  a provider-specific lookup that returns `None` for an unmapped region.
+- `PostgresRegionCatalog` in `backend/src/melliatlas/persistence/regions.py`
+  implements those ports through parameterized read-only database access.
+  The adapter is injected at `main.py` when `MELLIATLAS_DATABASE_URL` is explicit.
+  Do not auto-seed, migrate, or contact providers at ASGI startup. Missing
+  database returns a typed unavailable state; district depth and geometry
+  remain unsupported/missing for the ISO name-only seed.
+- `backend/migrations/0002_region_directory.sql` adds `melliatlas_region`
+  (country, canonical ID, ISO code, names, source/version/date) and the separate
+  RU-only FK table `melliatlas_source_saturn` (source subject/OKTMO mapping,
+  provenance). The first seed, `backend/reference/iso3166-2-regions.json`, pins
+  83 RU and 7 BY first-order ISO 3166-2 subdivisions from iso-codes 4.18.0.
+  It is not a verified full modern jurisdiction or polygon inventory.
+  `bootstrap_regions.py` validates existing rows and seeds the archived
+  Smolensk `55` mapping; an operator-reviewed offline import may add further
+  exact-name mappings from a separate Saturn `/oktmo-subjects` capture.
+- Existing `GET /api/v1/territories/regions?country=...` remains the browser
+  directory contract. `POST /api/v1/sources/saturn/treatments` now accepts
+  **either** `region_id` or the legacy numeric `region_code`; exactly one is
+  required. Unmapped region returns `409/SOURCE_REGION_UNMAPPED` before any
+  source transport. Country BY remains rejected before mapping. Responses
+  echo the canonical region ID for matching client requests.
+- `web/src/components/SaturnPanel.tsx` shares the selected canonical region
+  from the left navigation. It neither requests Saturn regions on mount nor
+  exposes numeric codes; switching region aborts/clears stale source notices.
+
+**Tests:** `backend/tests/contract/test_persistent_region_directory.py`
+asserts independent RU/BY seeded identities, protocol behavior, unavailable
+catalog semantics, safe mapping, provider gating, and HTTP statuses. Existing
+territory and Saturn HTTP contract tests preserve the injected in-memory
+reference path and numeric legacy request. `web/tests/saturn.test.tsx` checks
+canonical-ID posting, no-region disablement, and BY filtering. Manual Postgres
+integration, captured full Saturn directory reconciliation, and W02 district/
+geometry completion remain outstanding.
+
+### W01 follow-up — operator-only Saturn subject catalog capture (R02, partial)
+
+**Scope:** complete the operator path from independent preloaded RU regions to
+verified source-specific Saturn IDs. This is an authorized small follow-up to
+the existing PostgreSQL mapping work, not a new source registry, scheduled
+collector, or accepted W02 geographic catalog.
+
+**Public contracts and integration design:** `sources.providers.saturn.subjects`
+validates one source-specific directory JSON array without importing transport
+or persistence. `api.saturn_http.get_public_subject_directory()` uses a pinned
+HTTPS GET with redirects/retries disabled, 8-second timeout and 256 KiB body cap;
+`api.subject_capture.capture_subjects()` accepts an injected fetch and validator,
+and saves to an explicitly named new local file with exclusive restrictive
+permissions. `backend/scripts/capture_saturn_subjects.py` is the only operator
+entrypoint; it reports only count, digest and timestamp. The existing
+`import_saturn_subjects.py` reuses the same validator and continues to enforce
+transactional exact-name matching into `melliatlas_source_saturn`. There is no
+browser endpoint, application startup request or automatic source ingestion.
+
+**Failure behavior:** invalid JSON, duplicate/blank identifiers, unexpectedly
+small catalogs, non-JSON responses, 403, redirects, timeouts and preexisting
+files fail closed. No raw payload is printed or included in repository fixtures.
+Unknown region-name correspondences remain unmapped; source permissions and
+live compatibility must be verified before operator capture. No actual local
+PostgreSQL import or source read is claimed by these offline tests.
+
+**Tests:** `backend/tests/contract/test_saturn_subject_capture.py` exercises
+validation, privacy, byte budgets, exclusive capture and mocked transport
+failures; existing region mapping tests and backend import architecture checks
+remain required. W01/W02 acceptance remains pending PostgreSQL integration,
+source inspection and verified region identifiers.
+
+
+### W01 user-authorized follow-up — beekeeper-first area navigation (partial R02)
+
+**Intent:** replace operator-oriented source actions with one beekeeper
+workflow: country -> independent administrative region -> optional reviewed
+district -> map -> one explicit *Analyze selected area* action. Keep synthetic
+scenario execution hidden under optional details; remove the UUID reopen field
+and provider-specific one-page/weather buttons from the primary interface.
+Country changes and region changes must invalidate stale data and requests.
+
+**Geographic boundary:** new `melliatlas_admin_geometry` in PostGIS stores
+reviewed ADM1/ADM2 MultiPolygons independently of the canonical `melliatlas_region`
+and the `melliatlas_source_saturn` mapping. `PostgisTerritoryCatalog` exposes the
+existing typed territory API; no new browser wire endpoint is required. Import
+is a deliberate offline operator action with original attribution and vintage
+recorded, exact ADM1 matching, unambiguous spatial ADM2 parent assignment and
+transactional conflict handling. No bulk provider data is bundled; a complete
+RU/BY verified spatial inventory remains **pending**.
+
+**Live-source boundary:** one browser click may request an attributed,
+**first region-wide Saturn page (RU only)** and a point forecast in parallel.
+The selected polygon bounds the UI interaction, not Saturn's server-side query;
+this is explicitly a preliminary source inspection, not a complete spatial
+query, treatment inventory, safety decision or pesticide drift estimate. Missing
+territories/geometries block the main analysis and display an actionable state.
+
+**Tests:** `backend/tests/contract/test_administrative_geometry.py` validates
+the read adapter and invalid geometry; `web/tests/live-area-analysis.test.tsx`
+checks one trigger, country gating and area selection. Existing W01 tests must
+remain green. PostgreSQL/PostGIS migrations, real ADM1/ADM2 loads, full
+React/Vitest/browser checks, actual Saturn compatibility and geography
+completeness are **not yet accepted**. W02 and W03 remain distinct future stages.

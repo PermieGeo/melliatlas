@@ -212,7 +212,7 @@ export function listExternalSources(
 /** One manual, bounded public-source read; no automatic pagination or retries. */
 export function readSaturnPage(
   country: CountryCode,
-  regionCode: number,
+  region: number | string,
   pageNumber: number,
   signal: AbortSignal,
 ): Promise<ApiResult<SaturnNoticePage>> {
@@ -225,7 +225,9 @@ export function readSaturnPage(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         country,
-        region_code: regionCode,
+        ...(typeof region === "number"
+          ? { region_code: region }
+          : { region_id: region }),
         page_number: pageNumber,
       }),
     },

@@ -559,6 +559,10 @@ export function decodeSaturnPage(value: unknown): SaturnNoticePage {
     source_id: nonEmpty(v.source_id, "saturnPage.source_id"),
     country: country(v.country, "saturnPage.country"),
     region_code: integer(v.region_code, "saturnPage.region_code"),
+    region_id:
+      v.region_id === undefined
+        ? null
+        : maybe(v.region_id, nonEmpty, "saturnPage.region_id"),
     captured_at: nonEmpty(v.captured_at, "saturnPage.captured_at"),
     page_number: integer(v.page_number, "saturnPage.page_number"),
     next_page: maybe(v.next_page, integer, "saturnPage.next_page"),

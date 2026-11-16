@@ -2,8 +2,9 @@
 
 The source-specific functions normalize the historically observed Russia-only
 ``/planapplybees`` JSON format. ``legacy_treatment.py`` decodes treatment claims,
-``geometry.py`` validates optional WGS84 field geometries, and ``pagination.py``
-validates progress through bounded pages. Provider-neutral ``TreatmentNotice``
+``geometry.py`` validates optional WGS84 field geometries, ``pagination.py``
+validates progress through bounded pages, and ``subjects.py`` validates
+operator-captured source-region identifiers without network access. Provider-neutral ``TreatmentNotice``
 and ``TreatmentProduct`` models are defined in ``sources.notices``.
 
 The normalizer and pagination helpers have no I/O. An opt-in live reader

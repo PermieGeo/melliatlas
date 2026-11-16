@@ -2,27 +2,52 @@
 export type Locale = "ru" | "en";
 
 const en = {
-  headerContext: "Apiary placement planning",
+  analysisAction: "Analyze selected area",
+  analysisSelectRegion: "Select a region first.",
+  analysisMissingBoundary:
+    "Administrative boundaries are not installed. Import a reviewed geographic dataset before analyzing this area.",
+  analysisNarrowArea:
+    "This area is too large. Choose a district or click within the selected boundary to focus on a local point.",
+  analysisPointOutside: "Click inside the selected territory boundary.",
+  analysisResultsTitle: "Preliminary area findings",
+  analysisAwaiting:
+    "Choose an area and run the analysis to query available sources together.",
+  analysisWorking: "Retrieving treatment notices and weather…",
+  analysisNoProviders: "No external data sources are enabled for this country.",
+  analysisSourcesUnavailable: "Source capabilities could not be retrieved.",
+  analysisPartialDisclaimer:
+    "Preliminary source inspection only. Saturn returns a region-wide first page, not verified complete coverage of the chosen area. No pesticide drift or safety assessment has been performed.",
+  analysisSaturnCount:
+    "{count} notices in the sampled response; {skipped} unrecognized entries.",
+  analysisSaturnPartial:
+    "Reported regional total: {total}. Further pages and local filtering have not been assessed.",
+  analysisForecastHours: "Hourly weather forecast ({count} h)",
+  analysisSaturnRegionUnmapped:
+    "The region has no verified Saturn mapping yet. Weather results can still be used.",
+  analysisSaturnNotSupported:
+    "Saturn is not available for this country or is disabled by the server.",
+  analysisWeatherNotEnabled: "Weather source is disabled by the server.",
+  headerContext: "Environmental source explorer",
   syntheticMode: "Synthetic source",
   setup: "01 / SETUP",
-  heading: "Where should the apiary move this season?",
+  heading: "Explore sources around your apiary",
   introduction:
-    "Compare forage periods with reported field treatments and ecological restrictions.",
+    "Read available treatment notices and weather forecasts. Fictional planning is a separate optional mode.",
   syntheticTitle: "Fictional data only.",
   syntheticDisclaimer:
     "This illustrates the workflow, not a forecast, warning or safety clearance.",
   country: "Country",
   language: "Language",
-  referenceHeading: "Reference geography",
+  referenceHeading: "Location",
   referenceHelp:
-    "Administrative boundaries are independent of synthetic study results.",
-  referenceRegion: "Referenced region",
-  referenceDistrict: "Supported district",
+    "Select a country, region and optionally a district from the independent geographic directory.",
+  referenceRegion: "Region",
+  referenceDistrict: "District",
   referenceSelectRegion: "Select a region",
   referenceSelectDistrict: "No district selected",
   referenceDistrictLoading: "Loading districts…",
   referenceDistrictUnsupported:
-    "District depth is unsupported for this region (HTTP 409).",
+    "Districts are not yet imported for this region.",
   referenceDistrictUnavailable:
     "District catalog unavailable; coverage is unverified.",
   referenceDistrictEmpty: "No districts listed; coverage is unverified.",
@@ -34,13 +59,26 @@ const en = {
   referenceGeometryAvailable:
     "Showing reference boundary, not an analysis result.",
   referenceVersion: "Reference version",
+  liveSourcesHeading: "Live data sources",
+  liveSourcesHelp:
+    "Choose a region from the independent administrative directory for Saturn; weather uses a selected map point.",
+  liveSourcesJump: "Open live data sources",
+  liveSourcesAvailability:
+    "Only providers enabled on the server will appear. Missing data cannot be interpreted as no risk.",
+  demoWorkflowHeading: "Optional fictional investigation",
+  demoWorkflowUnavailable:
+    "Fictional planning is disabled. Live sources remain usable without a scenario, territory or season.",
   saturnTitle: "Saturn: public treatment notices",
-  saturnCode: "Saturn subject code",
+  saturnCode: "Saturn region mapping",
+  saturnSelectRegion:
+    "Select a Russian region in the left panel before loading Saturn notices.",
   saturnCodeHint:
-    "Enter the provider's numeric subject code from the official portal. It is not a district or ISO code.",
+    "The backend resolves the selected region using verified Saturn mappings; an unmapped region is not queried.",
   saturnRead: "Read one live page",
   saturnNext: "Read next page",
   saturnLoading: "Reading the public portal…",
+  saturnUnmapped:
+    "This region has no verified Saturn subject mapping. No request was sent to Saturn.",
   saturnError: "Saturn read failed: {reason}. Data availability is unknown.",
   saturnCount:
     "Page {page} · {count} identified notices · {skipped} unrecognized entries",
@@ -78,8 +116,7 @@ const en = {
   countriesEmpty: "No countries are available from the API.",
   selectTerritory: "Select a territory",
   selectScenario: "Select an available scenario",
-  noScenarios:
-    "No executable scenarios are available for the selected country or territory.",
+  noScenarios: "No executable fictional scenarios are available.",
   loadingScenarios: "Loading available scenarios…",
   scenarioFailure: "Cannot load available scenarios: {reason}",
   loadingCountries: "Loading country list…",
@@ -90,7 +127,7 @@ const en = {
     "No verified regions are listed. This does not confirm complete geographic coverage.",
   availableRegions: "Regions from the current API reference are shown.",
   unavailableRegions:
-    "Regional boundaries and listings are not available (HTTP 503). Synthetic sources are listed separately.",
+    "The region directory is not configured. Run the documented PostgreSQL seed before using the map.",
   season: "Placement period",
   seasonStart: "Season start",
   seasonEnd: "Season end",
@@ -111,7 +148,7 @@ const en = {
   reopenHelp:
     "By default, the server retains completed results in memory until restart.",
   mapSpace: "02 / GEOGRAPHY",
-  mapHeading: "Apiary stops map",
+  mapHeading: "Selected area map",
   mapLabel: "Investigation map",
   basemap: "Online basemap",
   basemapPrivacy:
@@ -119,7 +156,7 @@ const en = {
   mapProposed: "Proposed stop",
   mapSelected: "Selected",
   mapNote:
-    "Synthetic site coordinates are fictional. Click the map to choose a starting point.",
+    "Click the selected territory to mark a local point. Online map tiles are optional.",
   mapStartingPoint: "Your point (current request only)",
   planReady: "Provisional plan prepared",
   noPlan: "No supported plan",
@@ -192,27 +229,53 @@ const en = {
 } as const;
 
 const ru: Record<keyof typeof en, string> = {
-  headerContext: "Моделирование размещения пасеки",
+  analysisAction: "Проанализировать выбранную местность",
+  analysisSelectRegion: "Сначала выберите область или регион.",
+  analysisMissingBoundary:
+    "Границы ещё не импортированы в географическую базу. Для анализа нужен проверенный географический слой.",
+  analysisNarrowArea:
+    "Территория слишком большая. Выберите район или нажмите внутри его границы на карте, чтобы указать локальную точку.",
+  analysisPointOutside: "Укажите точку внутри выбранной территории.",
+  analysisResultsTitle: "Предварительные сведения по местности",
+  analysisAwaiting:
+    "Выберите местность и запустите анализ для загрузки доступных источников одним действием.",
+  analysisWorking: "Получаем сообщения об обработках и прогноз погоды…",
+  analysisNoProviders:
+    "Для выбранной страны ни один реальный источник не включён на сервере.",
+  analysisSourcesUnavailable: "Не удалось узнать список доступных источников.",
+  analysisPartialDisclaimer:
+    "Предварительные сведения. Сатурн возвращает только первую страницу по всей области, а не полное покрытие выбранной местности. Перенос пестицидов и безопасность не рассчитаны.",
+  analysisSaturnCount:
+    "В полученной выборке {count} сообщений, не распознано: {skipped}.",
+  analysisSaturnPartial:
+    "Всего записей по области по версии источника: {total}. Остальные страницы и фильтрация по местности ещё не проверены.",
+  analysisForecastHours: "Почасовой прогноз ({count} ч)",
+  analysisSaturnRegionUnmapped:
+    "Для этой области пока нет проверенного кода Сатурна. Прогноз погоды остаётся доступен.",
+  analysisSaturnNotSupported:
+    "Сатурн недоступен для выбранной страны или отключён на сервере.",
+  analysisWeatherNotEnabled: "Погодный источник отключён на сервере.",
+  headerContext: "Исследование данных для пчеловода",
   syntheticMode: "Синтетический источник",
   setup: "01 / ПОДГОТОВКА",
-  heading: "Где разместить пасеку в этом сезоне?",
+  heading: "Изучение данных вокруг пасеки",
   introduction:
-    "Сопоставьте периоды медосбора с сообщениями об обработке полей и экологическими ограничениями.",
+    "Проверяйте доступные сообщения об обработках и прогноз погоды. Демонстрационное планирование — отдельный режим.",
   syntheticTitle: "Только вымышленные данные.",
   syntheticDisclaimer:
     "Это демонстрация механизма, не прогноз, оповещение или подтверждение безопасности.",
   country: "Страна",
   language: "Язык",
-  referenceHeading: "Географический справочник",
+  referenceHeading: "Местность",
   referenceHelp:
-    "Административные границы загружаются отдельно от синтетического исследования.",
-  referenceRegion: "Проверенный регион",
-  referenceDistrict: "Поддерживаемый район",
+    "Выберите область и при необходимости район. Их границы берутся из собственного географического справочника.",
+  referenceRegion: "Область / регион",
+  referenceDistrict: "Район",
   referenceSelectRegion: "Выберите регион",
   referenceSelectDistrict: "Без выбора района",
   referenceDistrictLoading: "Загрузка районов…",
   referenceDistrictUnsupported:
-    "Районы этого региона не поддерживаются (HTTP 409).",
+    "Районы для этой области пока не загружены в географический справочник.",
   referenceDistrictUnavailable:
     "Список районов недоступен; полнота данных не подтверждена.",
   referenceDistrictEmpty:
@@ -226,13 +289,26 @@ const ru: Record<keyof typeof en, string> = {
   referenceGeometryAvailable:
     "Отображается граница из справочника, не результат анализа.",
   referenceVersion: "Версия справочника",
+  liveSourcesHeading: "Реальные источники данных",
+  liveSourcesHelp:
+    "Для Сатурн выбери регион из независимого справочника; для погоды достаточно точки на карте.",
+  liveSourcesJump: "Перейти к реальным источникам",
+  liveSourcesAvailability:
+    "Показываются только источники, включённые на сервере. Отсутствие данных не означает отсутствие риска.",
+  demoWorkflowHeading: "Необязательное демонстрационное исследование",
+  demoWorkflowUnavailable:
+    "Демонстрационный планировщик отключён. Для реальных источников сценарий, территория и сезон не требуются.",
   saturnTitle: "Сатурн: сообщения об обработках",
-  saturnCode: "Код субъекта в Сатурн",
+  saturnCode: "Сопоставление региона с Сатурн",
+  saturnSelectRegion:
+    "Сначала выбери регион России в левой панели, затем загрузи уведомления Сатурн.",
   saturnCodeHint:
-    "Укажи числовой код субъекта из официального портала. Это не код района и не ISO-код.",
+    "Backend сопоставляет регион с проверенным кодом Сатурн. Если соответствие отсутствует, запрос не выполняется.",
   saturnRead: "Загрузить одну страницу",
   saturnNext: "Загрузить следующую",
   saturnLoading: "Чтение публичного портала…",
+  saturnUnmapped:
+    "Для региона нет проверенного соответствия в Сатурн. Запрос на портал не отправлен.",
   saturnError: "Ошибка чтения Сатурн: {reason}. Доступность данных неизвестна.",
   saturnCount:
     "Страница {page} · найдено {count} сообщений · не распознано {skipped}",
@@ -283,7 +359,7 @@ const ru: Record<keyof typeof en, string> = {
     "Справочник не содержит подтверждённых регионов. Это не сведения о полном покрытии.",
   availableRegions: "Показаны регионы из текущего API-справочника.",
   unavailableRegions:
-    "Границы и перечень регионов пока не загружены (HTTP 503). Синтетические источники доступны отдельно.",
+    "Справочник регионов ещё не загружен в PostgreSQL. Требуется первоначальная настройка базы.",
   season: "Период размещения",
   seasonStart: "Начало сезона",
   seasonEnd: "Конец сезона",
@@ -303,7 +379,7 @@ const ru: Record<keyof typeof en, string> = {
   open: "Открыть",
   reopenHelp: "По умолчанию сервер хранит результаты в памяти до перезапуска.",
   mapSpace: "02 / ПРОСТРАНСТВО",
-  mapHeading: "Карта стоянок",
+  mapHeading: "Карта выбранной местности",
   mapLabel: "Карта исследования",
   basemap: "Онлайн-подложка",
   basemapPrivacy:
@@ -311,7 +387,7 @@ const ru: Record<keyof typeof en, string> = {
   mapProposed: "Предлагаемая стоянка",
   mapSelected: "Выбрана",
   mapNote:
-    "Координаты демонстрационных стоянок вымышлены. Нажмите на карту, чтобы выбрать исходную точку.",
+    "Нажмите на карту внутри выбранной местности, чтобы уточнить точку. Онлайн-подложка необязательна.",
   mapStartingPoint: "Ваша точка (только для текущего запроса)",
   planReady: "Предварительный план сформирован",
   noPlan: "План не сформирован",

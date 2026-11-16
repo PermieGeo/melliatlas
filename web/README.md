@@ -1,8 +1,8 @@
 # Web — beekeeper workspace
 
-`web/` is the **only** MelliAtlas browser client. It is a React 19 / TypeScript / Leaflet Vite application. There is no operator/Admin UI, no live pesticide-source collection and no browser telemetry.
+`web/` is the **only** MelliAtlas browser client. It is a React 19 / TypeScript / Leaflet Vite application. There is no operator/Admin UI, no background source collection and no browser telemetry. Opt-in, manual-only live Saturn and weather reads are available in the current experimental UI.
 
-The first W01 workspace lets a beekeeper select an API-advertised country and executable fictional scenario, choose a server-bounded season and optional private point, run the existing FastAPI investigation, and explore stop alternatives using a map, seasonal timeline and attributed ecology/treatment findings. Source claims and synthetic geometric screening are not confirmed spray events or safe-placement assessments. Country, scenario and region controls read the API; when validated RU/BY catalogs are missing, the app displays the HTTP `503` limitation instead of inventing regional coverage.
+The W01 workspace now starts with country-scoped live source access, independent of the fictional investigation. Where enabled, Saturn accepts a manually verified upstream subject code and Open-Meteo accepts a point chosen on the map. An optional fictional scenario permits a separate FastAPI investigation with a bounded season, timeline and attributed ecology/treatment findings. Source claims and synthetic geometric screening are not confirmed spray events or safe-placement assessments. Country, scenario and region controls read the API; when validated RU/BY catalogs are missing, the app displays the HTTP `503` limitation instead of inventing regional coverage.
 
 ## Run locally
 
@@ -85,3 +85,52 @@ Open-Meteo via the server; no automatic polling, browser persistence or drift
 safety judgment occurs. A disabled/unreachable source is not assumed to have
 zero wind. Displayed data are attributed to Open-Meteo (CC BY 4.0); the free
 endpoint is licensed for non-commercial use only.
+
+## Live-first navigation when no reference catalog is loaded
+
+The country selector and on-demand live-source panels do **not** require fictional
+investigation metadata. With the default `MELLIATLAS_SOURCE_PROVIDER=disabled`,
+the fictional territory, scenario and season controls are not rendered; an
+explicit status explains the unavailable demo and links to the live sources.
+A missing validated region catalog still produces `503` and leaves geographic
+region selection unavailable. This must not be replaced with fabricated
+administrative regions or assumed Saturn subject-code mappings.
+
+For a local live preview, explicitly enable the opt-in Saturn and weather
+adapters in the backend as documented above. The Saturn panel accepts only a
+manually verified upstream subject code; weather reads require a point selected
+on the map. For BY, Saturn is never offered, but weather can be available.
+
+
+### Preseeded country region navigation
+
+With the optional PostgreSQL region directory configured on the backend, the
+left panel offers independent RU/BY ISO-coded first-order regions. Saturn uses
+the selected canonical region ID and a server-owned mapping table; no manual
+numeric Saturn code is entered. Regions with no verified Saturn mapping return
+`409/SOURCE_REGION_UNMAPPED` without contacting the provider. The initial seed
+contains only the archived Smolensk source mapping. Region borders and pilot
+districts are not included in the name-only seed; their absence is explicit.
+
+
+## Area-first beekeeper workflow (W01 partial)
+
+Select a country, then an independently seeded region and optional reviewed
+district. The map fits the selected **imported** territory geometry. Large
+regions require a more local district or a click inside the reviewed boundary
+before the **Analyze selected area** action becomes available.
+
+The one action fetches enabled, country-scoped live sources: RU-only Saturn
+and a point-specific Open-Meteo forecast. The result is explicitly preliminary:
+Saturn currently returns only **one region-wide page**, not a full inventory
+for the selected square, and no drift or safety model is executed. An empty
+provider response must not be interpreted as proof of safety. The old direct
+source-page and weather buttons, UUID lookup, and source-jump link are not
+shown in the main user workflow; the fictional scenario remains collapsed and
+opt-in. No private coordinates are persisted in the browser.
+
+The API cannot manufacture administrative geography: run the PostgreSQL
+`0002` seed and the separately reviewed `0003` ADM1/ADM2 boundary imports
+from `docs/INSTALLATION.md` before evaluating map zoom, district selectors,
+or the area action. Without these imports the form explains that the required
+reference data is missing rather than falling back to synthetic geography.

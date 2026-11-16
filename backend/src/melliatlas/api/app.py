@@ -27,7 +27,7 @@ from melliatlas.jobs.api import (
 )
 from melliatlas.sources.api import TreatmentNoticeReader, WeatherForecastReader
 from melliatlas.territories import InMemoryTerritoryCatalog
-from melliatlas.territories.api import TerritoryCatalog
+from melliatlas.territories.api import SourceTerritoryCodeLookup, TerritoryCatalog
 
 
 @dataclass(frozen=True)
@@ -48,6 +48,7 @@ def create_app(
     investigations: InvestigationService | None = None,
     saturn_reader: TreatmentNoticeReader | None = None,
     weather_reader: WeatherForecastReader | None = None,
+    source_region_lookup: SourceTerritoryCodeLookup | None = None,
 ) -> FastAPI:
     config = settings if settings is not None else AppSettings()
     snapshot_path = config.reference_snapshot_path
@@ -100,7 +101,7 @@ def create_app(
         if config.weather_live_enabled
         else None
     )
-    app.include_router(create_source_router(live_reader, forecast_reader))
+    app.include_router(create_source_router(live_reader, forecast_reader, source_region_lookup))
     source_runtime = compose_sources(config.source_provider)
     job_service = (
         investigations

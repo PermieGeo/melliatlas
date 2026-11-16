@@ -23,3 +23,28 @@ The normalized JSON file loader belongs to the API/administration boundary (`mel
 
 **Current status:** API contracts, in-memory validated import, and HTTP reads are implemented. No real complete RU/BY inventory, licensed boundary download, approved reference version, or PostGIS adapter has been installed. `MVP01-BE-A02/A03` remain open.
 
+
+
+## Persistent first-order region directory (separate from geometry)
+
+`PostgresRegionCatalog` is an optional persistence adapter for the existing
+`TerritoryCatalog` port. It reads country-scoped, stable ISO 3166-2 canonical
+IDs (`ru:region:smo`, `by:region:vi`) from `melliatlas_region`, with name,
+source version, validity snapshot date and an explicitly **missing** geometry.
+Its initial pinned data contains 83 RU and 7 BY subdivisions from iso-codes
+4.18.0; this is the coverage of that source, **not proof of complete current
+administrative or geometric coverage**. The independent full snapshot
+validator and pilot district requirements remain unchanged.
+
+District reads from this name-only adapter return `CatalogDepthUnsupported`;
+unknown regions return `TerritoryNotFound`; missing database/catalog returns
+`ReferenceUnavailableError` rather than a false empty result. This adapter
+cannot be mixed with file-snapshot injection for the same application.
+
+`SourceTerritoryCodeLookup` converts a canonical region ID to a numeric
+provider identifier only for the requested source/country. Its PostgreSQL
+Saturn implementation reads `melliatlas_source_saturn`, which has a foreign key
+to the independent region table and an RU-only country constraint. An unmapped
+region is not guessed, fabricated or queried remotely. The mapping's historical
+capture provenance is recorded; separate review is required before production
+use and bulk ingestion.

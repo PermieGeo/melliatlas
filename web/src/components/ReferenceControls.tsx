@@ -25,9 +25,11 @@ export function ReferenceControls({
     >
       <h3>{tr("referenceHeading")}</h3>
       <p className="field-help">{tr("referenceHelp")}</p>
-      <p className="field-help" role="status">
-        {tr(catalogMessage)}
-      </p>
+      {catalogMessage !== "availableRegions" && (
+        <p className="field-help" role="status">
+          {tr(catalogMessage)}
+        </p>
+      )}
       <div className="form-group">
         <label htmlFor="reference-region">{tr("referenceRegion")}</label>
         <select
@@ -60,14 +62,18 @@ export function ReferenceControls({
               </option>
             ))}
           </select>
-          <p className="field-help" role="status">
-            {tr(navigation.districtMessage)}
-          </p>
+          {navigation.districtMessage !== "referenceDistrictAvailable" && (
+            <p className="field-help" role="status">
+              {tr(navigation.districtMessage)}
+            </p>
+          )}
         </div>
       )}
-      <p className="field-help" role="status">
-        {tr(navigation.geometryMessage)}
-      </p>
+      {navigation.geometryMessage !== "referenceGeometryAvailable" && (
+        <p className="field-help" role="status">
+          {tr(navigation.geometryMessage)}
+        </p>
+      )}
       {navigation.geometry && (
         <p className="reference-provenance">
           {tr("referenceVersion")}: {navigation.geometry.reference_id} ·

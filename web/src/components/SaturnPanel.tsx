@@ -8,15 +8,16 @@ import type { Locale, TranslationKey } from "../i18n";
 interface Props {
   country: CountryCode;
   locale: Locale;
+  regionId: string;
   onNotices: (notices: SaturnNotice[]) => void;
 }
 
 /** Isolated public notice reader. It never mutates synthetic investigations. */
-export function SaturnPanel({ country, locale, onNotices }: Props) {
+export function SaturnPanel({ country, locale, regionId, onNotices }: Props) {
   const [availableCountry, setAvailableCountry] = useState("");
-  const [regionCode, setRegionCode] = useState("");
   const [result, setResult] = useState<{
     country: string;
+    regionId: string;
     page: SaturnNoticePage;
   } | null>(null);
   const [error, setError] = useState("");
@@ -31,8 +32,10 @@ export function SaturnPanel({ country, locale, onNotices }: Props) {
     const controller = new AbortController();
     fetchController.current?.abort();
     onNoticesRef.current([]);
+    setBusy(false);
     setError("");
     setResult(null);
+    setAvailableCountry("");
     void listExternalSources(country, controller.signal).then((response) => {
       if (controller.signal.aborted) return;
       setAvailableCountry(
@@ -50,10 +53,21 @@ export function SaturnPanel({ country, locale, onNotices }: Props) {
     };
   }, [country]);
 
-  const region = Number(regionCode);
-  const validRegion = /^[1-9][0-9]{0,5}$/.test(regionCode) && region <= 999999;
+  useEffect(() => {
+    fetchController.current?.abort();
+    onNoticesRef.current([]);
+    setBusy(false);
+    setError("");
+    setResult(null);
+  }, [regionId]);
+
+  const validRegion =
+    country === "RU" && /^ru:region:[a-z0-9-]+$/.test(regionId);
   const visible = availableCountry === country && country !== "";
-  const shown = result?.country === country ? result.page : null;
+  const shown =
+    result?.country === country && result.regionId === regionId
+      ? result.page
+      : null;
   const nextPage = shown?.next_page ?? null;
 
   const read = (pageNumber: number) => {
@@ -65,7 +79,7 @@ export function SaturnPanel({ country, locale, onNotices }: Props) {
     setError("");
     setResult(null);
     onNoticesRef.current([]);
-    void readSaturnPage(country, region, pageNumber, controller.signal).then(
+    void readSaturnPage(country, regionId, pageNumber, controller.signal).then(
       (response) => {
         if (controller.signal.aborted) return;
         setBusy(false);
@@ -75,13 +89,13 @@ export function SaturnPanel({ country, locale, onNotices }: Props) {
         }
         if (
           response.data.country !== country ||
-          response.data.region_code !== region ||
+          response.data.region_id !== regionId ||
           response.data.page_number !== pageNumber
         ) {
           setError("INVALID_RESPONSE");
           return;
         }
-        setResult({ country, page: response.data });
+        setResult({ country, regionId, page: response.data });
         onNoticesRef.current(response.data.notices);
       },
     );
@@ -92,21 +106,7 @@ export function SaturnPanel({ country, locale, onNotices }: Props) {
     <section className="saturn-panel" aria-label={tr("saturnTitle")}>
       <h2>{tr("saturnTitle")}</h2>
       <p className="warning-text">{tr("saturnWarning")}</p>
-      <label htmlFor="saturn-region">{tr("saturnCode")}</label>
       <div className="saturn-controls">
-        <input
-          id="saturn-region"
-          inputMode="numeric"
-          value={regionCode}
-          onChange={(event) => {
-            fetchController.current?.abort();
-            setBusy(false);
-            setResult(null);
-            setError("");
-            onNoticesRef.current([]);
-            setRegionCode(event.target.value);
-          }}
-        />
         <button
           type="button"
           disabled={!validRegion || busy}
@@ -115,10 +115,17 @@ export function SaturnPanel({ country, locale, onNotices }: Props) {
           {busy ? tr("saturnLoading") : tr("saturnRead")}
         </button>
       </div>
-      <p className="field-help">{tr("saturnCodeHint")}</p>
+      {!validRegion && (
+        <p className="field-help" role="status">
+          {tr("saturnSelectRegion")}
+        </p>
+      )}
+      {validRegion && <p className="field-help">{tr("saturnCodeHint")}</p>}
       {error && (
         <p role="alert" className="warning-text">
-          {tr("saturnError", { reason: error })}
+          {error === "SOURCE_REGION_UNMAPPED"
+            ? tr("saturnUnmapped")
+            : tr("saturnError", { reason: error })}
         </p>
       )}
       {shown && (

@@ -43,3 +43,14 @@ stale request is not a completed forecast. `WeatherPanel` has a manual button,
 does not log or persist coordinates, and includes Open-Meteo attribution.
 Neither a weather forecast nor a live treatment notice modifies synthetic
 investigation results or certifies pesticide drift, exposure or placement safety.
+
+## Persistent regional directory and manual Saturn source selection
+
+The country-scoped region list is authoritative for user-selectable first-order
+regions. The UI passes its canonical `region_id` to the manual Saturn reader;
+it never derives provider numeric IDs from region names, array indexes, ISO
+codes, or synthetic scenarios. Region changes cancel outstanding Saturn
+requests and clear prior notices. `SOURCE_REGION_UNMAPPED` is an explicit
+no-data-source-mapping state, not a negative treatment finding. The numeric
+`region_code` request is retained only for older API clients and controlled
+operator tooling; the beekeeper UI does not expose it.

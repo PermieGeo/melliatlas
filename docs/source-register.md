@@ -16,7 +16,7 @@ The historical 2026-11-13 TypeScript MelliAtlas snapshot is a **reference implem
 | `/backend/beemaster/geojson-polygons` | A possible geometry response when captured and reviewed | A verified join to a plan or application without independent identity evidence |
 | `/backend/beemaster/acr/{fieldId}` | A possible field-detail response when captured and reviewed | Independent verification of an index/geometry association |
 
-The historical host `bee-saturn.ru`, request headers, request bodies, region code `55`, and server-specific query filters are **not pinned as current production contracts**. The later `bee.fgis-saturn.ru` public hostname must not be assumed to serve those same paths. The historical code includes strict pagination validation, immutable raw-page versions, source-wide throttling, operator-only bounded requests, a restricted HTTP fetcher with redirect/DNS/TLS rules, per-field geometry validation, and human review statuses. These are useful design precedents; copying the old transport unchanged would bypass present-day contract and access verification.
+The historical host `bee-saturn.ru`, request headers, request bodies, region code `55`, and server-specific query filters are **not pinned as current production contracts**. The optional local `backend/scripts/probe_saturn.py` makes exactly one bounded upstream request and reports structural JSON metadata only; it does not archive raw evidence, confirm API stability or grant reuse rights. A compatibility check must use a reviewed region identifier and must not be automated or distributed as a collection job. The later `bee.fgis-saturn.ru` public hostname must not be assumed to serve those same paths. The historical code includes strict pagination validation, immutable raw-page versions, source-wide throttling, operator-only bounded requests, a restricted HTTP fetcher with redirect/DNS/TLS rules, per-field geometry validation, and human review statuses. These are useful design precedents; copying the old transport unchanged would bypass present-day contract and access verification.
 
 ### Next verification steps before an opt-in live source
 
@@ -61,3 +61,32 @@ manual-only RU source. Earlier statements in this register about there being
 no live connector describe the historical offline stage, not the latest
 optional code. Its current upstream compatibility and reuse rights remain
 unverified.
+
+## Independent first-order region seed and source-specific mappings
+
+- **Dataset:** `iso-codes` 4.18.0, ISO 3166-2 country subdivisions, from
+  https://salsa.debian.org/iso-codes-team/iso-codes, LGPL-2.1-or-later.
+  Localized Russian display names are maintained alongside each ISO identifier.
+- **Pinned coverage:** 83 ISO-coded RU subdivisions and 7 BY subdivisions
+  (including Minsk city). This is not equivalent to current national territorial
+  claims, legal boundaries or full municipal inventory. No geometry is supplied.
+- **Identity:** `melliatlas_region` stores canonical country-scoped region ID,
+  ISO code, names, reference version and snapshot/import date. It remains
+  independent of pesticide, weather and external publication sources.
+- **Saturn:** `melliatlas_source_saturn` maps canonical RU region IDs to
+  Saturn `subject_id` and optionally OKTMO, with capture metadata.
+  The operator-provided `bee-saturn_agent_algorithm.zip` reports Smolensk
+  `subject_id=55`, `oktmoCode=66000000` from 2026-11-11; only that mapping
+  is initially pinned. The archive does not contain the complete 86-row
+  `/beemaster/oktmo-subjects` response.
+- **Operator-only capture:** `backend/scripts/capture_saturn_subjects.py`
+  makes at most one bounded, fixed-origin GET of the historically observed
+  `/beemaster/oktmo-subjects` endpoint when explicitly run; it requires a new
+  private local file, validates the directory before writing and returns
+  structural count, SHA-256 and capture time. This does not approve reuse,
+  guarantee 86-current-subject coverage, or enable automatic polling.
+- **Further mappings:** run the reviewed, offline import command on a saved
+  `/beemaster/oktmo-subjects` response. Only unique exact normalized names
+  match. Unmatched regions are reported, not assigned guessed numeric IDs.
+  No provider network calls occur during seeding or app startup. Independent
+  review of source access and permissions remains open.

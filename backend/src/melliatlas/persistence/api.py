@@ -2,7 +2,7 @@
 
 import json
 from collections.abc import Callable, Sequence
-from typing import Protocol
+from typing import Final, LiteralString, Protocol
 from uuid import UUID
 
 from melliatlas.jobs.api import (
@@ -15,7 +15,7 @@ from melliatlas.jobs.api import (
 
 
 class DatabaseCursor(Protocol):
-    def execute(self, query: str, params: Sequence[object] = ()) -> object: ...
+    def execute(self, query: LiteralString, params: Sequence[object] = ()) -> object: ...
     def fetchone(self) -> tuple[object, ...] | None: ...
     def close(self) -> None: ...
 
@@ -33,14 +33,14 @@ ConnectionFactory = Callable[[], DatabaseConnection]
 class PostgisCompletedInvestigationStore:
     """Owns PostgreSQL I/O; never updates or deletes completed results."""
 
-    _SAVE = """
+    _SAVE: Final[LiteralString] = """
         INSERT INTO melliatlas_completed_investigations (
             id, payload, reference_version, created_at, completed_at, site_points
         ) VALUES (
             %s, %s::jsonb, %s, %s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s::text), 4326)
         ) ON CONFLICT DO NOTHING RETURNING id
     """
-    _LOAD = """
+    _LOAD: Final[LiteralString] = """
         SELECT payload::text FROM melliatlas_completed_investigations WHERE id = %s
     """
 

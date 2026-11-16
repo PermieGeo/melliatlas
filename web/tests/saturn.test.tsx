@@ -27,6 +27,7 @@ const livePage = {
   source_id: "saturn:public-beekeeper-portal",
   country: "RU",
   region_code: 55,
+  region_id: "ru:region:smo",
   captured_at: "2026-11-15T17:00:00Z",
   page_number: 0,
   next_page: null,
@@ -90,19 +91,23 @@ describe("Saturn live capability boundary", () => {
       expect(init?.method).toBe("POST");
       expect(JSON.parse(String(init?.body))).toEqual({
         country: "RU",
-        region_code: 55,
+        region_id: "ru:region:smo",
         page_number: 0,
       });
       return new Response(JSON.stringify(livePage));
     });
     vi.stubGlobal("fetch", fetchMock);
     const onNotices = vi.fn();
-    render(<SaturnPanel country="RU" locale="en" onNotices={onNotices} />);
+    render(
+      <SaturnPanel
+        country="RU"
+        locale="en"
+        regionId="ru:region:smo"
+        onNotices={onNotices}
+      />,
+    );
     await screen.findByText("Saturn: public treatment notices");
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    fireEvent.change(screen.getByLabelText("Saturn subject code"), {
-      target: { value: "55" },
-    });
     fireEvent.click(screen.getByRole("button", { name: "Read one live page" }));
     await screen.findByText(/Field record 71/);
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -113,11 +118,41 @@ describe("Saturn live capability boundary", () => {
     );
   });
 
+  it("requires a canonical region instead of a typed Saturn subject code", async () => {
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify(liveSource)),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const onNotices = vi.fn();
+    render(
+      <SaturnPanel
+        country="RU"
+        locale="en"
+        regionId=""
+        onNotices={onNotices}
+      />,
+    );
+    await screen.findByText(
+      "Select a Russian region in the left panel before loading Saturn notices.",
+    );
+    expect(
+      screen.getByRole("button", { name: "Read one live page" }),
+    ).toHaveProperty("disabled", true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("never shows or requests Saturn for an unsupported country", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify([])));
     vi.stubGlobal("fetch", fetchMock);
     const onNotices = vi.fn();
-    render(<SaturnPanel country="BY" locale="en" onNotices={onNotices} />);
+    render(
+      <SaturnPanel
+        country="BY"
+        locale="en"
+        regionId="by:region:vi"
+        onNotices={onNotices}
+      />,
+    );
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(screen.queryByText("Saturn: public treatment notices")).toBeNull();
     expect(fetchMock.mock.calls).toHaveLength(1);
