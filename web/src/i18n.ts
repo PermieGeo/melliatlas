@@ -149,13 +149,10 @@ const en = {
   mapSpace: "02 / GEOGRAPHY",
   mapHeading: "Selected area map",
   mapLabel: "Investigation map",
-  basemap: "Online basemap",
-  basemapPrivacy:
-    "When enabled, the external tile provider receives requested map tile coordinates.",
   mapProposed: "Proposed stop",
   mapSelected: "Selected",
   mapNote:
-    "Click the selected territory to mark a local point. Online map tiles are optional.",
+    "Select a region or district to zoom to its imported boundary. Map tiles come from OpenStreetMap; the last viewed map area is saved only in this browser.",
   mapStartingPoint: "Your point (current request only)",
   planReady: "Provisional plan prepared",
   noPlan: "No supported plan",
@@ -379,13 +376,10 @@ const ru: Record<keyof typeof en, string> = {
   mapSpace: "02 / ПРОСТРАНСТВО",
   mapHeading: "Карта выбранной местности",
   mapLabel: "Карта исследования",
-  basemap: "Онлайн-подложка",
-  basemapPrivacy:
-    "При включении сторонний сервис получает координаты запрошенных картографических тайлов.",
   mapProposed: "Предлагаемая стоянка",
   mapSelected: "Выбрана",
   mapNote:
-    "Нажмите на карту внутри выбранной местности, чтобы уточнить точку. Онлайн-подложка необязательна.",
+    "Выберите область или район для приближения к загруженной границе. Тайлы загружаются из OpenStreetMap, а последний вид карты сохраняется только в этом браузере.",
   mapStartingPoint: "Ваша точка (только для текущего запроса)",
   planReady: "Предварительный план сформирован",
   noPlan: "План не сформирован",

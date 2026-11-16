@@ -87,3 +87,21 @@ provenance review, mapping, order of operations, and attribution requirements.
 The server never fetches geographic boundaries on startup. Saturn subject IDs
 remain in the separate source mapping table.
 
+
+## Explicit geoBoundaries staging and database verification
+
+`backend/scripts/prepare_all_geoboundaries.py` stages all missing RU/BY
+ADM1/ADM2 geoBoundaries gbOpen layers into a user-chosen directory outside the
+repository, with network progress and SHA-256 verified reuse on repeat runs.
+`prepare_geoboundaries.py` remains the single-layer entry point. Metadata
+feature-count discrepancies are explicitly recorded and must be acknowledged
+before any affected manifest can authorize an import; incomplete source
+inventories are never reported as authoritative coverage. ADM1 also emits
+exact-match review information against the pinned ISO directory.
+The existing offline PostGIS importer accepts `--manifest` to bind provenance
+and file bytes at import time, and rejects conflicting repeat imports including
+changed geometry. `backend/scripts/verify_admin_boundaries.py` checks the
+recorded version and parent inventory by read-only SQL after loading. These are
+explicit operator actions and are not called during API startup. The source
+vintage is historical, real PostGIS verification is pending, and provenance
+review is required before publication. See `docs/INSTALLATION.md` for commands.

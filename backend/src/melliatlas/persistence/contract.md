@@ -45,3 +45,19 @@ transaction per review batch. Country/region independence remains mandatory:
 Saturn mappings are resolved only through `melliatlas_source_saturn`. A region
 with no approved geometry is still a valid region, but not an analyzable map
 boundary. Imported geometry/district coverage is not assumed complete.
+
+
+### Administrative boundary import integrity
+
+The operator-only staging tool downloads an externally versioned geoBoundaries
+layer into files outside the repository. A captured manifest records SHA-256,
+source version, country, ADM level, license, observed feature count and any
+discrepancy with the provider-advertised inventory. The importer's `--manifest`
+option validates these against exact source bytes before opening a database
+connection. A mismatched source inventory requires an explicit
+`--acknowledge-inventory-mismatch` option after human review, without weakening
+other matching, geometry or provenance checks. A repeated insert only counts as equivalent when shape ID,
+reference identity, region parent, name, provenance, validity anchor and actual
+PostGIS geometry match. Any conflicting row rolls back the batch. The database
+verifier counts exact reference IDs, checks spatial/CRS validity and district
+parent presence, but does not certify present-day authoritative boundaries.

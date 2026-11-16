@@ -37,10 +37,15 @@ features:
     owners:
       - backend/src/melliatlas/territories/api.py#TerritoryImport
       - backend/src/melliatlas/persistence/geography.py#PostgisTerritoryCatalog
+      - backend/scripts/prepare_geoboundaries.py#prepare
+      - backend/scripts/prepare_all_geoboundaries.py#prepare_all
+      - backend/scripts/import_admin_boundaries.py#import_boundaries
+      - backend/scripts/verify_admin_boundaries.py#verify
     test_files:
       - backend/tests/contract/test_territory_api.py
       - backend/tests/contract/test_reference_startup.py
       - backend/tests/contract/test_administrative_geometry.py
+      - backend/tests/unit/test_geoboundaries_preparation.py
   - feature_id: MAP.BASEMAP
     implementation_status: planned
     stages: [MVP-01]

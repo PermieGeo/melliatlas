@@ -40,7 +40,6 @@ export default function App() {
   const [scenariosMessage, setScenariosMessage] =
     useState<TranslationKey>("loadingScenarios");
   const [point, setPoint] = useState<Position | null>(null);
-  const [showTiles, setShowTiles] = useState(false);
   const [saturnNotices, setSaturnNotices] = useState<SaturnNotice[]>([]);
   const [analysisRequest, setAnalysisRequest] =
     useState<AreaAnalysisRequest | null>(null);
@@ -223,12 +222,14 @@ export default function App() {
     });
   };
   const chooseRegion = (id: string) => {
+    reset();
     setAnalysisRequest(null);
     setSaturnNotices([]);
     setPoint(null);
     referenceNavigation.selectRegion(id);
   };
   const chooseDistrict = (id: string) => {
+    reset();
     setAnalysisRequest(null);
     setSaturnNotices([]);
     setPoint(null);
@@ -328,24 +329,12 @@ export default function App() {
                 <span className="eyebrow">{tr("mapSpace")}</span>
                 <h2>{tr("mapHeading")}</h2>
               </div>
-              <label className="tile-switch">
-                <input
-                  type="checkbox"
-                  checked={showTiles}
-                  onChange={(event) => setShowTiles(event.target.checked)}
-                />{" "}
-                {tr("basemap")}
-                <span className="tile-info" title={tr("basemapPrivacy")}>
-                  ⓘ
-                </span>
-              </label>
             </div>
             <MapPanel
               locale={locale}
               stops={stops}
               selectedId={investigation.selectedSite}
               startingPoint={point}
-              showTiles={showTiles}
               referenceGeometry={referenceNavigation.geometry}
               saturnNotices={saturnNotices}
               onSelect={investigation.setSelectedSite}

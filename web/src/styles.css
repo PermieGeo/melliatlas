@@ -279,19 +279,6 @@ h3 {
 .section-header h2 {
   margin: 5px 0 15px;
 }
-.tile-switch {
-  font-size: 0.76rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #576b5e;
-}
-.tile-switch input {
-  accent-color: #3c6148;
-}
-.tile-info {
-  font-size: 0.9rem;
-}
 .map-shell {
   position: relative;
 }
