@@ -366,7 +366,7 @@ export function LiveAreaAnalysis({
                 </div>
               </details>
               <a
-                href="https://open-meteo.com/en/docs"
+                href={forecast.source_uri}
                 target="_blank"
                 rel="noopener noreferrer"
               >

@@ -4,9 +4,9 @@ import argparse
 import sys
 from pathlib import Path
 
-from melliatlas.api.saturn_http import get_public_subject_directory
 from melliatlas.api.subject_capture import capture_subjects
 from melliatlas.sources.api import SourceReadError
+from melliatlas.sources.providers.saturn.http import get_public_subject_directory
 from melliatlas.sources.providers.saturn.subjects import validate_subject_directory
 
 

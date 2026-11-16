@@ -219,6 +219,14 @@ const en = {
   proximityUnknownGeometry: "Geometry unavailable",
   proximityOutsidePeriod: "Outside reported period",
   proximityUnknownPeriod: "Period unavailable",
+  syntheticTreatmentUnverified:
+    "Synthetic treatment claims are not verified application events.",
+  treatmentCoverageUnknown:
+    "Missing or distant reports do not establish complete coverage or safety.",
+  treatmentDriftUnknown:
+    "Wind, weather, drift and bee flight are not evaluated.",
+  treatmentAvoidanceDemo:
+    "Avoidance illustrates a preference, not a safe-distance or legal exclusion rule.",
   errorAborted: "Request cancelled",
   errorMissing:
     "Investigation not found. In-memory results may be lost after a server restart.",
@@ -462,6 +470,14 @@ const ru: Record<keyof typeof en, string> = {
   proximityUnknownGeometry: "Геометрия неизвестна",
   proximityOutsidePeriod: "Вне указанного периода",
   proximityUnknownPeriod: "Период неизвестен",
+  syntheticTreatmentUnverified:
+    "Синтетические сообщения об обработках не подтверждают факт их проведения.",
+  treatmentCoverageUnknown:
+    "Отсутствующие или удалённые сообщения не доказывают полноту данных либо безопасность.",
+  treatmentDriftUnknown:
+    "Ветер, погода, снос препарата и полёт пчёл не оценивались.",
+  treatmentAvoidanceDemo:
+    "Исключение участка — демонстрационный выбор, а не правовой запрет или безопасная дистанция.",
   errorAborted: "Запрос отменён",
   errorMissing:
     "Исследование не найдено. Результат в памяти сервера мог исчезнуть после перезапуска.",

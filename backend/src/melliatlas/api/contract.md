@@ -17,6 +17,15 @@
 
 Public domain errors have the typed envelope `{"error":{"code":"...","message":"..."}}` (`ErrorResponse`, `ApiErrorCode`). Missing catalog -> `503/TERRITORY_REFERENCE_UNAVAILABLE`; unknown territory -> `404/TERRITORY_NOT_FOUND`; missing geometry -> `404/TERRITORY_GEOMETRY_MISSING`; unsupported districts -> `409/DISTRICT_COVERAGE_UNSUPPORTED`; malformed input -> `422/INVALID_REQUEST`. The shared FastAPI validation handler returns `422/INVALID_REQUEST` in the same envelope; OpenAPI documents this actual response instead of the framework default validation schema. An unavailable catalog is **never** represented as a successfully loaded empty catalog.
 
+## Provider-neutral routes and evidence boundaries
+
+`routes_sources.py` only lists injected source capabilities and builds the sanitized
+HTTP error envelope. `providers/saturn/routes.py` and `providers/open_meteo/routes.py` own their
+provider-specific request validation, capability visibility and projections; the
+FastAPI composition root registers them independently. Source transports, decoders
+and operational weather policy belong to `sources/providers/`, never generic HTTP
+route modules. Stable domain warning codes are localized by the browser.
+
 ## Deferred
 
 Full versioned investigation/source endpoints, source provenance DTOs, PostGIS repositories and migrations, and durable server-side job processing remain deferred to later implementation-plan steps. The initial backend stages do not meet full `MVP01-BE-A01` or the browser MVP acceptance gate.
@@ -136,3 +145,14 @@ No source-specific identifier is leaked into the independent region catalog.
 ## Optional map point lookup (W01 R02 partial)
 
 `POST /api/v1/territories/resolve-point` accepts `country`, `longitude`, and `latitude` in a JSON body, validated as finite WGS84. It calls the optional `TerritoryPointLocator` port and returns `{region_id, district_id}` using canonical IDs. No hit is `404/TERRITORY_NOT_FOUND`; missing/ambiguous PostGIS coverage is `503/TERRITORY_REFERENCE_UNAVAILABLE`; bad coordinates are `422/INVALID_REQUEST`. The route is read-only, does not log point data, and does not fabricate containment in synthetic or name-only catalogs.
+
+## Deferred weather configuration
+
+The optional `weather_reader_factory` is injected into `create_app` and runs once
+inside the ASGI lifespan, off the event loop. Module import and route registration
+never query Postgres for Open-Meteo configuration. The factory cannot be combined
+with an explicitly injected `weather_reader`. A disabled database row produces
+no advertised weather capability; unavailable or unmigrated configuration aborts
+startup rather than substituting defaults. Reader availability is scoped to the
+application lifespan and cleared on shutdown. Direct `create_app` injection of
+`weather_reader` keeps the existing explicit testing semantics.

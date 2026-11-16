@@ -7,6 +7,12 @@ export interface AreaSize {
   heightKm: number;
 }
 
+// At the equator one degree spans about 111.32 km; the equirectangular
+// approximation uses cos(latitude) for east-west distance. It is only an
+// area-selection guard, not a geodesic measurement or risk buffer.
+const APPROX_KM_PER_DEGREE = 111.32;
+const DEGREES_TO_RADIANS = Math.PI / 180;
+
 /** Calculate a display center and approximate size from validated WGS84 geometry. */
 export function areaSize(shape: ReferenceShape): AreaSize | null {
   let minLon = Infinity;
@@ -27,8 +33,11 @@ export function areaSize(shape: ReferenceShape): AreaSize | null {
   const midLat = (minLat + maxLat) / 2;
   return {
     center: { longitude: (minLon + maxLon) / 2, latitude: midLat },
-    widthKm: (maxLon - minLon) * 111.32 * Math.cos((midLat * Math.PI) / 180),
-    heightKm: (maxLat - minLat) * 111.32,
+    widthKm:
+      (maxLon - minLon) *
+      APPROX_KM_PER_DEGREE *
+      Math.cos(midLat * DEGREES_TO_RADIANS),
+    heightKm: (maxLat - minLat) * APPROX_KM_PER_DEGREE,
   };
 }
 

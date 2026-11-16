@@ -61,6 +61,15 @@ describe("Weather forecast boundary", () => {
       decodeWeatherForecast({ ...forecast, synthetic: true }),
     ).toThrow(WireError);
     expect(() =>
+      decodeWeatherForecast({ ...forecast, source_uri: "javascript:alert(1)" }),
+    ).toThrow(WireError);
+    expect(() =>
+      decodeWeatherForecast({
+        ...forecast,
+        source_uri: "https://open-meteo.com.evil.invalid/docs",
+      }),
+    ).toThrow(WireError);
+    expect(() =>
       decodeWeatherForecast({ ...forecast, hours: hours.slice(1) }),
     ).toThrow(WireError);
     const skippedHour = hours.map((hour, index) =>

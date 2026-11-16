@@ -12,6 +12,8 @@ export const DEFAULT_VIEWPORT: MapViewport = {
   zoom: 4,
 };
 
+// Inverse spherical Web Mercator at projected y = pi is atan(sinh(pi))°.
+// This is the projection domain limit (about 85.05113°), not a user setting.
 const MAX_MERCATOR_LATITUDE = 85.05112878;
 const MAX_MAP_ZOOM = 18;
 

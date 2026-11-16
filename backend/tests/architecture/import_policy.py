@@ -32,7 +32,7 @@ DATABASE_IMPORTS = frozenset(
     {"sqlalchemy", "psycopg", "psycopg2", "psycopg_pool", "asyncpg", "sqlite3", "geoalchemy2"}
 )
 FRAMEWORK_IMPORTS = frozenset({"fastapi", "starlette", "pydantic"})
-NETWORK_TRANSPORT_MODULES = frozenset({"melliatlas.api.saturn_http", "melliatlas.api.weather_http"})
+NETWORK_TRANSPORT_MODULES = frozenset({"melliatlas.sources.providers.http_transport"})
 
 NETWORK_IMPORTS = frozenset(
     {"httpx", "requests", "aiohttp", "urllib3", "urllib.request", "http.client", "socket"}
@@ -45,6 +45,9 @@ COMPOSITION_ROOT_PROVIDER_IMPORTS = frozenset(
         "melliatlas.sources.providers.synthetic.api",
         "melliatlas.sources.providers.saturn.api",
         "melliatlas.sources.providers.open_meteo.api",
+        "melliatlas.sources.providers.saturn.http",
+        "melliatlas.sources.providers.open_meteo.http",
+        "melliatlas.sources.providers.open_meteo.settings",
     }
 )
 
@@ -147,8 +150,18 @@ def find_violations(source_root: Path) -> list[str]:
                 violations.append(f"{path}:{line}: forbidden dependency {owner} -> {target}")
             if len(imported_parts) > 2 and (imported_parts[2] != "api" or len(imported_parts) > 3):
                 composition_import = (
-                    source_module == "melliatlas.api.composition"
-                    and imported in COMPOSITION_ROOT_PROVIDER_IMPORTS
+                    (
+                        source_module == "melliatlas.api.composition"
+                        and imported in COMPOSITION_ROOT_PROVIDER_IMPORTS
+                    )
+                    or (
+                        source_module == "melliatlas.api.providers.saturn.routes"
+                        and imported == "melliatlas.sources.providers.saturn.api"
+                    )
+                    or (
+                        source_module == "melliatlas.api.providers.open_meteo.routes"
+                        and imported == "melliatlas.sources.providers.open_meteo.api"
+                    )
                 )
                 if not composition_import:
                     violations.append(f"{path}:{line}: imports private module {imported}")

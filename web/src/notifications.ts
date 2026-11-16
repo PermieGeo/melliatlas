@@ -9,16 +9,24 @@ export interface Notice {
   values?: Record<string, string | number>;
 }
 
-/** Map typed API failures into user-facing states without trusting server text as UI copy. */
+/** Standard HTTP statuses are protocol values, not a configurable domain enum. */
+const statusMessageKeys: Readonly<Record<number, TranslationKey>> = {
+  404: "errorMissing",
+  409: "errorDepth",
+  422: "errorInvalid",
+  503: "errorUnavailable",
+};
+
+/** Map stable HTTP failures to localized notices; never render raw provider text. */
 export function failure<T>(
   result: Extract<ApiResult<T>, { kind: "error" }>,
 ): Notice {
   if (result.code === "ABORTED") return { kind: "info", key: "errorAborted" };
-  if (result.status === 404) return { kind: "error", key: "errorMissing" };
-  if (result.status === 422) return { kind: "error", key: "errorInvalid" };
-  if (result.status === 409) return { kind: "error", key: "errorDepth" };
-  if (result.status === 503) return { kind: "error", key: "errorUnavailable" };
-  return { kind: "error", key: "errorOther", values: { code: result.code } };
+  const key =
+    result.status === null ? undefined : statusMessageKeys[result.status];
+  return key
+    ? { kind: "error", key }
+    : { kind: "error", key: "errorOther", values: { code: result.code } };
 }
 
 /** Technical completion and domain feasibility are separate lifecycle outcomes. */

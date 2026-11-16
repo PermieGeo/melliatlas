@@ -134,7 +134,7 @@ export function WeatherPanel({ country, locale, point }: Props) {
             </p>
           ))}
           <a
-            href="https://open-meteo.com/en/docs"
+            href={forecast.source_uri}
             target="_blank"
             rel="noopener noreferrer"
           >

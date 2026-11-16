@@ -12,9 +12,10 @@ from urllib.request import HTTPRedirectHandler, Request
 
 import pytest
 
-from melliatlas.api import saturn_http
 from melliatlas.api.subject_capture import capture_subjects
 from melliatlas.sources.api import SourceReadError
+from melliatlas.sources.providers import http_transport
+from melliatlas.sources.providers.saturn import http as saturn_http
 from melliatlas.sources.providers.saturn.subjects import validate_subject_directory
 
 
@@ -157,7 +158,7 @@ def test_bounded_transport_uses_single_fixed_get_no_user_url(
         assert isinstance(handler, HTTPRedirectHandler)
         return fake
 
-    monkeypatch.setattr(saturn_http, "build_opener", builder)
+    monkeypatch.setattr(http_transport, "build_opener", builder)
     body = saturn_http.get_public_subject_directory()
     assert len(fake.requests) == 1
     assert fake.requests[0].get_method() == "GET"
@@ -181,7 +182,7 @@ def test_transport_rejects_bad_content_and_oversize(
     def builder(handler: object) -> FakeOpener:
         return fake
 
-    monkeypatch.setattr(saturn_http, "build_opener", builder)
+    monkeypatch.setattr(http_transport, "build_opener", builder)
     with pytest.raises(SourceReadError):
         saturn_http.get_public_subject_directory()
 
@@ -196,7 +197,7 @@ def test_transport_rejects_upstream_403_without_returning_body(
     def builder(handler: object) -> ErrorOpener:
         return ErrorOpener()
 
-    monkeypatch.setattr(saturn_http, "build_opener", builder)
+    monkeypatch.setattr(http_transport, "build_opener", builder)
     with pytest.raises(SourceReadError, match="Public subject directory request failed") as info:
         saturn_http.get_public_subject_directory()
     assert "PRIVATE" not in str(info.value)

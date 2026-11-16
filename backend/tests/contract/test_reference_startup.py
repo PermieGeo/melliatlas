@@ -190,6 +190,7 @@ def test_asgi_entrypoint_respects_explicit_environment_paths(
     with monkeypatch.context() as environment:
         environment.setenv("MELLIATLAS_REFERENCE_SNAPSHOT", str(snapshot_file))
         environment.setenv("MELLIATLAS_REFERENCE_INVENTORY", str(inventory_file))
+        environment.setenv("MELLIATLAS_WEATHER_LIVE_ENABLED", "false")
         configured = reload(main).app
         assert configured is not None
 

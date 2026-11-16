@@ -118,7 +118,7 @@ def test_combined_http_retains_both_findings_and_selects_a_joint_alternative() -
                     decision["kind"] == "ECOLOGY_CHECK"
                     for decision in completed["replanning"]["decisions"]
                 )
-                assert any("Wind" in note for note in completed["limitations"])
+                assert "DRIFT_NOT_EVALUATED" in completed["limitations"]
                 assert "starting_point" not in completed["request"]
                 reopened = (await client.get(f"/api/v1/investigations/{identifier}")).json()
                 assert reopened == completed

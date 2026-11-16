@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from functools import partial
 from typing import TYPE_CHECKING
 
 from melliatlas.agent.api import DeterministicPlanner, TreatmentPlanner
@@ -25,6 +26,7 @@ from melliatlas.sources.api import (
 from melliatlas.territories.api import CountryCode
 
 if TYPE_CHECKING:
+    from melliatlas.sources.providers.open_meteo.settings import WeatherTransportSettings
     from melliatlas.sources.providers.synthetic.api import SyntheticFixtureProvider
 
 
@@ -96,17 +98,23 @@ def compose_saturn_reader(enabled: bool) -> TreatmentNoticeReader | None:
     """Create the opt-in RU-only live transport, separate from scenario selection."""
     if not enabled:
         return None
-    from melliatlas.api.saturn_http import post_public_page
     from melliatlas.sources.providers.saturn.api import SaturnPublicTreatmentReader
+    from melliatlas.sources.providers.saturn.http import post_public_page
 
     return SaturnPublicTreatmentReader(post_public_page)
 
 
-def compose_weather_reader(enabled: bool) -> WeatherForecastReader | None:
+def compose_weather_reader(
+    enabled: bool, options: "WeatherTransportSettings | None" = None
+) -> WeatherForecastReader | None:
     """Opt into Open-Meteo reads without creating a global source registry."""
     if not enabled:
         return None
-    from melliatlas.api.weather_http import get_public_forecast
     from melliatlas.sources.providers.open_meteo.api import OpenMeteoForecastReader
+    from melliatlas.sources.providers.open_meteo.http import get_public_forecast
+    from melliatlas.sources.providers.open_meteo.settings import SOURCE_URI
 
-    return OpenMeteoForecastReader(get_public_forecast)
+    return OpenMeteoForecastReader(
+        get_public_forecast if options is None else partial(get_public_forecast, settings=options),
+        source_uri=options.source_uri if options is not None else SOURCE_URI,
+    )

@@ -4,9 +4,11 @@ import os
 from pathlib import Path
 
 from melliatlas.api.app import AppSettings, create_app
-from melliatlas.api.composition import SourceProviderMode
+from melliatlas.api.composition import SourceProviderMode, compose_weather_reader
 from melliatlas.api.reference_loader import read_iso_region_directory
 from melliatlas.persistence.geography import PostgisTerritoryCatalog
+from melliatlas.sources.api import WeatherForecastReader
+from melliatlas.sources.providers.open_meteo.settings import WeatherTransportSettings
 from melliatlas.territories.region_directory import RegionDirectoryCatalog
 
 
@@ -53,6 +55,24 @@ def _database_regions() -> PostgisTerritoryCatalog | None:
 
 
 _regions = _database_regions()
+_weather_allowed = _weather_enabled()
+
+
+def _configured_weather_reader() -> WeatherForecastReader | None:
+    """Load optional Postgres settings only during the ASGI lifespan startup."""
+    if _regions is None:
+        return compose_weather_reader(True)
+
+    from melliatlas.persistence.postgres import connection_factory
+    from melliatlas.persistence.weather_config import read_weather_configuration
+
+    dsn = os.environ["MELLIATLAS_DATABASE_URL"]
+    enabled, timeout, max_body, docs = read_weather_configuration(connection_factory(dsn))
+    if not enabled:
+        return None
+    return compose_weather_reader(True, WeatherTransportSettings(timeout, max_body, docs))
+
+
 _reference_snapshot = _optional_path("MELLIATLAS_REFERENCE_SNAPSHOT")
 _reference_inventory = _optional_path("MELLIATLAS_REFERENCE_INVENTORY")
 if _reference_snapshot is not None or _reference_inventory is not None:
@@ -69,11 +89,12 @@ else:
 app = create_app(
     territories=_catalog,
     source_region_lookup=_regions,
+    weather_reader_factory=_configured_weather_reader if _weather_allowed else None,
     settings=AppSettings(
         reference_snapshot_path=_reference_snapshot,
         reference_inventory_path=_reference_inventory,
         source_provider=_source_provider_mode(),
         saturn_live_enabled=_saturn_enabled(),
-        weather_live_enabled=_weather_enabled(),
+        weather_live_enabled=_weather_allowed,
     ),
 )

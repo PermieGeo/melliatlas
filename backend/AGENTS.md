@@ -6,12 +6,15 @@ Extends `../AGENTS.md`. Applies to Python backend code and tests.
 - Keep domain modules independent of FastAPI, SQL/ORM, and HTTP clients. Keep HTTP routes responsible for validation, serialization, orchestration, and error mapping, not domain policy.
 - Use capability-owned, typed public interfaces. Import peer capabilities only through their public API or explicitly approved facade.
 - Inject I/O clients and repositories at composition boundaries. Add adapters, protocols, and indirection only when required by actual consumers or testing seams.
+- Keep provider HTTP transport, parsing and source-specific routes under provider-owned modules; cross-provider routing may depend only on public capability ports.
+- Keep `api.py` files as documented, lightweight public facades; put nontrivial algorithms in owned implementation modules.
 - Record non-obvious public invariants, failure modes, and ownership in the relevant module contract; do not duplicate type declarations as prose.
 
 ## Python and integrations
 - Type public functions and run strict Pyright. Validate untrusted data at I/O boundaries with Pydantic or equivalent explicit parsing.
 - Preserve meaningful exception causes internally and sanitize external error responses. Do not silence type warnings or swallow failures.
-- Pass settings explicitly; keep secrets and environment loading out of domain modules.
+- Pass settings explicitly; keep secrets and environment loading out of domain modules. Differentiate protocol/geometric invariants from operator settings; only operational values belong in configuration or persistence.
+- Represent repeated source failures and user-visible domain warnings with stable typed codes; never embed translated UI prose in domain decisions.
 - Do not block the async event loop with synchronous external I/O. Close owned resources, respect cancellation, and bound external calls with timeouts.
 - For persistence, use parameterized queries, explicit transaction boundaries, reviewable migrations, and tests for rollback/idempotency. In-process tasks are not durable across restarts.
 

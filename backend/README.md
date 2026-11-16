@@ -24,7 +24,7 @@ See the [repository overview](../README.md) and [specification index](../docs/sp
 
 Only if `MELLIATLAS_SATURN_LIVE_ENABLED=true`, the FastAPI composition root
 injects a bounded `SaturnPublicTreatmentReader`. The fixed HTTPS transport is
-isolated in `api/saturn_http.py`; the decoder remains in `sources/providers/saturn/`.
+isolated in `sources/providers/saturn/http.py`; the decoder remains in `sources/providers/saturn/`.
 `GET /api/v1/sources?country=RU` advertises this capability; a manual POST to
 `/api/v1/sources/saturn/treatments` reads one public portal page. Country BY
 is rejected before transport. A 502 response means the live portal could not
@@ -53,7 +53,7 @@ Do not run it as a scheduled job or increase its call frequency without review.
 ## Live point weather preview (opt-in)
 
 The `WeatherForecastReader` port is implemented by the bounded Open-Meteo
-adapter, with network I/O isolated in `api/weather_http.py`. It requires
+adapter, with network I/O isolated in `sources/providers/open_meteo/http.py`. It requires
 `AppSettings.weather_live_enabled=True` or the main-process environment flag
 `MELLIATLAS_WEATHER_LIVE_ENABLED=true`. The default is disabled and does not
 activate synthetic scenarios. Requests are explicit, 24-hour, UTC and local
@@ -105,3 +105,16 @@ recorded version and parent inventory by read-only SQL after loading. These are
 explicit operator actions and are not called during API startup. The source
 vintage is historical, real PostGIS verification is pending, and provenance
 review is required before publication. See `docs/INSTALLATION.md` for commands.
+
+
+## Optional database-backed weather policy
+
+Migration `0004_weather_provider_configuration.sql` creates an idempotent,
+single-provider configuration row. With `MELLIATLAS_DATABASE_URL` and explicit
+`MELLIATLAS_WEATHER_LIVE_ENABLED=true`, startup reads that row and applies the
+bounded timeout, maximum response size, allowlisted attribution URL and enable flag.
+Missing/invalid migration data or an unavailable DB prevents startup rather than
+silently reverting to defaults. Without a configured database, fixed safe defaults
+apply. The 24-hour UTC metric forecast and upstream HTTPS origin are not
+operator-configurable. The source-specific routers live in `api/providers/saturn/routes.py`
+and `api/providers/open_meteo/routes.py`; `api/routes_sources.py` only lists capabilities.

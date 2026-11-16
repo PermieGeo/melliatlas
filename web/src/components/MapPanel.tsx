@@ -100,10 +100,9 @@ export function MapPanel({
       const active = selectedId === stop.site_id;
       const marker = L.circleMarker([stop.latitude, stop.longitude], {
         radius: active ? 11 : 8,
-        weight: active ? 3 : 2,
-        color: active ? "#263a28" : "#456b5a",
-        fillColor: active ? "#f4b75c" : "#a8d5b6",
-        fillOpacity: 0.95,
+        className: active
+          ? "ma-site-marker ma-site-selected"
+          : "ma-site-marker",
       });
       marker.bindTooltip(stop.site_id, { direction: "top" });
       marker.on("click", (event: L.LeafletMouseEvent) => {
@@ -117,10 +116,7 @@ export function MapPanel({
         [startingPoint.latitude, startingPoint.longitude],
         {
           radius: 6,
-          color: "#355d9a",
-          fillColor: "#fff",
-          fillOpacity: 1,
-          weight: 3,
+          className: "ma-starting-point",
         },
       );
       point.bindTooltip(t(locale, "mapStartingPoint"));
@@ -144,12 +140,7 @@ export function MapPanel({
     if (!referenceGeometry) return;
     // Only the validated server reference is used to draw administrative geometry.
     const boundary = L.geoJSON(referenceGeometry.geometry, {
-      style: {
-        color: "#6475a2",
-        weight: 2,
-        fillColor: "#9aa7cf",
-        fillOpacity: 0.14,
-      },
+      style: { className: "ma-reference-boundary" },
       interactive: false,
     }).addTo(instance);
     boundaryLayer.current = boundary;
@@ -176,12 +167,7 @@ export function MapPanel({
     for (const notice of geometries) {
       if (!notice.geometry) continue;
       const polygon = L.geoJSON(notice.geometry, {
-        style: {
-          color: "#c57832",
-          fillColor: "#edaf75",
-          fillOpacity: 0.24,
-          weight: 2,
-        },
+        style: { className: "ma-saturn-polygon" },
       });
       polygon.bindTooltip(`${notice.source_id} / ${notice.record_id}`);
       polygon.on("click", (event: L.LeafletMouseEvent) =>

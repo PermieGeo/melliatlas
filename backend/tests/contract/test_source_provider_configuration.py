@@ -115,3 +115,20 @@ def test_disabled_import_does_not_eagerly_load_synthetic_adapter() -> None:
         timeout=15,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_asgi_entrypoint_import_does_not_query_unmigrated_weather_database() -> None:
+    root = Path(__file__).resolve().parents[2] / "src"
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(root)
+    env["MELLIATLAS_DATABASE_URL"] = "postgresql://fake:fake@127.0.0.1:1/unavailable"
+    env["MELLIATLAS_WEATHER_LIVE_ENABLED"] = "true"
+    result = subprocess.run(
+        [sys.executable, "-B", "-c", "from melliatlas.main import app; print(app.title)"],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "MelliAtlas"
