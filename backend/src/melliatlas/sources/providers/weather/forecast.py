@@ -24,7 +24,6 @@ from melliatlas.sources.providers.weather.failures import WeatherReadFailure
 from melliatlas.sources.providers.weather.settings import (
     FORECAST_HOURS,
     MAX_ALLOWED_BODY_BYTES,
-    SOURCE_URI,
 )
 
 SOURCE_ID = "open-meteo:forecast"
@@ -73,9 +72,7 @@ def _optional(value: object, *, minimum: float, maximum: float) -> float | None:
 class OpenMeteoForecastReader:
     """Decode one on-demand 24-hour forecast from an injected fixed-origin transport."""
 
-    def __init__(
-        self, transport: Callable[[float, float], bytes], *, source_uri: str = SOURCE_URI
-    ) -> None:
+    def __init__(self, transport: Callable[[float, float], bytes], *, source_uri: str) -> None:
         self._transport = transport
         self._source_uri = source_uri
 

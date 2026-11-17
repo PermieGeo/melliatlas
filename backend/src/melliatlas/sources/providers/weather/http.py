@@ -1,11 +1,10 @@
-"""Pinned Open-Meteo forecast request construction and operational budgets.
+"""Bounded Open-Meteo request construction using a validated database endpoint.
 
-Only the configured byte and timeout budgets vary; the HTTPS origin, hourly
-variables, UTC timestamps and metric units belong to the validated forecast
-contract. Geography is supplied by the explicit end-user request.
+The adapter pins the allowed HTTPS host/path, fixed hourly variables and UTC
+units. Its approved URL and resource budgets are selected through configuration.
 """
 
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 from melliatlas.geography import is_wgs84_position
 from melliatlas.sources.providers.http_transport import (
@@ -13,17 +12,8 @@ from melliatlas.sources.providers.http_transport import (
     read_fixed_origin_json,
 )
 from melliatlas.sources.providers.weather.failures import WeatherReadFailure
-from melliatlas.sources.providers.weather.settings import (
-    FORECAST_ENDPOINT,
-    FORECAST_HOURS,
-    WeatherTransportSettings,
-)
+from melliatlas.sources.providers.weather.settings import FORECAST_HOURS, WeatherTransportSettings
 
-FORECAST_URL = FORECAST_ENDPOINT
-DEFAULT_SETTINGS = WeatherTransportSettings()
-MAX_BODY_BYTES = DEFAULT_SETTINGS.max_body_bytes
-TIMEOUT_SECONDS = DEFAULT_SETTINGS.timeout_seconds
-_HOST = "api.open-meteo.com"
 _FAILURES = JsonTransportFailures(
     WeatherReadFailure.WEATHER_HTTP,
     WeatherReadFailure.WEATHER_CONTENT_TYPE,
@@ -34,9 +24,9 @@ _FAILURES = JsonTransportFailures(
 
 
 def get_public_forecast(
-    latitude: float, longitude: float, *, settings: WeatherTransportSettings = DEFAULT_SETTINGS
+    latitude: float, longitude: float, *, settings: WeatherTransportSettings
 ) -> bytes:
-    """Send only validated WGS84 coordinates to the fixed weather origin."""
+    """Send bounded forecast requests to a configured, approved provider endpoint."""
     if not is_wgs84_position(longitude, latitude):
         raise ValueError("Invalid WGS84 forecast coordinates")
     params = urlencode(
@@ -51,8 +41,8 @@ def get_public_forecast(
         }
     )
     return read_fixed_origin_json(
-        f"{FORECAST_URL}?{params}",
-        expected_host=_HOST,
+        f"{settings.forecast_url}?{params}",
+        expected_host=urlsplit(settings.forecast_url).hostname or "",
         method="GET",
         body=None,
         timeout_seconds=settings.timeout_seconds,

@@ -155,6 +155,23 @@ clearing. Full local typecheck, lint, Vitest, browser and real provider
 compatibility remain acceptance gates. Current live-source reading does not
 establish legal/commercial reuse eligibility or forecast accuracy.
 
+### W01 maintenance — country normalizers, PostGIS row boundaries and weather endpoint policy
+
+Russian Saturn district-name normalization is selected through an explicit
+country strategy; the Russian municipal-district abbreviation is never applied
+to BY names. The PostGIS catalog validates driver row shapes separately from
+point containment queries; ambiguous overlapping `ST_Covers` results fail.
+Shared `WGS84_SRID` replaces inline SQL literals. Existing snapshot forage
+levels use an explicit typed lookup rather than sequential string comparisons.
+
+Weather provider endpoint and attribution URLs are operator-managed database
+fields added by migration `0007`. Composition selects one enabled provider by
+registered adapter identity, with pinned HTTPS host/path validation for the
+currently implemented Open-Meteo wire format; unknown adapters fail closed.
+No provider is implicitly collected or switched at runtime by the browser.
+The migration, fake-DB contract tests and explicit local PostGIS verification
+are distinct from full W01 acceptance.
+
 ### W01 follow-up — usable live sources without fictional catalog entries
 
 **Scope and requirement:** W01 source discovery and explicit `503` catalog handling,

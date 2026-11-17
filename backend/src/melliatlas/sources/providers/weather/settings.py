@@ -1,25 +1,49 @@
-"""Bounded Open-Meteo request policy, distinct from the forecast wire contract.
+"""Validated Open-Meteo HTTP policy; network URLs come from provider configuration.
 
-The 24-hour, UTC, metric field selection is an invariant of the current API,
-not an arbitrary database setting. Only operational budgets are configurable.
+The adapter accepts only its reviewed HTTPS host and exact endpoint path.
+Changing to a different provider format requires registering a separate adapter.
 """
 
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 FORECAST_HOURS = 24
-SOURCE_URI = "https://open-meteo.com/en/docs"
-FORECAST_ENDPOINT = "https://api.open-meteo.com/v1/forecast"
 MAX_ALLOWED_BODY_BYTES = 100_000
 MAX_ALLOWED_TIMEOUT_SECONDS = 15
+_APPROVED_API_HOST = "api.open-meteo.com"
+_APPROVED_DOC_HOST = "open-meteo.com"
+_APPROVED_FORECAST_PATH = "/v1/forecast"
+
+
+def _safe_url(value: object, *, hostname: str, path: str | None = None) -> bool:
+    """Validate untrusted configuration values before URL parsing."""
+    if not isinstance(value, str) or value != value.strip():
+        return False
+    try:
+        url = urlsplit(value)
+        return (
+            url.scheme == "https"
+            and url.hostname == hostname
+            and url.username is None
+            and url.password is None
+            and url.port is None
+            and not url.query
+            and not url.fragment
+            and (url.path == path if path is not None else url.path.startswith("/"))
+            and not any(char in value for char in ("\\", "@", "?", "#", " ", "\t", "\n", "\r"))
+        )
+    except ValueError:
+        return False
 
 
 @dataclass(frozen=True)
 class WeatherTransportSettings:
-    """Bounds protect the fixed provider HTTP contract from DB overrides."""
+    """Resource limits and explicitly approved endpoints for one forecast adapter."""
 
-    timeout_seconds: int = 8
-    max_body_bytes: int = MAX_ALLOWED_BODY_BYTES
-    source_uri: str = SOURCE_URI
+    forecast_url: str
+    source_uri: str
+    timeout_seconds: int
+    max_body_bytes: int
 
     def __post_init__(self) -> None:
         if (
@@ -32,7 +56,9 @@ class WeatherTransportSettings:
             or not 1024 <= self.max_body_bytes <= MAX_ALLOWED_BODY_BYTES
         ):
             raise ValueError("Weather response budget must be between 1024 and 100000 bytes")
-        if not self.source_uri.startswith("https://open-meteo.com/") or any(
-            token in self.source_uri for token in ("?", "#", "@", "\\", " ")
+        if not _safe_url(
+            self.forecast_url, hostname=_APPROVED_API_HOST, path=_APPROVED_FORECAST_PATH
         ):
-            raise ValueError("Weather documentation link must use the fixed verified HTTPS origin")
+            raise ValueError("Forecast URL must use the approved Open-Meteo HTTPS endpoint")
+        if not _safe_url(self.source_uri, hostname=_APPROVED_DOC_HOST):
+            raise ValueError("Weather attribution URL must use the approved HTTPS origin")

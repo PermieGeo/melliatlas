@@ -457,6 +457,11 @@ export function decodeSources(value: unknown): ExternalSource[] {
   });
 }
 
+// This is a host allowlist, not a forecast URL: actual attribution URLs are server-configured.
+const WEATHER_ATTRIBUTION_HOST: Record<WeatherForecast["source_id"], string> = {
+  "open-meteo:forecast": "open-meteo.com",
+};
+
 /** Do not convert missing weather values to zero or accept swapped units/time. */
 export function decodeWeatherForecast(value: unknown): WeatherForecast {
   const v = record(value, "weather");
@@ -509,7 +514,7 @@ export function decodeWeatherForecast(value: unknown): WeatherForecast {
     previousTime = currentTime;
   }
   const source_uri = nonEmpty(v.source_uri, "weather.source_uri");
-  // External links are server-provided, but must still match the approved origin.
+  // Server configuration selects attribution; prevent unsafe external link schemes.
   let attribution: URL;
   try {
     attribution = new URL(source_uri);
@@ -518,7 +523,7 @@ export function decodeWeatherForecast(value: unknown): WeatherForecast {
   }
   if (
     attribution.protocol !== "https:" ||
-    attribution.hostname !== "open-meteo.com" ||
+    attribution.hostname !== WEATHER_ATTRIBUTION_HOST[source_id] ||
     attribution.port !== "" ||
     attribution.username !== "" ||
     attribution.password !== ""

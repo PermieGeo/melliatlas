@@ -5,6 +5,7 @@ from typing import Final, Literal, TypeAlias
 
 Wgs84Crs: TypeAlias = Literal["EPSG:4326"]
 WGS84_CRS: Final[Wgs84Crs] = "EPSG:4326"
+WGS84_SRID: Final = 4326
 LONGITUDE_MIN: Final = -180.0
 LONGITUDE_MAX: Final = 180.0
 LATITUDE_MIN: Final = -90.0

@@ -11,6 +11,8 @@ from melliatlas.api.app import AppSettings, create_app
 from melliatlas.sources.api import SourceReadError, WeatherForecast
 from melliatlas.sources.providers.weather import OpenMeteoForecastReader
 
+TEST_WEATHER_ATTRIBUTION = "https://open-meteo.com/en/docs"
+
 
 def _payload() -> bytes:
     times = [
@@ -49,7 +51,9 @@ def test_provider_preserves_utc_units_grid_and_null_forecast_values() -> None:
         called.append((latitude, longitude))
         return _payload()
 
-    forecast = OpenMeteoForecastReader(fetch).forecast(latitude=54.0, longitude=32.0)
+    forecast = OpenMeteoForecastReader(fetch, source_uri=TEST_WEATHER_ATTRIBUTION).forecast(
+        latitude=54.0, longitude=32.0
+    )
     assert called == [(54.0, 32.0)]
     assert forecast.source_id == "open-meteo:forecast"
     assert (forecast.grid_latitude, forecast.grid_longitude) == (54.02, 32.03)
@@ -70,7 +74,9 @@ def test_provider_rejects_invalid_coordinates_before_network(value: float) -> No
         return _payload()
 
     with pytest.raises(ValueError, match="WGS84"):
-        OpenMeteoForecastReader(fetch).forecast(latitude=value, longitude=32.0)
+        OpenMeteoForecastReader(fetch, source_uri=TEST_WEATHER_ATTRIBUTION).forecast(
+            latitude=value, longitude=32.0
+        )
     assert not called
 
 
@@ -100,14 +106,19 @@ def test_unexpected_forecast_fails_closed(case: str) -> None:
             entry["wind_speed_10m"] = ["calm"] * 24
         else:
             entry["time"] = ["2026-11-15T03:00"] * 24
-    reader = OpenMeteoForecastReader(lambda latitude, longitude: json.dumps(payload).encode())
+    reader = OpenMeteoForecastReader(
+        lambda latitude, longitude: json.dumps(payload).encode(),
+        source_uri=TEST_WEATHER_ATTRIBUTION,
+    )
     with pytest.raises(SourceReadError):
         reader.forecast(latitude=54.0, longitude=32.0)
 
 
 def test_weather_capability_is_independent_of_saturn_and_synthetic() -> None:
     async def check() -> None:
-        reader = OpenMeteoForecastReader(lambda latitude, longitude: _payload())
+        reader = OpenMeteoForecastReader(
+            lambda latitude, longitude: _payload(), source_uri=TEST_WEATHER_ATTRIBUTION
+        )
         disabled = create_app(weather_reader=reader)
         enabled = create_app(settings=AppSettings(weather_live_enabled=True), weather_reader=reader)
         for app, active in ((disabled, False), (enabled, True)):
@@ -162,7 +173,9 @@ def test_upstream_failures_never_become_empty_weather() -> None:
 
 def test_weather_configuration_is_loaded_at_lifespan_not_app_construction() -> None:
     calls: list[str] = []
-    reader = OpenMeteoForecastReader(lambda latitude, longitude: _payload())
+    reader = OpenMeteoForecastReader(
+        lambda latitude, longitude: _payload(), source_uri=TEST_WEATHER_ATTRIBUTION
+    )
 
     def configure() -> OpenMeteoForecastReader:
         calls.append("startup")
@@ -248,7 +261,9 @@ def test_weather_configuration_failure_blocks_startup_without_fallback() -> None
 
 
 def test_cannot_combine_explicit_weather_reader_and_startup_factory() -> None:
-    reader = OpenMeteoForecastReader(lambda latitude, longitude: _payload())
+    reader = OpenMeteoForecastReader(
+        lambda latitude, longitude: _payload(), source_uri=TEST_WEATHER_ATTRIBUTION
+    )
     with pytest.raises(ValueError, match="mutually exclusive"):
         create_app(
             settings=AppSettings(weather_live_enabled=True),

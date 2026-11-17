@@ -5,6 +5,7 @@ connection lifecycle and snapshot serialization stay in postgis_store.py.
 """
 
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from typing import LiteralString, Protocol
 
 
@@ -23,4 +24,16 @@ class DatabaseConnection(Protocol):
 
 ConnectionFactory = Callable[[], DatabaseConnection]
 
-__all__ = ["DatabaseCursor", "DatabaseConnection", "ConnectionFactory"]
+
+@dataclass(frozen=True)
+class WeatherProviderConfig:
+    """Validated DB setting shape; provider-specific URLs are checked by its adapter."""
+
+    provider_id: str
+    timeout_seconds: int
+    max_body_bytes: int
+    source_uri: str
+    forecast_url: str
+
+
+__all__ = ["DatabaseCursor", "DatabaseConnection", "ConnectionFactory", "WeatherProviderConfig"]

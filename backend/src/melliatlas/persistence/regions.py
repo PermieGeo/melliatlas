@@ -64,29 +64,32 @@ class PostgresRegionCatalog:
 
     @staticmethod
     def _region(row: tuple[object, ...]) -> Territory:
-        if (
-            len(row) != 5
-            or not isinstance(row[0], str)
-            or not isinstance(row[1], str)
-            or not isinstance(row[2], str)
-            or not isinstance(row[3], str)
-            or not isinstance(row[4], date)
-        ):
-            raise ReferenceUnavailableError("Invalid region database record")
+        # PostgreSQL returns untyped driver values; validate column order before domain mapping.
+        match row:
+            case (
+                str(identifier),
+                str(country_code),
+                str(name),
+                str(reference),
+                date() as valid_on,
+            ):
+                pass
+            case _:
+                raise ReferenceUnavailableError("Invalid region database record")
         try:
-            country = CountryCode(row[1])
+            country = CountryCode(country_code)
         except ValueError as exc:
             raise ReferenceUnavailableError("Invalid region country") from exc
-        if not row[0].startswith(f"{country.value.lower()}:region:"):
+        if not identifier.startswith(f"{country.value.lower()}:region:"):
             raise ReferenceUnavailableError("Invalid canonical region identifier")
         return Territory(
-            id=row[0],
+            id=identifier,
             country=country,
             kind=TerritoryKind.REGION,
-            name=row[2],
+            name=name,
             parent_id=country.value,
-            reference_id=row[3],
-            valid_on=row[4],
+            reference_id=reference,
+            valid_on=valid_on,
             geometry_status=GeometryStatus.MISSING,
         )
 

@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 from functools import partial
-from typing import TYPE_CHECKING
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Final, Mapping
 
 from melliatlas.agent import DeterministicPlanner, TreatmentPlanner
 from melliatlas.analyzers import find_ecology_overlaps, screen_treatment_notices
 from melliatlas.jobs import EcologyPlannerFactory, TreatmentPlannerFactory
+from melliatlas.persistence.api import WeatherProviderConfig
 from melliatlas.planning import (
     CandidateSite,
     SiteAssessment,
@@ -27,7 +30,6 @@ from melliatlas.territories.api import CountryCode
 
 if TYPE_CHECKING:
     from melliatlas.sources.providers.synthetic import SyntheticFixtureProvider
-    from melliatlas.sources.providers.weather.settings import WeatherTransportSettings
 
 
 class SourceProviderMode(StrEnum):
@@ -104,17 +106,37 @@ def compose_saturn_reader(enabled: bool) -> TreatmentNoticeReader | None:
     return SaturnPublicTreatmentReader(post_public_page)
 
 
-def compose_weather_reader(
-    enabled: bool, options: "WeatherTransportSettings | None" = None
-) -> WeatherForecastReader | None:
-    """Opt into Open-Meteo reads without creating a global source registry."""
-    if not enabled:
-        return None
+def _open_meteo_reader(config: WeatherProviderConfig) -> WeatherForecastReader:
     from melliatlas.sources.providers.weather import OpenMeteoForecastReader
     from melliatlas.sources.providers.weather.http import get_public_forecast
-    from melliatlas.sources.providers.weather.settings import SOURCE_URI
+    from melliatlas.sources.providers.weather.settings import WeatherTransportSettings
 
-    return OpenMeteoForecastReader(
-        get_public_forecast if options is None else partial(get_public_forecast, settings=options),
-        source_uri=options.source_uri if options is not None else SOURCE_URI,
+    settings = WeatherTransportSettings(
+        forecast_url=config.forecast_url,
+        source_uri=config.source_uri,
+        timeout_seconds=config.timeout_seconds,
+        max_body_bytes=config.max_body_bytes,
     )
+    return OpenMeteoForecastReader(
+        partial(get_public_forecast, settings=settings), source_uri=settings.source_uri
+    )
+
+
+# Registered factories implement provider wire formats; the database owns endpoint URLs.
+_WEATHER_READER_FACTORIES: Final[
+    Mapping[str, Callable[[WeatherProviderConfig], WeatherForecastReader]]
+] = MappingProxyType({"open-meteo": _open_meteo_reader})
+
+
+def compose_weather_reader(
+    enabled: bool, options: WeatherProviderConfig | None = None
+) -> WeatherForecastReader | None:
+    """Select one explicitly implemented weather adapter from the DB provider identity."""
+    if not enabled:
+        return None
+    if options is None:
+        raise ValueError("Live weather requires an explicit provider configuration")
+    factory = _WEATHER_READER_FACTORIES.get(options.provider_id)
+    if factory is None:
+        raise ValueError("Weather provider is not implemented")
+    return factory(options)

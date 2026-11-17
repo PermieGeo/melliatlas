@@ -45,6 +45,7 @@ psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0002_re
 python backend/scripts/bootstrap_regions.py
 psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0003_administrative_boundaries.sql
 psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0004_weather_provider_configuration.sql
+psql "$MELLIATLAS_DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/migrations/0007_weather_provider_endpoints.sql
 ```
 
 Migration `0001_completed_investigations.sql` is optional and separate from geographic navigation.
@@ -119,17 +120,25 @@ npm run dev
 
 Open `http://127.0.0.1:5173`. Vite proxies `/api` to port `8000`. Without `MELLIATLAS_DATABASE_URL`, the backend serves region names only (no districts/geometry).
 
-Weather operational configuration is kept in the single `open-meteo` row of
-`melliatlas_weather_provider_config`: `enabled`, `timeout_seconds` (1–15),
-`max_body_bytes` (1024–100000), and the provider documentation URL (verified
-`https://open-meteo.com/` origin). Edit only with a reviewed database update;
-there is no public or remote operator configuration endpoint. The migration
-is required for database-backed live weather. If `MELLIATLAS_DATABASE_URL`
-and `MELLIATLAS_WEATHER_LIVE_ENABLED=true` are configured, settings are read
-at ASGI lifespan startup, not during module import. A missing migration prevents
-the server from starting in that explicit live-weather mode. Apply the `0004`
-migration before restarting; do not delete existing geographic data or turn
-on unreviewed fallback settings. Missing database settings fail closed; the source is still disabled unless the explicit environment gate is true.
+Weather endpoints and attribution URLs are stored in PostgreSQL
+`melliatlas_weather_provider_config` as `forecast_url` and `documentation_url`.
+Apply `0004` and then the additive `0007_weather_provider_endpoints.sql`; the
+latter seeds only the missing Open-Meteo URL without changing existing operator
+budgets or enabled flags. Each row also carries `provider_id`, `enabled`,
+`timeout_seconds` (1–15), and `max_body_bytes` (1024–100000). Exactly one row may
+be enabled for live weather. The runtime checks the chosen provider against
+registered weather adapter factories, and separately restricts the current
+Open-Meteo adapter to its reviewed HTTPS host and `/v1/forecast` path.
+Adding a provider with a different response schema requires an adapter, not
+just a new URL. Neither the browser nor a public HTTP endpoint can configure
+weather sources. Edit the database only after operator review.
+
+The live weather flag and `MELLIATLAS_DATABASE_URL` are both required for the
+default application: configuration loads at ASGI lifespan startup and missing,
+ambiguous, invalid or unsafe settings fail closed. A disabled provider is not
+advertised. This eliminates the old implicit fixed-URL fallback when no database
+is configured. Explicitly injected readers remain supported for tests. No
+migration runs automatically when the API starts.
 
 Optional local-only flags: `MELLIATLAS_SOURCE_PROVIDER=synthetic` enables fictional investigation scenarios; `MELLIATLAS_SATURN_LIVE_ENABLED=true` enables the experimental RU-only manual Saturn read; `MELLIATLAS_WEATHER_LIVE_ENABLED=true` enables a manually requested Open-Meteo forecast. Review source terms before use.
 

@@ -8,6 +8,7 @@ import json
 from typing import Final, LiteralString
 from uuid import UUID
 
+from melliatlas.geography import WGS84_SRID
 from melliatlas.jobs import (
     InvestigationSnapshot,
     InvestigationStatus,
@@ -26,7 +27,7 @@ class PostgisCompletedInvestigationStore:
         INSERT INTO melliatlas_completed_investigations (
             id, payload, reference_version, created_at, completed_at, site_points
         ) VALUES (
-            %s, %s::jsonb, %s, %s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s::text), 4326)
+            %s, %s::jsonb, %s, %s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s::text), %s)
         ) ON CONFLICT DO NOTHING RETURNING id
     """
     _LOAD: Final[LiteralString] = """
@@ -69,6 +70,7 @@ class PostgisCompletedInvestigationStore:
                         snapshot.created_at,
                         snapshot.updated_at,
                         geometry,
+                        WGS84_SRID,
                     ),
                 )
                 if cursor.fetchone() is None:

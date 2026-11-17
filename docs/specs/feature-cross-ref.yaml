@@ -133,11 +133,15 @@ features:
     owners:
       - backend/src/melliatlas/sources/api.py#WeatherForecastReader
       - backend/src/melliatlas/sources/providers/weather/forecast.py#OpenMeteoForecastReader
+      - backend/src/melliatlas/sources/providers/weather/settings.py
+      - backend/src/melliatlas/persistence/weather/config.py#read_weather_configuration
+      - backend/migrations/0007_weather_provider_endpoints.sql
       - backend/src/melliatlas/api/providers/weather/routes.py#create_weather_router
       - web/src/components/WeatherPanel.tsx
       - web/src/geo/selection.ts
     test_files:
       - backend/tests/contract/test_open_meteo_live_http.py
+      - backend/tests/unit/test_weather_configuration.py
       - web/tests/weather.test.tsx
       - web/tests/territory-preference.test.ts
   - feature_id: AGRICULTURE.NOTICES

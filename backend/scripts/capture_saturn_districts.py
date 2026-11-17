@@ -12,6 +12,7 @@ from melliatlas.api.subject_capture import capture_subjects
 from melliatlas.sources.api import SourceReadError
 from melliatlas.sources.providers.saturn.districts import validate_district_directory
 from melliatlas.sources.providers.saturn.http import get_smolensk_district_directory
+from melliatlas.territories.api import CountryCode
 
 
 def main() -> int:
@@ -22,7 +23,7 @@ def main() -> int:
         count, digest, captured_at = capture_subjects(
             args.output,
             get_smolensk_district_directory,
-            lambda raw: len(validate_district_directory(raw)),
+            lambda raw: len(validate_district_directory(raw, country=CountryCode.RU)),
         )
     except (SourceReadError, ValueError, OSError) as exc:
         print(f"District capture failed: {type(exc).__name__}", file=sys.stderr)

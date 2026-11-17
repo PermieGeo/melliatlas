@@ -18,9 +18,10 @@ from import_saturn_districts import (
 from melliatlas.api.subject_capture import capture_subjects
 from melliatlas.sources.providers.saturn.districts import (
     SaturnDistrict,
-    normalized_district_name,
+    district_name_normalizer,
     validate_district_directory,
 )
+from melliatlas.territories.api import CountryCode
 
 
 def _district_directory(size: int = 27) -> bytes:
@@ -38,20 +39,24 @@ def _district_directory(size: int = 27) -> bytes:
 
 def test_historical_smolensk_directory_and_operator_capture(tmp_path: Path) -> None:
     raw = _district_directory()
-    parsed = validate_district_directory(raw)
+    parsed = validate_district_directory(raw, country=CountryCode.RU)
     assert len(parsed) == 27
     assert parsed[0] == SaturnDistrict(1524, "Велижский муниципальный район")
-    assert normalized_district_name(parsed[0].name) == "велижский район"
+    assert district_name_normalizer(CountryCode.RU)(parsed[0].name) == "велижский район"
     output = tmp_path / "districts.json"
     count, digest, _ = capture_subjects(
-        output, lambda: raw, lambda payload: len(validate_district_directory(payload))
+        output,
+        lambda: raw,
+        lambda payload: len(validate_district_directory(payload, country=CountryCode.RU)),
     )
     assert count == 27
     assert output.read_bytes() == raw
     assert digest == hashlib.sha256(raw).hexdigest()
     with pytest.raises(FileExistsError):
         capture_subjects(
-            output, lambda: b"", lambda payload: len(validate_district_directory(payload))
+            output,
+            lambda: b"",
+            lambda payload: len(validate_district_directory(payload, country=CountryCode.RU)),
         )
 
 
@@ -71,7 +76,7 @@ def test_historical_smolensk_directory_and_operator_capture(tmp_path: Path) -> N
 )
 def test_directory_rejects_unsafe_or_ambiguous_source(raw: bytes) -> None:
     with pytest.raises(ValueError):
-        validate_district_directory(raw)
+        validate_district_directory(raw, country=CountryCode.RU)
 
 
 def test_exact_names_need_review_and_missing_names_remain_unmapped() -> None:
@@ -212,3 +217,9 @@ def test_existing_mapping_is_idempotent_and_mismatches_fail(
     cursor.subject = 56
     with pytest.raises(ValueError, match="subject"):
         run_import("fake-dsn", directory, "hash", {}, apply=False)
+
+
+def test_district_name_normalization_is_country_specific() -> None:
+    name = "Ёлкинский муниципальный район"
+    assert district_name_normalizer(CountryCode.RU)(name) == "елкинский район"
+    assert district_name_normalizer(CountryCode.BY)(name) == "ёлкинский муниципальный район"

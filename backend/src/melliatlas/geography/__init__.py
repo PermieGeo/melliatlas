@@ -10,6 +10,7 @@ from .coordinates import (
     MIN_LINEAR_RING_POSITIONS,
     POSITION_DIMENSIONS,
     WGS84_CRS,
+    WGS84_SRID,
     Wgs84Crs,
     is_wgs84_position,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "MIN_LINEAR_RING_POSITIONS",
     "POSITION_DIMENSIONS",
     "WGS84_CRS",
+    "WGS84_SRID",
     "is_wgs84_position",
     "approximate_distance_to_boundary_km",
 ]

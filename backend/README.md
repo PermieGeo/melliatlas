@@ -109,14 +109,14 @@ review is required before publication. See `docs/INSTALLATION.md` for commands.
 
 ## Optional database-backed weather policy
 
-Migration `0004_weather_provider_configuration.sql` creates an idempotent,
-single-provider configuration row. With `MELLIATLAS_DATABASE_URL` and explicit
-`MELLIATLAS_WEATHER_LIVE_ENABLED=true`, startup reads that row and applies the
-bounded timeout, maximum response size, allowlisted attribution URL and enable flag.
-Missing/invalid migration data or an unavailable DB prevents startup rather than
-silently reverting to defaults. Without a configured database, fixed safe defaults
-apply. The 24-hour UTC metric forecast and upstream HTTPS origin are not
-operator-configurable. The source-specific routers live in `api/providers/saturn/routes.py`
+Migrations `0004_weather_provider_configuration.sql` and additive
+`0007_weather_provider_endpoints.sql` store provider identity, forecast endpoint,
+attribution URL, enabled state, and bounded HTTP budgets. Exactly one enabled
+provider is selected at startup with the explicit weather flag and DB URL.
+Without a database, live weather fails closed instead of guessing URLs.
+The Open-Meteo-specific factory accepts only its audited HTTPS host and endpoint
+path; registering a different provider wire format requires a new adapter.
+The 24-hour UTC metric forecast schema remains fixed for the current adapter. The source-specific routers live in `api/providers/saturn/routes.py`
 and `api/providers/weather/routes.py`; `api/routes_sources.py` only lists capabilities.
 
 ## Reviewed Saturn district scope

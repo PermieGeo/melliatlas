@@ -37,10 +37,12 @@ class GeographyConnection:
         self.db.sql.append(query)
         if "ST_Covers(boundary" in query:
             if "kind = 'region'" in query:
-                self.rows = (("by:region:vi",),) if params == ("BY", 27.5, 55.5) else ()
+                self.rows = (("by:region:vi",),) if params == ("BY", 27.5, 55.5, 4326) else ()
             else:
                 self.rows = (
-                    (("by:district:abc123",),) if params == ("by:region:vi", 27.5, 55.5) else ()
+                    (("by:district:abc123",),)
+                    if params == ("by:region:vi", 27.5, 55.5, 4326)
+                    else ()
                 )
         elif "FROM melliatlas_source_saturn" in query:
             self.rows = ((55,),)

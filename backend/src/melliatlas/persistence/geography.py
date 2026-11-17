@@ -18,6 +18,7 @@ from melliatlas.geography import (
     WGS84_CRS,
     is_wgs84_position,
 )
+from melliatlas.persistence.point_locator import PostgisPointLocator
 from melliatlas.persistence.regions import PostgresRegionCatalog
 from melliatlas.territories.api import (
     CountryCode,
@@ -119,18 +120,6 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
         FROM melliatlas_admin_geometry
         WHERE territory_id = %s AND kind = 'district'
     """
-    _CONTAINING_REGIONS: Final[LiteralString] = """
-        SELECT territory_id FROM melliatlas_admin_geometry
-        WHERE country_code = %s AND kind = 'region'
-          AND ST_Covers(boundary, ST_SetSRID(ST_MakePoint(%s, %s), 4326))
-        LIMIT 2
-    """
-    _CONTAINING_DISTRICTS: Final[LiteralString] = """
-        SELECT territory_id FROM melliatlas_admin_geometry
-        WHERE region_id = %s AND kind = 'district'
-          AND ST_Covers(boundary, ST_SetSRID(ST_MakePoint(%s, %s), 4326))
-        LIMIT 2
-    """
     _GEOMETRY: Final[LiteralString] = """
         SELECT reference_id, ST_AsGeoJSON(ST_SimplifyPreserveTopology(boundary, %s), %s)
         FROM melliatlas_admin_geometry WHERE territory_id = %s
@@ -147,25 +136,23 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
 
     @staticmethod
     def _district(row: tuple[object, ...]) -> Territory:
-        if (
-            len(row) != 7
-            or any(not isinstance(value, str) for value in row[:5])
-            or not isinstance(row[5], date)
-        ):
-            raise ReferenceUnavailableError("Invalid district database row")
-        translated = row[6]
+        # The last column is a nullable translated label; identity columns stay source-owned.
+        match row:
+            case (
+                str(identifier),
+                str(country),
+                str(name),
+                str(region),
+                str(reference),
+                date() as valid_on,
+                translated,
+            ):
+                pass
+            case _:
+                raise ReferenceUnavailableError("Invalid district database row")
         if translated is not None and (not isinstance(translated, str) or not translated.strip()):
             raise ReferenceUnavailableError("Invalid district display name")
         localized_name: str | None = translated if isinstance(translated, str) else None
-        identifier, country, name, region, reference = row[:5]
-        if (
-            not isinstance(identifier, str)
-            or not isinstance(country, str)
-            or not isinstance(name, str)
-            or not isinstance(region, str)
-            or not isinstance(reference, str)
-        ):
-            raise ReferenceUnavailableError("Invalid district fields")
         try:
             country_code = CountryCode(country)
         except ValueError as exc:
@@ -181,7 +168,7 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
             name=name,
             parent_id=region,
             reference_id=reference,
-            valid_on=row[5],
+            valid_on=valid_on,
             geometry_status=GeometryStatus.AVAILABLE,
             name_ru=localized_name,
         )
@@ -189,35 +176,9 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
     async def locate_point(
         self, *, country: CountryCode, longitude: float, latitude: float
     ) -> TerritoryAtPoint | None:
-        if not is_wgs84_position(longitude, latitude):
-            raise ValueError("Invalid WGS84 point")
-        regions = await asyncio.to_thread(
-            self._read, self._CONTAINING_REGIONS, (country.value, longitude, latitude)
+        return await PostgisPointLocator(self._read).locate_point(
+            country=country, longitude=longitude, latitude=latitude
         )
-        if not regions:
-            return None
-        if len(regions) != 1 or len(regions[0]) != 1 or not isinstance(regions[0][0], str):
-            raise ReferenceUnavailableError("Overlapping or invalid region reference at point")
-        region_id = regions[0][0]
-        districts = await asyncio.to_thread(
-            self._read, self._CONTAINING_DISTRICTS, (region_id, longitude, latitude)
-        )
-        if len(districts) > 1:
-            raise ReferenceUnavailableError("Overlapping or invalid district reference at point")
-        district_id: str | None = None
-        if districts:
-            district_row = districts[0]
-            if len(district_row) != 1:
-                raise ReferenceUnavailableError(
-                    "Overlapping or invalid district reference at point"
-                )
-            district_value = district_row[0]
-            if not isinstance(district_value, str):
-                raise ReferenceUnavailableError(
-                    "Overlapping or invalid district reference at point"
-                )
-            district_id = district_value
-        return TerritoryAtPoint(region_id=region_id, district_id=district_id)
 
     async def list_regions(self, country: CountryCode) -> tuple[Territory, ...]:
         rows = await asyncio.to_thread(self._read, self._COUNTRY_REGIONS, (country.value,))
@@ -250,21 +211,20 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
         )
         if not rows:
             return None
-        if (
-            len(rows) != 1
-            or len(rows[0]) != 2
-            or not isinstance(rows[0][0], str)
-            or not isinstance(rows[0][1], str)
-        ):
-            raise ReferenceUnavailableError("Invalid geometry database row")
+        # The geometry query must return exactly one reference ID and GeoJSON document.
+        match rows:
+            case ((str(reference_id), str(geometry_json)),):
+                pass
+            case _:
+                raise ReferenceUnavailableError("Invalid geometry database row")
         try:
-            geo = _decode_geometry(rows[0][1])
+            geo = _decode_geometry(geometry_json)
         except (ValueError, TypeError) as exc:
             raise ReferenceUnavailableError("Invalid stored boundary geometry") from exc
         # PostGIS enforces SRID and topology when the boundary is inserted.
         return TerritoryGeometry(
             territory_id=territory_id,
             geometry=geo,
-            reference_id=rows[0][0],
+            reference_id=reference_id,
             coordinate_system=WGS84_CRS,
         )

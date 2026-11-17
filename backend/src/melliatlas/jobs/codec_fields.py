@@ -82,14 +82,19 @@ def stored_window(value: object, field: str) -> TimeWindow:
     return TimeWindow(_stored_date(window, "start"), _stored_date(window, "end"))
 
 
+_FORAGE_LEVELS: Final[dict[str, Literal["LOW", "MEDIUM", "HIGH"]]] = {
+    "LOW": "LOW",
+    "MEDIUM": "MEDIUM",
+    "HIGH": "HIGH",
+}
+
+
 def _stored_level(value: object) -> Literal["LOW", "MEDIUM", "HIGH"]:
-    if value == "LOW":
-        return "LOW"
-    if value == "MEDIUM":
-        return "MEDIUM"
-    if value == "HIGH":
-        return "HIGH"
-    raise ValueError("Stored forage_level must be LOW, MEDIUM, or HIGH")
+    # Lookup preserves the narrow Literal type without widening untrusted stored values.
+    level = _FORAGE_LEVELS.get(value) if isinstance(value, str) else None
+    if level is None:
+        raise ValueError("Stored forage_level must be LOW, MEDIUM, or HIGH")
+    return level
 
 
 def _stored_stop(value: object) -> SeasonStop:

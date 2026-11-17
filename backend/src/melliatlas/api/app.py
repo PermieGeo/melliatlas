@@ -14,7 +14,6 @@ from melliatlas.api.composition import (
     SourceProviderMode,
     compose_saturn_reader,
     compose_sources,
-    compose_weather_reader,
 )
 from melliatlas.api.providers.saturn.routes import create_saturn_router, saturn_capability
 from melliatlas.api.providers.weather.routes import (
@@ -75,10 +74,10 @@ def create_app(
 
     loaded_catalog = InMemoryTerritoryCatalog() if snapshot_path is not None else None
     initial_weather_reader: WeatherForecastReader | None = None
+    if config.weather_live_enabled and weather_reader_factory is None and weather_reader is None:
+        raise ValueError("Live weather requires an injected reader or startup configuration")
     if config.weather_live_enabled and weather_reader_factory is None:
-        initial_weather_reader = (
-            weather_reader if weather_reader is not None else compose_weather_reader(True)
-        )
+        initial_weather_reader = weather_reader
     weather_state = WeatherReaderState(initial_weather_reader)
 
     @asynccontextmanager
