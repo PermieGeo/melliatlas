@@ -96,3 +96,7 @@ imported districts. A browser selecting Russian may prefer it, but must retain
 identifier. The canonical `id`, `parent_id`, reference version, geometry and
 source display name remain unchanged. The initial operator-curated seed is
 limited to the Smolensk district names shown in `0006_smolensk_district_names.sql`.
+
+## Unsaved analysis-area district preview
+
+`lookupIntersectingDistricts` posts the selected country, canonical region ID, private center and bounded dimensions to `/api/v1/territories/intersecting-districts`. It is a read-only, explicitly requested operation; the position is never included in a URL, log, browser storage, or a saved-place mutation. `decodeAreaDistrictResult` validates the response rectangle, unique district IDs, provenance labels and the limited `MISSING` / `UNVERIFIED` coverage states. An error or an empty district array does not establish complete regional coverage. The backend spatial lookup, not the browser preview rectangle, is authoritative for region containment and district intersection. Aborts and stale responses must be discarded before presentation.

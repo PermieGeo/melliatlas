@@ -6,7 +6,7 @@
 - **Requirements approval:** APPROVED — original W01 browser scope.
 - **Implementation authorization:** AUTHORIZED — original W01 scope only; the new saved-place task remains design-only until explicit approval.
 - **Acceptance:** PENDING.
-- **Selected bounded task:** [Saved place and editable bbox](../tasks/web-saved-place-bbox/task.md) with [task plan](../tasks/web-saved-place-bbox/task-plan.md); backend read-only geography and a disconnected, owner-scoped storage adapter are prepared.
+- **Selected bounded task:** [Saved place and editable bbox](../tasks/web-saved-place-bbox/task.md) with [task plan](../tasks/web-saved-place-bbox/task-plan.md); backend read-only geography and the unsaved React preview are implemented; the owner-scoped storage adapter remains disconnected.
 
 This document is a stable entrypoint for the selected Web workstream, not a chronology of completed increments. For the selected bounded task read only its task/plan, shared normative requirements and the explicitly listed module contracts and code. Do not re-open previous task history by default.
 
@@ -28,7 +28,7 @@ Source-of-truth contracts: [HTTP API contract](../../../../backend/src/melliatla
 
 `web/src/App.tsx` coordinates country, region, selected territory/point, the opt-in live source previews and the separate synthetic investigation. `MapPanel`, `ReferenceControls`, `LiveAreaAnalysis`, `WeatherPanel` and `Timeline` display the existing workflow. Browser code does not store private selected points. Viewport and validated public territory preferences have separate local persistence. The OpenStreetMap remote tile layer is now explicitly opt-in per map session; there is no full offline basemap or regional thematic dataset yet.
 
-The UI does **not** yet save private analysis places, offer editable 15–30 km bbox, load a complete regional thematic dataset, discover every district intersecting a rectangle, or persist analytic snapshots locally. Browser and live PostGIS verification, external-source access/reuse rights, feature acceptance and production authentication remain open gates.
+The UI offers an **unsaved** editable 15–30 km analysis rectangle and an explicit read-only lookup of imported districts, without claiming complete ADM2 coverage. It does **not** yet save private analysis places, load a complete regional thematic dataset, render all district boundary overlays, or persist analytic snapshots locally. Browser and live PostGIS verification, external-source access/reuse rights, feature acceptance and production authentication remain open gates.
 
 The existing server/client code permits a one-calendar-year source filter; documentation or operator hints must not silently restore the obsolete 31-day limit. API date filtering, source completeness, and evidence validity are distinct claims.
 
@@ -36,7 +36,7 @@ The existing server/client code permits a one-calendar-year source filter; docum
 
 **Selected task:** `WEB-PLACE-01`, [requirements](../tasks/web-saved-place-bbox/task.md) and [integration design](../tasks/web-saved-place-bbox/task-plan.md).
 
-The read-only rectangle/district contract is implemented. Owner-scoped private place values, an optional storage adapter and migration are prepared, but **not wired to any HTTP route or startup path**. Activation and the UI workflow remain gated by explicit approval of user ownership/security, CRUD transport contracts, real PostGIS verification and available regional map coverage. Do not create a Tauri runtime dependency, general workflow engine or new country/provider registry as part of this slice.
+The read-only rectangle/district contract and unsaved Web preview are implemented. Owner-scoped private place values, an optional storage adapter and migration are prepared, but **not wired to any HTTP route or startup path**. Activation and the UI workflow remain gated by explicit approval of user ownership/security, CRUD transport contracts, real PostGIS verification and available regional map coverage. Do not create a Tauri runtime dependency, general workflow engine or new country/provider registry as part of this slice.
 
 ## 4. Current TDD evidence and verification
 

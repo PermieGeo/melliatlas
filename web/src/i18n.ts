@@ -2,6 +2,25 @@
 export type Locale = "ru" | "en";
 
 const en = {
+  draftAreaTitle: "Unsaved analysis area",
+  draftAreaStart: "Create area draft",
+  draftAreaCancel: "Discard draft",
+  draftAreaNeedsRegion: "Select a region before creating an area.",
+  draftAreaClickHint: "Click the map to set or move the draft center.",
+  draftAreaIntro: "Select a region, then create a temporary area on the map.",
+  draftAreaWidth: "Width (km)",
+  draftAreaHeight: "Height (km)",
+  draftAreaSize: "Nominal area: {area} km²",
+  draftAreaCheck: "Check intersecting districts",
+  draftAreaChecking: "Checking imported districts…",
+  draftAreaError: "Area lookup unavailable ({code}). Coverage is unknown.",
+  draftAreaDistricts: "Imported intersecting districts: {count}",
+  draftAreaMissing:
+    "No district geometry was returned. Coverage is missing or incomplete.",
+  draftAreaUnverified:
+    "These are known overlaps only; complete district coverage is not verified.",
+  draftAreaUnsaved:
+    "Draft only. Coordinates are not saved; this is not a safety assessment.",
   mapPointOutside: "No imported administrative region contains this point.",
   mapPointUnavailable: "Could not identify a district at the selected point.",
   mapShowSaturnFields: "Zoom to fetched fields",
@@ -264,6 +283,25 @@ const en = {
 } as const;
 
 const ru: Record<keyof typeof en, string> = {
+  draftAreaTitle: "Черновик области анализа",
+  draftAreaStart: "Создать черновик",
+  draftAreaCancel: "Отменить черновик",
+  draftAreaNeedsRegion: "Для создания области сначала выберите регион.",
+  draftAreaClickHint:
+    "Нажмите на карту, чтобы установить или переместить центр.",
+  draftAreaIntro: "Выберите регион, затем создайте временную область на карте.",
+  draftAreaWidth: "Ширина (км)",
+  draftAreaHeight: "Высота (км)",
+  draftAreaSize: "Расчётная площадь: {area} км²",
+  draftAreaCheck: "Найти пересекающиеся районы",
+  draftAreaChecking: "Проверка импортированных районов…",
+  draftAreaError: "Не удалось прочитать районы ({code}). Полнота неизвестна.",
+  draftAreaDistricts: "Известных пересекающихся районов: {count}",
+  draftAreaMissing: "Границы районов отсутствуют или неполны.",
+  draftAreaUnverified:
+    "Показаны только известные пересечения; полнота данных не подтверждена.",
+  draftAreaUnsaved:
+    "Это черновик без сохранения координат, не оценка безопасности.",
   mapPointOutside:
     "Для этой точки нет импортированной административной территории.",
   mapPointUnavailable: "Не удалось определить район по выбранной точке.",

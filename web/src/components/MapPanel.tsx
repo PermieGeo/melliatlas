@@ -7,6 +7,7 @@ import type {
   TerritoryGeometry,
 } from "../api/types";
 import { t } from "../i18n";
+import type { DraftRectangle } from "../geo/analysisDraft";
 import type { Locale } from "../i18n";
 import {
   DEFAULT_VIEWPORT,
@@ -33,6 +34,8 @@ interface Props {
   stops: Stop[];
   selectedId: string | null;
   startingPoint: Position | null;
+  draftPoint: Position | null;
+  draftBounds: DraftRectangle | null;
   referenceGeometry: TerritoryGeometry | null;
   saturnNotices: SaturnNotice[];
   onSelect: (siteId: string) => void;
@@ -45,6 +48,8 @@ export function MapPanel({
   stops,
   selectedId,
   startingPoint,
+  draftPoint,
+  draftBounds,
   referenceGeometry,
   saturnNotices,
   onSelect,
@@ -56,6 +61,7 @@ export function MapPanel({
   const overlays = useRef<L.LayerGroup | null>(null);
   const boundaryLayer = useRef<L.GeoJSON | null>(null);
   const treatmentLayer = useRef<L.LayerGroup | null>(null);
+  const draftLayer = useRef<L.LayerGroup | null>(null);
   const pointCallback = useRef(onPoint);
   const focusTreatment = () => {
     const instance = map.current;
@@ -105,6 +111,7 @@ export function MapPanel({
       overlays.current = null;
       boundaryLayer.current = null;
       treatmentLayer.current = null;
+      draftLayer.current = null;
     };
   }, []);
 
@@ -164,6 +171,40 @@ export function MapPanel({
       });
     }
   }, [locale, onSelect, selectedId, startingPoint, stops]);
+
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance) return;
+    if (draftLayer.current) instance.removeLayer(draftLayer.current);
+    const layer = L.layerGroup().addTo(instance);
+    draftLayer.current = layer;
+    if (draftBounds) {
+      for (const [west, east] of draftBounds.longitudeRanges) {
+        layer.addLayer(
+          L.rectangle(
+            [
+              [draftBounds.south, west],
+              [draftBounds.north, east],
+            ],
+            { className: "ma-analysis-draft", interactive: false },
+          ),
+        );
+      }
+    }
+    if (draftPoint) {
+      layer.addLayer(
+        L.circleMarker([draftPoint.latitude, draftPoint.longitude], {
+          radius: STARTING_POINT_MARKER_RADIUS_PX,
+          className: "ma-analysis-draft-point",
+          interactive: false,
+        }),
+      );
+    }
+    return () => {
+      instance.removeLayer(layer);
+      if (draftLayer.current === layer) draftLayer.current = null;
+    };
+  }, [draftBounds, draftPoint]);
 
   useEffect(() => {
     const instance = map.current;

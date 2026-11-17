@@ -1,0 +1,103 @@
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { useAreaDraft } from "../src/hooks/useAreaDraft";
+
+const result = {
+  coverage: "UNVERIFIED",
+  south: 53.9,
+  north: 54.1,
+  longitude_ranges: [[31.9, 32.1]],
+  nominal_area_km2: 225,
+  districts: [
+    {
+      id: "ru:district:a",
+      region_id: "ru:region:smo",
+      name: "A",
+      reference_id: "ref",
+    },
+  ],
+};
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+describe("region-scoped unsaved area workflow", () => {
+  it("requires a region and a map click before requesting districts", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(result)));
+    vi.stubGlobal("fetch", fetchMock);
+    const { result: state, rerender } = renderHook(
+      ({ region }) => useAreaDraft("RU", region),
+      { initialProps: { region: "" } },
+    );
+    act(() => state.current.start());
+    expect(state.current.editing).toBe(false);
+    rerender({ region: "ru:region:smo" });
+    act(() => {
+      state.current.start();
+      state.current.selectPoint({ longitude: 32, latitude: 54 });
+    });
+    // A click after enabling draft mode is a separate user interaction.
+    act(() => state.current.selectPoint({ longitude: 32, latitude: 54 }));
+    expect(state.current.draft?.widthKm).toBe(15);
+    expect(state.current.draft?.heightKm).toBe(15);
+    expect(fetchMock).not.toHaveBeenCalled();
+    await act(async () => {
+      await state.current.checkDistricts();
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(state.current.preview?.districts).toHaveLength(1);
+    expect(state.current.preview?.coverage).toBe("UNVERIFIED");
+  });
+
+  it("invalidates stale results after resizing and on region changes", async () => {
+    let finish: ((response: Response) => void) | undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            finish = resolve;
+          }),
+      ),
+    );
+    const { result: state, rerender } = renderHook(
+      ({ region }) => useAreaDraft("RU", region),
+      { initialProps: { region: "ru:region:smo" } },
+    );
+    act(() => state.current.start());
+    act(() => state.current.selectPoint({ longitude: 32, latitude: 54 }));
+    let pending: Promise<void> | undefined;
+    act(() => {
+      pending = state.current.checkDistricts();
+    });
+    expect(state.current.status).toBe("loading");
+    act(() => state.current.resize("widthKm", 20));
+    expect(state.current.preview).toBeNull();
+    expect(state.current.status).toBe("idle");
+    await act(async () => {
+      finish?.(new Response(JSON.stringify(result)));
+      await pending;
+    });
+    expect(state.current.preview).toBeNull();
+    rerender({ region: "ru:region:other" });
+    await waitFor(() => expect(state.current.draft).toBeNull());
+    expect(state.current.editing).toBe(false);
+  });
+
+  it("keeps invalid dimensions unchanged and cancels a draft without persistence", () => {
+    const { result: state } = renderHook(() =>
+      useAreaDraft("RU", "ru:region:smo"),
+    );
+    act(() => state.current.start());
+    act(() => state.current.selectPoint({ longitude: 32, latitude: 54 }));
+    act(() => state.current.resize("heightKm", 31));
+    expect(state.current.draft?.heightKm).toBe(15);
+    act(() => state.current.resize("heightKm", 25));
+    expect(state.current.draft?.heightKm).toBe(25);
+    act(() => state.current.cancel());
+    expect(state.current.draft).toBeNull();
+    expect(state.current.editing).toBe(false);
+  });
+});

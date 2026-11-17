@@ -50,6 +50,10 @@ features:
       - backend/src/melliatlas/persistence/geography.py#PostgisTerritoryCatalog
       - backend/migrations/0006_smolensk_district_names.sql
       - web/src/components/ReferenceControls.tsx
+      - web/src/components/AreaDraftPanel.tsx
+      - web/src/hooks/useAreaDraft.ts
+      - web/src/geo/analysisDraft.ts
+      - web/src/api/client.ts
       - web/src/api/validation.ts
       - backend/scripts/prepare_geoboundaries.py#prepare
       - backend/scripts/prepare_all_geoboundaries.py#prepare_all
@@ -67,6 +71,9 @@ features:
       - backend/tests/unit/test_navigation_diagnostics.py
       - web/tests/reference-navigation.test.tsx
       - web/tests/territory-preference.test.ts
+      - web/tests/analysis-draft.test.ts
+      - web/tests/area-draft-workflow.test.tsx
+      - web/tests/area-district-client.test.ts
   - feature_id: MAP.BASEMAP
     implementation_status: planned
     stages: [MVP-01]
