@@ -9,7 +9,7 @@
 ## Architecture
 - Organize by cohesive capabilities with clear owners and small public boundaries.
 - Never place a concrete implementation in an abstract contract/interface layer (`api.py`, ports or protocol declarations); keep implementations in capability-owned, clearly named modules and inject them at composition boundaries. Do not introduce a package or abstraction solely to satisfy a diagram.
-- Import other modules through declared public APIs, not private implementations. Keep dependency direction explicit, acyclic, and enforceable in tests.
+- Cross-capability consumers must use declared public API entrypoints (normally `api.py` for Python, or an explicitly documented public facade), never private implementation files. Composition roots may import concrete adapters solely to wire dependencies. Keep dependency direction explicit, acyclic, and enforceable in tests.
 - Keep domain decisions independent of HTTP frameworks, database adapters, and external transport. Inject I/O collaborators at composition boundaries.
 - Avoid global mutable registries, service locators, hidden side effects, speculative wrappers, and generic `common` modules. Extract shared code only when concrete consumers justify it.
 - Prefer clear names, readable control flow, and explicit failure states. Some local duplication is acceptable when premature sharing would obscure ownership.
@@ -29,9 +29,9 @@
 
 ## Documentation and SDD
 - Read the relevant README for project context; keep AGENTS concise and README developer-facing. Maintain a README next to each existing AGENTS, but do not create extra documentation without a concrete need.
-- Write `contract.md` for stable cross-module boundaries with meaningful invariants, errors, and interoperability concerns; do not duplicate a trivial typed implementation in prose.
+- Keep each module `contract.md` concise and strictly consumer-facing: describe what the module provides to other modules, its documented public API entrypoint, observable guarantees and invariants, error semantics, and externally visible side effects or compatibility constraints. The API declarations (for example, `api.py`) own exact types and signatures. Never describe private algorithms, internal state, SQL queries, private implementation classes, or step-by-step implementation in `contract.md`; do not duplicate API declarations in prose.
 - Keep the active sub-spec, implementation plan, feature cross-reference, and checkpoint consistent with real code. Never invent implementation paths or treat planned features as implemented.
-- Do not record conversation provenance, patch history, or speculative acceptance in repository documentation.
+- Keep active specifications, plans, contracts, and READMEs focused on current obligations and behavior, not chronological implementation history. Preserve only significant superseded engineering decisions in the non-normative `docs/specs/archive/` when needed; Git remains the complete change history. Never record conversation or AI provenance, PATCH handoff logs, or speculative acceptance in repository documentation.
 
 ## Checks and dependencies
 - Verify changed behavior with positive, negative, and boundary tests. Enforce critical module imports and dependency direction automatically, with tests showing that invalid dependencies are rejected.

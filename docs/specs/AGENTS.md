@@ -28,4 +28,10 @@ Extends `../../AGENTS.md`. Keep normative requirements separate from advisory im
 - Set `implementation_status: verified` only with a matching `STATE.json.featureAcceptances` record identifying acceptance criteria, verifiable evidence paths, and an explicit developer approval reference. Code and passing tests alone do not establish feature acceptance; never invent approval.
 - Keep feature IDs and links in `docs/FEATURES.md` and `docs/specs/feature-cross-ref.yaml` accurate for actually implemented behavior.
 - After each coherent task, review changes for scope creep, contract drift, unnecessary dependencies, missing tests and false implementation claims.
-- Do not read `docs/specs/archive/` during ordinary implementation; consult it for an explicitly requested historical review only.
+
+## Active documents and historical continuity
+- MUST keep active sub-specifications, implementation plans, the specification index, and related READMEs as current-state documents. NEVER append chronological PATCH notes, completed-task narratives, superseded proposals, or implementation diaries to them. Replace obsolete plan material with the current next task, concise dependency references, and links to authoritative APIs, contracts, and tests.
+- After each bounded task, remove or replace stale implementation-plan text and reconcile changed requirements, public boundaries, documented limitations, feature status, and tests. Preserve approved normative requirements and acceptance criteria until explicitly revised; documentation cleanup never grants approval or acceptance.
+- When a past decision is worth retaining, record a brief dated entry in a single optional engineering history under `docs/specs/archive/`: task/requirement reference, decision and rationale, affected public contract, and links to the authoritative current sources. Do not copy full diffs, old plans, conversation content, or generated-PATCH handoff records; use Git for exact history.
+- Treat `docs/specs/archive/` as non-normative historical material. NEVER read it in ordinary task implementation, dependency discovery, or context assembly; consult it only for an explicitly requested historical or deep architecture review. Archived records never override active specifications and public contracts.
+
