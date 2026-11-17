@@ -1,5 +1,6 @@
 """Territory module public adapter exports."""
 
-from melliatlas.territories.catalog import InMemoryTerritoryCatalog
+from .catalog import InMemoryTerritoryCatalog
+from .countries import supported_countries
 
-__all__ = ["InMemoryTerritoryCatalog"]
+__all__ = ["InMemoryTerritoryCatalog", "supported_countries"]

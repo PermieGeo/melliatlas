@@ -55,13 +55,14 @@ Missing hourly values stay `None`, never zero. `SourceReadError` means unknown
 weather availability, not calm wind or no pesticide exposure.
 
 The Open-Meteo implementation decodes only one 24-hour forecast with 10-m wind
-speed/direction, gusts and precipitation. Provider-owned `open_meteo/http.py`
+speed/direction, gusts and precipitation. Provider-owned `weather/http.py`
 uses a shared fixed-origin transport helper; only the API composition root can
-instantiate it. PostgreSQL `0004_weather_provider_configuration.sql` stores an
-optional enable/timeout/byte budget and allowlisted attribution URL. The ASGI
-entry point reads that row only when a database and the explicit weather live
-flag are both configured; missing configuration fails closed. The 24-hour UTC
-wire contract and source HTTP origin are not database overrides. No advection, spray drift, safety rating, automatic refresh or cached forecasts
+instantiate it. PostgreSQL migrations `0004` and `0007` store provider identity, enabled flag,
+HTTP budgets, forecast endpoint and attribution URL. The default ASGI entry point
+requires a configured database when live weather is enabled, selects exactly one
+active row and composes only a registered weather adapter. Open-Meteo still
+validates its fixed HTTPS host/path and 24-hour UTC wire format; a new provider
+requires its own reader factory and decoder. No arbitrary DB URL is fetched. No advection, spray drift, safety rating, automatic refresh or cached forecasts
 are provided. This source does not require a synthetic scenario and is usable
 independently of the country-specific Saturn notice reader.
 
@@ -94,3 +95,5 @@ operator approval of the captured bytes; no source ID is inferred from a
 canonical territory ID. The existing Saturn reader then sends the approved
 source ID as `beekeperSearchFilter.district` for the user's manual request.
 External endpoint compatibility and use rights remain independently gated.
+
+The source-specific HTTP weather implementation resides in `sources/providers/weather/` and retains Open-Meteo-specific configuration in its concrete settings adapter. This package is distinct from the persistence-owned weather policy and from provider-neutral `sources/api.py`. WGS84 coordinates are validated through the shared geographic primitives.

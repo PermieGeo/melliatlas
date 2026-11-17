@@ -99,10 +99,10 @@ def test_provider_facades_export_implementations_not_contract_modules() -> None:
     from melliatlas.persistence import PostgisCompletedInvestigationStore
     from melliatlas.persistence import api as persistence_api
     from melliatlas.sources.api import ScenarioProvider
-    from melliatlas.sources.providers import open_meteo, saturn, synthetic
-    from melliatlas.sources.providers.open_meteo import api as weather_api
+    from melliatlas.sources.providers import saturn, synthetic, weather
     from melliatlas.sources.providers.saturn import api as saturn_api
     from melliatlas.sources.providers.synthetic import api as synthetic_api
+    from melliatlas.sources.providers.weather import api as weather_api
 
     assert PostgisCompletedInvestigationStore.__module__ == "melliatlas.persistence.postgis_store"
     assert not hasattr(persistence_api, "PostgisCompletedInvestigationStore")
@@ -111,7 +111,7 @@ def test_provider_facades_export_implementations_not_contract_modules() -> None:
     assert not hasattr(saturn_api, "SaturnPublicTreatmentReader")
     assert saturn.SaturnPublicTreatmentReader.__module__.endswith(".saturn.live")
     assert not hasattr(weather_api, "OpenMeteoForecastReader")
-    assert open_meteo.OpenMeteoForecastReader.__module__.endswith(".open_meteo.forecast")
+    assert weather.OpenMeteoForecastReader.__module__.endswith(".weather.forecast")
 
 
 def test_real_ports_are_structural_protocols() -> None:

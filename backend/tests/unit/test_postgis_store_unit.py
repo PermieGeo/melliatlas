@@ -52,7 +52,8 @@ class RecordingConnection:
     def execute(self, query: str, params: Sequence[object] = ()) -> None:
         self.executed.append((query, tuple(params)))
         if "INSERT INTO" in query:
-            identifier, serialized, _, _, _, geometry = params
+            identifier, serialized, _, _, _, geometry, srid = params
+            assert srid == 4326
             assert isinstance(identifier, UUID)
             assert isinstance(serialized, str)
             if geometry is not None:
@@ -189,5 +190,6 @@ def test_insufficient_evidence_save_has_no_site_geometry() -> None:
     assert completed.plan is None
     query, parameters = database.connections[0].executed[0]
     assert "ST_GeomFromGeoJSON" in query
-    assert parameters[-1] is None
+    assert parameters[-2] is None
+    assert parameters[-1] == 4326
     assert repo.load(queued.id) == completed

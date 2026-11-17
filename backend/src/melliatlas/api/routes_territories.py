@@ -5,6 +5,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse
+from melliatlas.geography import LATITUDE_MAX, LATITUDE_MIN, LONGITUDE_MAX, LONGITUDE_MIN
+from melliatlas.territories import supported_countries
 from melliatlas.territories.api import (
     CatalogDepthUnsupported,
     CountryCode,
@@ -43,8 +45,8 @@ class TerritoryResponse(BaseModel):
 class ResolvePointRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     country: CountryCode
-    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
-    latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
+    longitude: float = Field(ge=LONGITUDE_MIN, le=LONGITUDE_MAX, allow_inf_nan=False)
+    latitude: float = Field(ge=LATITUDE_MIN, le=LATITUDE_MAX, allow_inf_nan=False)
 
 
 class ResolvePointResponse(BaseModel):
@@ -108,10 +110,7 @@ def create_territory_router(catalog: TerritoryCatalog | None) -> APIRouter:
 
     @router.get("/countries", response_model=list[CountryResponse])
     async def list_countries() -> list[CountryResponse]:
-        return [
-            CountryResponse(code=CountryCode.RU, name="Russia"),
-            CountryResponse(code=CountryCode.BY, name="Belarus"),
-        ]
+        return [CountryResponse(code=code, name=name) for code, name in supported_countries()]
 
     @router.get(
         "/regions",

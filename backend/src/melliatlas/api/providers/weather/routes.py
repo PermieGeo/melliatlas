@@ -15,8 +15,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from melliatlas.api.public import ApiErrorCode, ErrorResponse
 from melliatlas.api.routes_sources import SourceCapability, SourceListingDto, source_failure
+from melliatlas.geography import LATITUDE_MAX, LATITUDE_MIN, LONGITUDE_MAX, LONGITUDE_MIN
 from melliatlas.sources.api import SourceReadError, WeatherForecastReader
-from melliatlas.sources.providers.open_meteo import FORECAST_HOURS
+from melliatlas.sources.providers.weather import FORECAST_HOURS
 from melliatlas.territories.api import CountryCode
 
 
@@ -29,8 +30,8 @@ class WeatherReaderState:
 
 class WeatherPointRequestDto(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
-    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    latitude: float = Field(ge=LATITUDE_MIN, le=LATITUDE_MAX, allow_inf_nan=False)
+    longitude: float = Field(ge=LONGITUDE_MIN, le=LONGITUDE_MAX, allow_inf_nan=False)
 
 
 class WeatherHourDto(BaseModel):

@@ -12,6 +12,7 @@ from fastapi import FastAPI
 
 from melliatlas.api.app import AppSettings, create_app
 from melliatlas.persistence.regions import PostgresRegionCatalog
+from melliatlas.persistence.source_registry import SOURCE_MAPPING_QUERIES
 from melliatlas.sources.api import TreatmentNoticePage
 from melliatlas.territories.api import (
     CatalogDepthUnsupported,
@@ -54,9 +55,11 @@ class RegionConnection:
     def execute(self, query: str, params: Sequence[object] = ()) -> None:
         self.statements.append((query, tuple(params)))
         if "FROM melliatlas_source_saturn_district" in query:
-            self.rows = ((1472,),) if params == ("ru:district:verified", "ru:region:smo") else ()
+            self.rows = (
+                ((1472,),) if params == ("ru:district:verified", "ru:region:smo", "RU") else ()
+            )
         elif "FROM melliatlas_source_saturn" in query:
-            self.rows = ((55,),) if params == ("ru:region:smo",) else ()
+            self.rows = ((55,),) if params == ("ru:region:smo", "RU") else ()
         elif "WHERE country_code = %s" in query:
             self.rows = tuple(x for x in self.db.rows if x[1] == params[0])
         elif "WHERE id = %s" in query:
@@ -192,6 +195,27 @@ def test_source_mapping_is_ru_only_and_never_guessed() -> None:
         is None
     )
     assert len(db.connections) == count
+
+
+def test_source_lookup_can_dispatch_an_injected_registered_alias() -> None:
+    db = RegionDatabase()
+    store = PostgresRegionCatalog(
+        db.connect, source_mappings={"fixture-adapter": SOURCE_MAPPING_QUERIES["saturn"]}
+    )
+    assert (
+        asyncio.run(
+            store.find_code(
+                source_id="fixture-adapter", country=CountryCode.RU, region_id="ru:region:smo"
+            )
+        )
+        == 55
+    )
+    assert (
+        asyncio.run(
+            store.find_code(source_id="saturn", country=CountryCode.RU, region_id="ru:region:smo")
+        )
+        is None
+    )
 
 
 def test_saturn_district_mapping_is_distinct_from_geography_identity() -> None:

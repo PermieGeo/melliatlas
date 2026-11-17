@@ -137,8 +137,8 @@ existing live-source panel without changing W01 acceptance or synthetic study
 results. This is an independent source observation, not a new planning engine.
 
 **Boundary:** `sources.api.WeatherForecastReader` and typed `WeatherForecast`
-use `sources.providers.open_meteo.OpenMeteoForecastReader` through
-`api.composition.compose_weather_reader`. `sources.providers.open_meteo.http` is the sole
+use `sources.providers.weather.OpenMeteoForecastReader` through
+`api.composition.compose_weather_reader`. `sources.providers.weather.http` is the sole
 fixed-origin transport; it requests 24 UTC hours, has strict time/size bounds,
 and never follows redirects. `AppSettings.weather_live_enabled=False` and
 `MELLIATLAS_WEATHER_LIVE_ENABLED=true` govern opt-in availability. Open-Meteo
@@ -154,6 +154,23 @@ source discovery, manual requests, schema rejection, attribution and state
 clearing. Full local typecheck, lint, Vitest, browser and real provider
 compatibility remain acceptance gates. Current live-source reading does not
 establish legal/commercial reuse eligibility or forecast accuracy.
+
+### W01 maintenance — country normalizers, PostGIS row boundaries and weather endpoint policy
+
+Russian Saturn district-name normalization is selected through an explicit
+country strategy; the Russian municipal-district abbreviation is never applied
+to BY names. The PostGIS catalog validates driver row shapes separately from
+point containment queries; ambiguous overlapping `ST_Covers` results fail.
+Shared `WGS84_SRID` replaces inline SQL literals. Existing snapshot forage
+levels use an explicit typed lookup rather than sequential string comparisons.
+
+Weather provider endpoint and attribution URLs are operator-managed database
+fields added by migration `0007`. Composition selects one enabled provider by
+registered adapter identity, with pinned HTTPS host/path validation for the
+currently implemented Open-Meteo wire format; unknown adapters fail closed.
+No provider is implicitly collected or switched at runtime by the browser.
+The migration, fake-DB contract tests and explicit local PostGIS verification
+are distinct from full W01 acceptance.
 
 ### W01 follow-up — usable live sources without fictional catalog entries
 
@@ -472,3 +489,20 @@ validation, name matching, explicit overrides, idempotency and conflicts;
 bounded single GET. The existing district HTTP contract and 100-record tests
 remain authoritative. Manual live capture, real PostGIS import and source
 permission are deployment gates, not outcomes of the fixture tests.
+
+### W01 maintenance — capability boundaries and generated enum contract
+
+**Public contracts and integration design:** `jobs.api.InvestigationStatus` and
+`InvestigationOutcomeKind` remain the authoritative wire value enums.
+`backend/scripts/export_investigation_enums.py` generates the TypeScript literal
+values and runtime validator lists; a backend contract test rejects drift.
+`territories` owns supported-country metadata rather than returning fixed country
+responses inside the HTTP handler. `persistence/source_registry.py` dispatches
+reviewed provider/country mappings without dynamic SQL identifiers.
+`geography` owns shared coordinate constraints and approximate local metric
+screening while `sources/providers/weather/` owns the concrete weather client.
+
+**Tests and acceptance:** existing weather, Saturn, country and investigation
+HTTP contracts must remain unchanged. The generated-enum drift test, shared
+WGS84 unit tests, architecture import policy and existing regression suites
+are required. W01 acceptance is unchanged pending independent approval.

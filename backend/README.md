@@ -53,7 +53,7 @@ Do not run it as a scheduled job or increase its call frequency without review.
 ## Live point weather preview (opt-in)
 
 The `WeatherForecastReader` port is implemented by the bounded Open-Meteo
-adapter, with network I/O isolated in `sources/providers/open_meteo/http.py`. It requires
+adapter, with network I/O isolated in `sources/providers/weather/http.py`. It requires
 `AppSettings.weather_live_enabled=True` or the main-process environment flag
 `MELLIATLAS_WEATHER_LIVE_ENABLED=true`. The default is disabled and does not
 activate synthetic scenarios. Requests are explicit, 24-hour, UTC and local
@@ -109,15 +109,15 @@ review is required before publication. See `docs/INSTALLATION.md` for commands.
 
 ## Optional database-backed weather policy
 
-Migration `0004_weather_provider_configuration.sql` creates an idempotent,
-single-provider configuration row. With `MELLIATLAS_DATABASE_URL` and explicit
-`MELLIATLAS_WEATHER_LIVE_ENABLED=true`, startup reads that row and applies the
-bounded timeout, maximum response size, allowlisted attribution URL and enable flag.
-Missing/invalid migration data or an unavailable DB prevents startup rather than
-silently reverting to defaults. Without a configured database, fixed safe defaults
-apply. The 24-hour UTC metric forecast and upstream HTTPS origin are not
-operator-configurable. The source-specific routers live in `api/providers/saturn/routes.py`
-and `api/providers/open_meteo/routes.py`; `api/routes_sources.py` only lists capabilities.
+Migrations `0004_weather_provider_configuration.sql` and additive
+`0007_weather_provider_endpoints.sql` store provider identity, forecast endpoint,
+attribution URL, enabled state, and bounded HTTP budgets. Exactly one enabled
+provider is selected at startup with the explicit weather flag and DB URL.
+Without a database, live weather fails closed instead of guessing URLs.
+The Open-Meteo-specific factory accepts only its audited HTTPS host and endpoint
+path; registering a different provider wire format requires a new adapter.
+The 24-hour UTC metric forecast schema remains fixed for the current adapter. The source-specific routers live in `api/providers/saturn/routes.py`
+and `api/providers/weather/routes.py`; `api/routes_sources.py` only lists capabilities.
 
 ## Reviewed Saturn district scope
 
@@ -129,3 +129,17 @@ RU district belonging to its selected region and dates no longer than 31 days.
 An absent mapping returns 409 without sending a region-wide request; a
 missing configured database returns 503. Experimental `UpdateMap` date filters
 are not verified spraying dates or evidence of complete district coverage.
+
+## Capability contract maintenance
+
+`geography/` owns provider-neutral WGS84 bounds, CRS and approximate local
+distance rules. The source-specific weather adapter lives in
+`sources/providers/weather/`; persistence-owned weather settings live in
+`persistence/weather/config.py`. Concrete source mappings are registered in
+`persistence/source_registry.py` with explicitly scoped SQL and supported countries.
+
+The Python `jobs.api` lifecycle enums are the source of truth for their
+TypeScript counterparts. From the repository root, run
+`PYTHONPATH=backend/src python backend/scripts/export_investigation_enums.py`
+when changing an enum. The backend contract test detects an outdated generated
+`web/src/api/generated/investigationEnums.ts`.

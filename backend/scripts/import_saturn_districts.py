@@ -18,13 +18,15 @@ from typing import TypeGuard
 
 from melliatlas.sources.providers.saturn.districts import (
     SaturnDistrict,
-    normalized_district_name,
+    district_name_normalizer,
     validate_district_directory,
 )
 from melliatlas.sources.providers.saturn.http import SATURN_SMOLENSK_DISTRICTS_URL
+from melliatlas.territories.api import CountryCode
 
 SMOLENSK_REGION_ID = "ru:region:smo"
 SMOLENSK_SUBJECT_ID = 55
+SMOLENSK_COUNTRY = CountryCode.RU
 
 
 @dataclass(frozen=True)
@@ -83,10 +85,11 @@ def propose_mappings(
     if any(code not in known_codes or target not in by_id for code, target in overrides.items()):
         raise ValueError("Override refers to a missing Saturn or canonical district")
 
+    normalize = district_name_normalizer(SMOLENSK_COUNTRY)
     by_name: dict[str, list[CanonicalDistrict]] = {}
     for district in canonical:
         for label in {district.name, district.name_ru or district.name}:
-            by_name.setdefault(normalized_district_name(label), []).append(district)
+            by_name.setdefault(normalize(label), []).append(district)
 
     used: set[str] = set()
     matched: list[DistrictMapping] = []
@@ -99,8 +102,7 @@ def propose_mappings(
         else:
             # A name shared by multiple canonical rows is never enough to authorize a mapping.
             possible = {
-                candidate.id: candidate
-                for candidate in by_name.get(normalized_district_name(item.name), [])
+                candidate.id: candidate for candidate in by_name.get(normalize(item.name), [])
             }
             if len(possible) != 1:
                 unmatched.append(item)
@@ -243,7 +245,7 @@ def main() -> int:
     if args.file.stat().st_size > 64_000:
         parser.error("Captured source file exceeds the district directory limit")
     raw = args.file.read_bytes()
-    source = validate_district_directory(raw)
+    source = validate_district_directory(raw, country=SMOLENSK_COUNTRY)
     if len(source) < 20:
         parser.error("Smolensk capture is unexpectedly small; review upstream coverage")
     digest = hashlib.sha256(raw).hexdigest()

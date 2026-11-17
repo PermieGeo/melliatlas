@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from threading import Lock
 from uuid import UUID, uuid4
 
-from melliatlas.agent import CombinedPlanner, ReplanOutcome, ReplanResult
+from melliatlas.agent import CombinedPlanner, ReplanResult
 from melliatlas.planning import SyntheticScenario, TreatmentReview, build_season_plan
 
 from .api import (
@@ -22,6 +22,7 @@ from .models import (
     InvestigationSnapshot,
     InvestigationStatus,
 )
+from .outcomes import REPLAN_OUTCOME_TO_INVESTIGATION
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -109,15 +110,7 @@ class InMemoryInvestigationService:
                 replanning = combined.replanning
                 treatment_review = combined.treatment_review
                 plan = replanning.plan
-                outcome = {
-                    ReplanOutcome.PLAN_FOUND: InvestigationOutcomeKind.PLAN_FOUND,
-                    ReplanOutcome.NO_FEASIBLE_ALTERNATIVE: (
-                        InvestigationOutcomeKind.NO_FEASIBLE_ALTERNATIVE
-                    ),
-                    ReplanOutcome.CHECK_LIMIT_REACHED: (
-                        InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE
-                    ),
-                }[replanning.outcome]
+                outcome = REPLAN_OUTCOME_TO_INVESTIGATION[replanning.outcome]
                 trace = tuple(f"{event.kind.value}: {event.note}" for event in replanning.trace)
                 diagnostics = (
                     ()
@@ -132,15 +125,7 @@ class InMemoryInvestigationService:
                     scenario.candidates, current.request.season
                 )
                 plan = replanning.plan
-                outcome = {
-                    ReplanOutcome.PLAN_FOUND: InvestigationOutcomeKind.PLAN_FOUND,
-                    ReplanOutcome.NO_FEASIBLE_ALTERNATIVE: (
-                        InvestigationOutcomeKind.NO_FEASIBLE_ALTERNATIVE
-                    ),
-                    ReplanOutcome.CHECK_LIMIT_REACHED: (
-                        InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE
-                    ),
-                }[replanning.outcome]
+                outcome = REPLAN_OUTCOME_TO_INVESTIGATION[replanning.outcome]
                 trace = tuple(f"{event.kind.value}: {event.note}" for event in replanning.trace)
                 diagnostics = (
                     ()

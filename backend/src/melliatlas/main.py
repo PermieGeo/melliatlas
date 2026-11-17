@@ -8,7 +8,6 @@ from melliatlas.api.composition import SourceProviderMode, compose_weather_reade
 from melliatlas.api.reference_loader import read_iso_region_directory
 from melliatlas.persistence.geography import PostgisTerritoryCatalog
 from melliatlas.sources.api import WeatherForecastReader
-from melliatlas.sources.providers.open_meteo.settings import WeatherTransportSettings
 from melliatlas.territories.region_directory import RegionDirectoryCatalog
 
 
@@ -61,16 +60,14 @@ _weather_allowed = _weather_enabled()
 def _configured_weather_reader() -> WeatherForecastReader | None:
     """Load optional Postgres settings only during the ASGI lifespan startup."""
     if _regions is None:
-        return compose_weather_reader(True)
+        raise ValueError("Live weather requires MELLIATLAS_DATABASE_URL")
 
     from melliatlas.persistence.postgres import connection_factory
-    from melliatlas.persistence.weather_config import read_weather_configuration
+    from melliatlas.persistence.weather.config import read_weather_configuration
 
     dsn = os.environ["MELLIATLAS_DATABASE_URL"]
-    enabled, timeout, max_body, docs = read_weather_configuration(connection_factory(dsn))
-    if not enabled:
-        return None
-    return compose_weather_reader(True, WeatherTransportSettings(timeout, max_body, docs))
+    config = read_weather_configuration(connection_factory(dsn))
+    return compose_weather_reader(True, config) if config is not None else None
 
 
 _reference_snapshot = _optional_path("MELLIATLAS_REFERENCE_SNAPSHOT")

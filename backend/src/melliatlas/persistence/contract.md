@@ -91,3 +91,21 @@ The read-only `PostgisTerritoryCatalog` exposes the optional translation on
 geometry, reference version or source authority. API consumers choose a locale;
 missing translations fall back to source names. This is a UI display field,
 not a new verified administrative inventory or Saturn identity.
+
+Source-code lookup dispatch is configured in `source_registry.py` by provider ID and supported country; each entry contains parameterized, reviewed SQL for a concrete mapping table. Unsupported combinations return no mapping without querying PostgreSQL. Provider-specific SQL is never embedded in public `api.py` contracts. Operational weather policy is read from `persistence/weather/config.py`.
+
+## Spatial SQL and weather configuration boundaries
+
+`point_locator.py` owns reviewed PostGIS point-containment queries. It uses
+`ST_Covers` to include boundary points and `LIMIT 2` to detect ambiguous
+regional or district overlays; multiple results fail rather than selecting
+first. Geometry JSON is decoded separately in `geography.py`, while region
+rows are validated by column shape in `regions.py`. SQL receives the shared
+`WGS84_SRID` instead of embedding an undocumented numeric literal.
+
+`persistence/weather/config.py` reads the optional operator-managed weather
+provider rows introduced by `0004` and augmented by `0007`. The public
+`WeatherProviderConfig` is a DB-owned value contract, not an HTTP adapter.
+Exactly one enabled provider can be selected; malformed rows and multiple
+active providers fail closed. The API composition boundary selects an approved
+provider-specific forecast adapter and validates its URLs before external I/O.

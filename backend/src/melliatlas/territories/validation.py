@@ -4,12 +4,12 @@ import hashlib
 import json
 import re
 from datetime import timezone
-from math import isfinite
 
 from shapely.errors import GEOSException
 from shapely.geometry import shape
 from shapely.validation import explain_validity
 
+from melliatlas.geography import MIN_LINEAR_RING_POSITIONS, WGS84_CRS, is_wgs84_position
 from melliatlas.territories.api import (
     CountryCode,
     ExpectedInventory,
@@ -58,12 +58,10 @@ def snapshot_checksum(snapshot: ReferenceSnapshot) -> str:
 
 
 def _validate_ring(ring: list[Position]) -> None:
-    if len(ring) < 4 or ring[0] != ring[-1]:
+    if len(ring) < MIN_LINEAR_RING_POSITIONS or ring[0] != ring[-1]:
         raise TerritoryReferenceError("Polygon rings must contain four positions and be closed")
     for longitude, latitude in ring:
-        if not (isfinite(longitude) and isfinite(latitude)):
-            raise TerritoryReferenceError("Non-finite GeoJSON coordinate")
-        if not (-180 <= longitude <= 180 and -90 <= latitude <= 90):
+        if not is_wgs84_position(longitude, latitude):
             raise TerritoryReferenceError("GeoJSON coordinates must use WGS84 longitude/latitude")
     if any(a == b for a, b in zip(ring, ring[1:])):
         raise TerritoryReferenceError("Polygon rings contain repeated adjacent coordinates")
@@ -155,7 +153,7 @@ def validate_reference(snapshot: ReferenceSnapshot, inventory: ExpectedInventory
         raise TerritoryReferenceError("Reference retrieval timestamp must include a timezone")
     if manifest.retrieved_at.astimezone(timezone.utc).date() < manifest.snapshot_date:
         raise TerritoryReferenceError("Reference retrieval predates the snapshot")
-    if manifest.coordinate_system != "EPSG:4326":
+    if manifest.coordinate_system != WGS84_CRS:
         raise TerritoryReferenceError("Unsupported coordinate system")
     if (
         not _CHECKSUM.fullmatch(manifest.checksum_sha256)
@@ -204,7 +202,7 @@ def validate_reference(snapshot: ReferenceSnapshot, inventory: ExpectedInventory
             raise TerritoryReferenceError("Orphaned or mismatched geometry")
         if (
             territory.geometry_status is not GeometryStatus.AVAILABLE
-            or entry.coordinate_system != "EPSG:4326"
+            or entry.coordinate_system != WGS84_CRS
         ):
             raise TerritoryReferenceError("Geometry and status/SRID disagree")
         validate_geometry(entry.geometry)

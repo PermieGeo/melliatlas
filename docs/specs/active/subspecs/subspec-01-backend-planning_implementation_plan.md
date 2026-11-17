@@ -215,3 +215,18 @@ Apply the shared [SDD convergence rules](../../AGENTS.md) to the selected task; 
 4. Keep V02 PostGIS acceptance pending until `BE-T040`–`BE-T044` run against a real approved database. Update feature traceability only after implementation review, with separate human acceptance decisions.
 5. If an actual reference validation or database check fails, record the offending input/migration, failing assertion and recovery before claiming any acceptance evidence.
 
+
+### Maintenance — separate geographic primitives from concrete adapters
+
+**Public contracts and integration design:** `geography` owns shared WGS84
+constants and a bounded local-distance screening primitive. `territories.api`
+retains public reference types, and `persistence` retains the PostGIS adapter.
+`jobs.outcomes` defines one immutable planner-to-investigation outcome mapping
+for both service execution and snapshot validation. `jobs.api` lifecycle enums
+remain Python-owned and are exported to the web client by a checked generator.
+Source-country eligibility for persistence lookup is configured per SQL adapter
+in `persistence/source_registry.py`, with query values always parameterized.
+
+**Checks:** architecture import policy, country and mapping contract tests,
+scenario persistence regressions, geographic boundary cases and enum drift.
+This is structural maintenance, not a new accepted V04 stage.

@@ -20,7 +20,7 @@ Public domain errors have the typed envelope `{"error":{"code":"...","message":"
 ## Provider-neutral routes and evidence boundaries
 
 `routes_sources.py` only lists injected source capabilities and builds the sanitized
-HTTP error envelope. `providers/saturn/routes.py` and `providers/open_meteo/routes.py` own their
+HTTP error envelope. `providers/saturn/routes.py` and `providers/weather/routes.py` own their
 provider-specific request validation, capability visibility and projections; the
 FastAPI composition root registers them independently. Source transports, decoders
 and operational weather policy belong to `sources/providers/`, never generic HTTP
@@ -152,8 +152,11 @@ The optional `weather_reader_factory` is injected into `create_app` and runs onc
 inside the ASGI lifespan, off the event loop. Module import and route registration
 never query Postgres for Open-Meteo configuration. The factory cannot be combined
 with an explicitly injected `weather_reader`. A disabled database row produces
-no advertised weather capability; unavailable or unmigrated configuration aborts
-startup rather than substituting defaults. Reader availability is scoped to the
+no advertised weather capability; unavailable, ambiguous or unmigrated
+configuration aborts startup rather than substituting defaults. Migrations
+`0004` and `0007` store the provider ID, forecast and documentation URLs and
+bounded HTTP settings. The selected URL must also pass the concrete provider's
+HTTPS allowlist. Without `MELLIATLAS_DATABASE_URL`, live weather is unavailable. Reader availability is scoped to the
 application lifespan and cleared on shutdown. Direct `create_app` injection of
 `weather_reader` keeps the existing explicit testing semantics.
 

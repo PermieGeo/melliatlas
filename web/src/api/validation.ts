@@ -1,4 +1,15 @@
+import {
+  LATITUDE_LIMIT,
+  LONGITUDE_LIMIT,
+  MIN_LINEAR_RING_POSITIONS,
+  POSITION_DIMENSIONS,
+  WGS84_CRS,
+} from "../geo/constants";
 import { SATURN_PAGE_COUNT, SATURN_PAGE_SIZE } from "./types";
+import {
+  INVESTIGATION_OUTCOMES,
+  INVESTIGATION_STATUSES,
+} from "./generated/investigationEnums";
 import type {
   Assessment,
   Country,
@@ -95,12 +106,6 @@ function list<T>(
 const strings = (value: unknown, field: string): string[] =>
   list(value, field, text);
 
-const statuses = ["QUEUED", "RUNNING", "COMPLETED", "FAILED"] as const;
-const outcomes = [
-  "PLAN_FOUND",
-  "INSUFFICIENT_EVIDENCE",
-  "NO_FEASIBLE_ALTERNATIVE",
-] as const;
 const ecology = ["ELIGIBLE", "EXCLUDED", "CAUTION", "UNKNOWN"] as const;
 const proximity = [
   "FIELD_INTERSECTION",
@@ -204,16 +209,20 @@ export function decodeTerritories(value: unknown): Territory[] {
 }
 /** Decode a WGS84 polygon response without trusting backend JSON shapes implicitly. */
 function position(value: unknown, field: string): GeoPosition {
-  if (!Array.isArray(value) || value.length !== 2) throw new WireError(field);
+  if (!Array.isArray(value) || value.length !== POSITION_DIMENSIONS)
+    throw new WireError(field);
   const longitude = numeric(value[0], `${field}[0]`);
   const latitude = numeric(value[1], `${field}[1]`);
-  if (Math.abs(longitude) > 180 || Math.abs(latitude) > 90)
+  if (
+    Math.abs(longitude) > LONGITUDE_LIMIT ||
+    Math.abs(latitude) > LATITUDE_LIMIT
+  )
     throw new WireError(field);
   return [longitude, latitude];
 }
 function ring(value: unknown, field: string): GeoPosition[] {
   const positions = list(value, field, position);
-  if (positions.length < 4) throw new WireError(field);
+  if (positions.length < MIN_LINEAR_RING_POSITIONS) throw new WireError(field);
   const first = positions[0];
   const last = positions[positions.length - 1];
   if (!first || !last || first[0] !== last[0] || first[1] !== last[1])
@@ -261,7 +270,7 @@ export function decodeTerritoryGeometry(value: unknown): TerritoryGeometry {
     coordinate_system: oneOf(
       object.coordinate_system,
       "territoryGeometry.coordinate_system",
-      ["EPSG:4326"],
+      [WGS84_CRS],
     ),
     geometry: referenceShape(object.geometry, "territoryGeometry.geometry"),
   };
@@ -271,7 +280,10 @@ function stop(value: unknown, path: string): Stop {
   const v = record(value, path);
   const longitude = numeric(v.longitude, `${path}.longitude`);
   const latitude = numeric(v.latitude, `${path}.latitude`);
-  if (Math.abs(longitude) > 180 || Math.abs(latitude) > 90)
+  if (
+    Math.abs(longitude) > LONGITUDE_LIMIT ||
+    Math.abs(latitude) > LATITUDE_LIMIT
+  )
     throw new WireError(path);
   return {
     site_id: nonEmpty(v.site_id, `${path}.site_id`),
@@ -394,7 +406,7 @@ export function decodeInvestigation(value: unknown): Investigation {
     throw new WireError("request.starting_point");
   return {
     id: nonEmpty(v.id, "id"),
-    status: oneOf(v.status, "status", statuses),
+    status: oneOf(v.status, "status", INVESTIGATION_STATUSES),
     request: {
       country: country(request.country, "request.country"),
       territory_id: nonEmpty(request.territory_id, "request.territory_id"),
@@ -406,7 +418,7 @@ export function decodeInvestigation(value: unknown): Investigation {
     updated_at: text(v.updated_at, "updated_at"),
     outcome: maybe(
       v.outcome,
-      (entry, field) => oneOf(entry, field, outcomes),
+      (entry, field) => oneOf(entry, field, INVESTIGATION_OUTCOMES),
       "outcome",
     ),
     plan: maybe(v.plan, plan, "plan"),
@@ -444,6 +456,11 @@ export function decodeSources(value: unknown): ExternalSource[] {
     throw new WireError(`${path}.sourceKind`);
   });
 }
+
+// This is a host allowlist, not a forecast URL: actual attribution URLs are server-configured.
+const WEATHER_ATTRIBUTION_HOST: Record<WeatherForecast["source_id"], string> = {
+  "open-meteo:forecast": "open-meteo.com",
+};
 
 /** Do not convert missing weather values to zero or accept swapped units/time. */
 export function decodeWeatherForecast(value: unknown): WeatherForecast {
@@ -497,7 +514,7 @@ export function decodeWeatherForecast(value: unknown): WeatherForecast {
     previousTime = currentTime;
   }
   const source_uri = nonEmpty(v.source_uri, "weather.source_uri");
-  // External links are server-provided, but must still match the approved origin.
+  // Server configuration selects attribution; prevent unsafe external link schemes.
   let attribution: URL;
   try {
     attribution = new URL(source_uri);
@@ -506,7 +523,7 @@ export function decodeWeatherForecast(value: unknown): WeatherForecast {
   }
   if (
     attribution.protocol !== "https:" ||
-    attribution.hostname !== "open-meteo.com" ||
+    attribution.hostname !== WEATHER_ATTRIBUTION_HOST[source_id] ||
     attribution.port !== "" ||
     attribution.username !== "" ||
     attribution.password !== ""

@@ -5,6 +5,8 @@ from datetime import date, datetime
 from enum import StrEnum
 from typing import Literal, Protocol, TypeAlias, TypedDict, runtime_checkable
 
+from melliatlas.geography import Wgs84Crs
+
 
 class CountryCode(StrEnum):
     RU = "RU"
@@ -62,7 +64,7 @@ class ReferenceManifest:
     license_id: str
     # SHA-256 of the canonical normalized territory and geometry payload.
     checksum_sha256: str
-    coordinate_system: Literal["EPSG:4326"]
+    coordinate_system: Wgs84Crs
     # The supplier's coverage statement, not a claim of verified completeness.
     declared_scope: str
     normalization_version: str
@@ -73,7 +75,7 @@ class TerritoryGeometry:
     territory_id: str
     geometry: GeometryWgs84
     reference_id: str
-    coordinate_system: Literal["EPSG:4326"]
+    coordinate_system: Wgs84Crs
 
 
 @dataclass(frozen=True)
