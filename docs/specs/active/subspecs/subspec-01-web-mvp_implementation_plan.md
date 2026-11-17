@@ -6,7 +6,7 @@
 - **Requirements approval:** APPROVED — original W01 browser scope.
 - **Implementation authorization:** AUTHORIZED — original W01 scope only; the new saved-place task remains design-only until explicit approval.
 - **Acceptance:** PENDING.
-- **Selected design task:** [Saved place and editable bbox](../tasks/web-saved-place-bbox/task.md) with [task plan](../tasks/web-saved-place-bbox/task-plan.md).
+- **Selected bounded task:** [Saved place and editable bbox](../tasks/web-saved-place-bbox/task.md) with [task plan](../tasks/web-saved-place-bbox/task-plan.md); only read-only backend geometry groundwork is implemented.
 
 This document is a stable entrypoint for the selected Web workstream, not a chronology of completed increments. For the selected bounded task read only its task/plan, shared normative requirements and the explicitly listed module contracts and code. Do not re-open previous task history by default.
 
@@ -15,7 +15,8 @@ This document is a stable entrypoint for the selected Web workstream, not a chro
 | Boundary | Current implementation and constraints |
 | --- | --- |
 | Territory catalog | `GET /api/v1/territories/countries`, `/regions`, `/districts`, `/geometry/{territory_id}`; names and validated outlines may be unavailable; never invent administrative coverage. |
-| Spatial point resolver | `POST /api/v1/territories/resolve-point` returns one canonical containing location when PostGIS data supports it; this is **not** bbox/district intersection. |
+| Spatial point resolver | `POST /api/v1/territories/resolve-point` returns one canonical containing location when PostGIS data supports it. |
+| Read-only rectangle lookup | `POST /api/v1/territories/intersecting-districts` returns all imported ADM2 positive-area overlaps with **unverified** coverage; it stores no places. Requires imported PostGIS geometry. |
 | Synthetic investigations | `GET /api/v1/investigations/scenarios`, `POST /api/v1/investigations`, `GET /api/v1/investigations/{id}`; results remain separate from live observations. |
 | Live notice preview | Explicit opt-in RU-only Saturn source discovery and manual district-mapped page reads; at most 100 source records/10 pages per bounded read, with no completeness claim. Source date intervals may cover up to **one calendar year**. |
 | Weather | Explicit opt-in, database-configured Open-Meteo provider; current contract supplies 24 UTC hours for a validated point. It does not provide a 15-day weather analysis or drift calculation. |
@@ -35,7 +36,7 @@ The existing server/client code permits a one-calendar-year source filter; docum
 
 **Selected task:** `WEB-PLACE-01`, [requirements](../tasks/web-saved-place-bbox/task.md) and [integration design](../tasks/web-saved-place-bbox/task-plan.md).
 
-The task pair is selected **for design and review**, not for implementation. Its explicit approval gates include server-side ownership/security for saved coordinates, new public place repository and bbox/district intersection contracts, database migration, and realistic map-layer coverage. Do not create a Tauri runtime dependency, general workflow engine or new country/provider registry as part of the initial slice.
+Only the read-only geographic rectangle/district contract is currently implemented. Saved-place persistence and UI workflow remain gated by approval of user ownership/security, the place repository and CRUD transport contracts, migration/integration checks, and realistic map-layer coverage. Do not create a Tauri runtime dependency, general workflow engine or new country/provider registry as part of this slice.
 
 ## 4. Current TDD evidence and verification
 

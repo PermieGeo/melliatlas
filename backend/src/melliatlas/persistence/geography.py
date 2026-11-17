@@ -18,9 +18,11 @@ from melliatlas.geography import (
     WGS84_CRS,
     is_wgs84_position,
 )
+from melliatlas.persistence.area_districts import PostgisAreaDistrictLookup
 from melliatlas.persistence.point_locator import PostgisPointLocator
 from melliatlas.persistence.regions import PostgresRegionCatalog
 from melliatlas.territories.api import (
+    AreaDistrictResult,
     CountryCode,
     GeometryStatus,
     GeometryWgs84,
@@ -178,6 +180,30 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
     ) -> TerritoryAtPoint | None:
         return await PostgisPointLocator(self._read).locate_point(
             country=country, longitude=longitude, latitude=latitude
+        )
+
+    async def intersect_districts(
+        self,
+        *,
+        country: CountryCode,
+        region_id: str,
+        longitude: float,
+        latitude: float,
+        width_km: float,
+        height_km: float,
+    ) -> AreaDistrictResult:
+        region = await self.get(region_id)
+        if region is None or region.country != country or region.kind is not TerritoryKind.REGION:
+            raise TerritoryNotFound("Unknown region for analysis area")
+        if region.geometry_status is not GeometryStatus.AVAILABLE:
+            raise ReferenceUnavailableError("Region geometry has not been imported")
+        return await PostgisAreaDistrictLookup(self._read).intersect_districts(
+            country=country,
+            region_id=region_id,
+            longitude=longitude,
+            latitude=latitude,
+            width_km=width_km,
+            height_km=height_km,
         )
 
     async def list_regions(self, country: CountryCode) -> tuple[Territory, ...]:

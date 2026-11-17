@@ -80,3 +80,9 @@ No localization may change geographic identity, source version, hierarchy,
 completeness or authority. When `name_ru` is absent, clients display `name`.
 
 Country display metadata is owned by `territories/countries.py` and exported by the territories facade; HTTP routes enumerate that configuration rather than hardcoding individual country responses. WGS84 bounds and coordinate dimension live in the provider-neutral `geography` capability.
+
+## Read-only analysis area district intersection
+
+`territories.api.TerritoryAreaDistrictLookup` is an optional public read-only protocol. It accepts a country, selected administrative region, WGS84 center and bounded rectangle dimensions; it returns **all imported ADM2 polygons with positive-area overlap**, including districts of neighboring regions in the same country. Boundary-only touches are not overlaps. The selected center must belong unambiguously to the selected imported ADM1 region; missing or ambiguous reference data fails explicitly.
+
+`AreaDistrictCoverage.MISSING` indicates that no intersecting district records were found. `UNVERIFIED` means some reviewed records are available but complete district coverage has **not** been demonstrated. Neither status establishes that the area has no other districts or environmental risks. District IDs and provenance remain provider-independent. This operation neither reads nor writes saved-place records.

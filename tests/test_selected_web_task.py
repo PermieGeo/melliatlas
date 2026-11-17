@@ -43,7 +43,12 @@ def task_context_errors(state: dict[str, object], root: Path) -> list[str]:
     ids = set(ORACLE_PATTERN.findall(task))
     if not ids or any(oracle not in plan for oracle in ids):
         errors.append("Selected task plan does not map its acceptance oracles")
-    if "**Status:** DESIGN SELECTED" not in task or "**Status:** DESIGN ONLY" not in plan:
+    if (
+        "**Status:** PARTIAL IMPLEMENTATION — read-only geographic bounds" not in task
+        or "**Status:** PARTIAL IMPLEMENTATION — read-only geographical bounds" not in plan
+        or "Saved-place persistence requires explicit approval" not in task
+        or "public CRUD remain blocked" not in plan
+    ):
         errors.append("Selected task has unexpected authorization state")
     if "**Acceptance:** NOT CLAIMED" not in task:
         errors.append("Selected task claims acceptance prematurely")
@@ -69,7 +74,7 @@ class SelectedWebTaskTests(unittest.TestCase):
         task = (ROOT / "docs/specs/active/tasks/web-saved-place-bbox/task.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("implementation pending explicit developer approval", task)
+        self.assertIn("Saved-place persistence requires explicit approval", task)
         self.assertIn("server-side", task)
         self.assertIn("30 km", task)
         self.assertIn("positive-area overlap", task)

@@ -5,15 +5,24 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse
-from melliatlas.geography import LATITUDE_MAX, LATITUDE_MIN, LONGITUDE_MAX, LONGITUDE_MIN
+from melliatlas.geography import (
+    LATITUDE_MAX,
+    LATITUDE_MIN,
+    LONGITUDE_MAX,
+    LONGITUDE_MIN,
+    MAX_AREA_DIMENSION_KM,
+)
 from melliatlas.territories import supported_countries
 from melliatlas.territories.api import (
+    AreaDistrictCoverage,
+    AreaDistrictResult,
     CatalogDepthUnsupported,
     CountryCode,
     GeometryStatus,
     GeometryWgs84,
     ReferenceUnavailableError,
     Territory,
+    TerritoryAreaDistrictLookup,
     TerritoryCatalog,
     TerritoryGeometry,
     TerritoryKind,
@@ -49,6 +58,32 @@ class ResolvePointRequest(BaseModel):
     latitude: float = Field(ge=LATITUDE_MIN, le=LATITUDE_MAX, allow_inf_nan=False)
 
 
+class AreaDistrictRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    country: CountryCode
+    region_id: str = Field(min_length=1, max_length=160)
+    longitude: float = Field(strict=True, ge=LONGITUDE_MIN, le=LONGITUDE_MAX, allow_inf_nan=False)
+    latitude: float = Field(strict=True, ge=LATITUDE_MIN, le=LATITUDE_MAX, allow_inf_nan=False)
+    width_km: float = Field(strict=True, gt=0, le=MAX_AREA_DIMENSION_KM, allow_inf_nan=False)
+    height_km: float = Field(strict=True, gt=0, le=MAX_AREA_DIMENSION_KM, allow_inf_nan=False)
+
+
+class AreaDistrictItemResponse(BaseModel):
+    id: str
+    region_id: str
+    name: str
+    reference_id: str
+
+
+class AreaDistrictResponse(BaseModel):
+    coverage: AreaDistrictCoverage
+    south: float
+    north: float
+    longitude_ranges: list[tuple[float, float]]
+    nominal_area_km2: float
+    districts: list[AreaDistrictItemResponse]
+
+
 class ResolvePointResponse(BaseModel):
     region_id: str
     district_id: str | None
@@ -59,6 +94,25 @@ class GeometryResponse(BaseModel):
     reference_id: str
     coordinate_system: str
     geometry: GeometryWgs84
+
+
+def _area_district_response(item: AreaDistrictResult) -> AreaDistrictResponse:
+    return AreaDistrictResponse(
+        coverage=item.coverage,
+        south=item.bounds.south,
+        north=item.bounds.north,
+        longitude_ranges=list(item.bounds.longitude_ranges),
+        nominal_area_km2=item.bounds.nominal_area_km2,
+        districts=[
+            AreaDistrictItemResponse(
+                id=district.id,
+                region_id=district.region_id,
+                name=district.name,
+                reference_id=district.reference_id,
+            )
+            for district in item.districts
+        ],
+    )
 
 
 def _territory_response(item: Territory) -> TerritoryResponse:
@@ -198,6 +252,47 @@ def create_territory_router(catalog: TerritoryCatalog | None) -> APIRouter:
                 "Invalid spatial reference identity",
             )
         return ResolvePointResponse(region_id=located.region_id, district_id=located.district_id)
+
+    @router.post(
+        "/intersecting-districts",
+        response_model=AreaDistrictResponse,
+        responses={
+            404: {"model": ErrorResponse},
+            422: {"model": ErrorResponse},
+            503: {"model": ErrorResponse},
+        },
+    )
+    async def intersecting_districts(
+        body: AreaDistrictRequest,
+    ) -> AreaDistrictResponse | JSONResponse:
+        if catalog is None or not isinstance(catalog, TerritoryAreaDistrictLookup):
+            return _failure(
+                503,
+                ApiErrorCode.TERRITORY_REFERENCE_UNAVAILABLE,
+                "Area lookup needs imported PostGIS boundaries",
+            )
+        try:
+            item = await catalog.intersect_districts(
+                country=body.country,
+                region_id=body.region_id,
+                longitude=body.longitude,
+                latitude=body.latitude,
+                width_km=body.width_km,
+                height_km=body.height_km,
+            )
+        except ValueError:
+            return _failure(422, ApiErrorCode.INVALID_TERRITORY_REQUEST, "Invalid analysis area")
+        except TerritoryNotFound:
+            return _failure(
+                404, ApiErrorCode.TERRITORY_NOT_FOUND, "Area center is outside the region"
+            )
+        except ReferenceUnavailableError:
+            return _failure(
+                503,
+                ApiErrorCode.TERRITORY_REFERENCE_UNAVAILABLE,
+                "Area district reference unavailable",
+            )
+        return _area_district_response(item)
 
     @router.get(
         "/geometry/{territory_id}",

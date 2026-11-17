@@ -5,7 +5,7 @@ from datetime import date, datetime
 from enum import StrEnum
 from typing import Literal, Protocol, TypeAlias, TypedDict, runtime_checkable
 
-from melliatlas.geography import Wgs84Crs
+from melliatlas.geography import Wgs84AnalysisBounds, Wgs84Crs
 
 
 class CountryCode(StrEnum):
@@ -132,6 +132,40 @@ class TerritoryPointLocator(Protocol):
     async def locate_point(
         self, *, country: CountryCode, longitude: float, latitude: float
     ) -> TerritoryAtPoint | None: ...
+
+
+class AreaDistrictCoverage(StrEnum):
+    MISSING = "MISSING"
+    UNVERIFIED = "UNVERIFIED"
+
+
+@dataclass(frozen=True)
+class AreaDistrict:
+    id: str
+    region_id: str
+    name: str
+    reference_id: str
+
+
+@dataclass(frozen=True)
+class AreaDistrictResult:
+    bounds: Wgs84AnalysisBounds
+    districts: tuple[AreaDistrict, ...]
+    coverage: AreaDistrictCoverage
+
+
+@runtime_checkable
+class TerritoryAreaDistrictLookup(Protocol):
+    async def intersect_districts(
+        self,
+        *,
+        country: CountryCode,
+        region_id: str,
+        longitude: float,
+        latitude: float,
+        width_km: float,
+        height_km: float,
+    ) -> AreaDistrictResult: ...
 
 
 class SourceTerritoryCodeLookup(Protocol):

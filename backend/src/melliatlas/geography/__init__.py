@@ -1,5 +1,11 @@
 """Public geographic primitives; no persistence or provider implementations."""
 
+from .area import (
+    DEFAULT_AREA_DIMENSION_KM,
+    MAX_AREA_DIMENSION_KM,
+    Wgs84AnalysisBounds,
+    make_analysis_bounds,
+)
 from .coordinates import (
     BOUNDARY_SIMPLIFICATION_DEGREES,
     GEOJSON_COORDINATE_PRECISION,
@@ -30,4 +36,8 @@ __all__ = [
     "WGS84_SRID",
     "is_wgs84_position",
     "approximate_distance_to_boundary_km",
+    "DEFAULT_AREA_DIMENSION_KM",
+    "MAX_AREA_DIMENSION_KM",
+    "Wgs84AnalysisBounds",
+    "make_analysis_bounds",
 ]

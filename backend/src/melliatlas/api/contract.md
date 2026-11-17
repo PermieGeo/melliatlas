@@ -174,3 +174,9 @@ Legacy region requests are retained for controlled clients but must never
 serve as a fallback for a requested district. Each read requests exactly 10 records; only pages 0–9 are permitted (100 source records at most). The result exposes `record_limit_exceeded` when the source reports more than 100 or a further page exists after the tenth page. A capped response has `next_page=null` and is never reported as complete.
 The provider `UpdateMap`
 filter semantics and rights to read remain unverified.
+
+## Read-only bounded area / district intersection
+
+`POST /api/v1/territories/intersecting-districts` accepts `country`, `region_id`, WGS84 `longitude`/`latitude`, and `width_km`/`height_km` (each greater than zero and at most 30). Coordinates are submitted in the request body, never in a URL. The response contains latitude bounds, one or two longitude intervals, the nominal area in km², imported district IDs/names/reference IDs, and coverage `MISSING` or `UNVERIFIED`; it does **not** certify complete geographic coverage. No saved user locations or credentials are stored.
+
+Errors: `422/INVALID_REQUEST` for malformed transport values, `422/INVALID_TERRITORY_REQUEST` for invalid area geometry or country/region mismatch, `404/TERRITORY_NOT_FOUND` when the center is outside the selected region, and `503/TERRITORY_REFERENCE_UNAVAILABLE` for unavailable/ambiguous imported geography. The optional PostGIS-backed catalog is required; the name-only bundled country directory returns `503`. This endpoint is independent of Saturn and does not fetch external data.

@@ -42,6 +42,10 @@ features:
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-backend-planning.md]
     owners:
+      - backend/src/melliatlas/territories/api.py#TerritoryAreaDistrictLookup
+      - backend/src/melliatlas/geography/area.py#make_analysis_bounds
+      - backend/src/melliatlas/persistence/area_districts.py#PostgisAreaDistrictLookup
+      - backend/src/melliatlas/api/routes_territories.py#create_territory_router
       - backend/src/melliatlas/territories/api.py#TerritoryImport
       - backend/src/melliatlas/persistence/geography.py#PostgisTerritoryCatalog
       - backend/migrations/0006_smolensk_district_names.sql
@@ -56,6 +60,9 @@ features:
       - backend/tests/contract/test_territory_api.py
       - backend/tests/contract/test_reference_startup.py
       - backend/tests/contract/test_administrative_geometry.py
+      - backend/tests/contract/test_area_district_http.py
+      - backend/tests/unit/test_analysis_area_bounds.py
+      - backend/tests/unit/test_postgis_area_districts.py
       - backend/tests/unit/test_geoboundaries_preparation.py
       - backend/tests/unit/test_navigation_diagnostics.py
       - web/tests/reference-navigation.test.tsx

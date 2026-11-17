@@ -1,7 +1,7 @@
 # WEB-PLACE-01 — Saved analysis place and editable bbox
 
 - **Task ID:** `WEB-PLACE-01`.
-- **Status:** DESIGN SELECTED — implementation pending explicit developer approval.
+- **Status:** PARTIAL IMPLEMENTATION — read-only geographic bounds and district query; saved-place persistence still gated.
 - **Workstream:** `mvp-01-web`; [current Web sub-spec](../../subspecs/subspec-01-web-mvp.md); [task plan](task-plan.md).
 - **Existing requirement anchors:** `MVP01-WEB-R01`, `MVP01-WEB-R02`, `MVP01-WEB-R08`. New saved-place and data-handling behavior must be incorporated into approved normative requirements before implementation.
 - **Acceptance:** NOT CLAIMED. This task defines an independently testable first redesign slice, not the full planned product.
@@ -32,4 +32,4 @@ No mandatory Tauri/SQLite runtime integration, full offline synchronization, set
 
 ## Approval gates
 
-Implementation requires review of the selected task and the proposed public contracts, an approved privacy/ownership model for remote saved points, PostGIS migration/integration test access, and agreement on draft-versus-saved semantics. The current `STATE.json` workstream phase does not grant approval for this new task by itself.
+Read-only geographic bounds and district-query contracts may be implemented without persisting or exposing user-owned saved places. Saved-place persistence requires explicit approval of the privacy/ownership model and public CRUD API, PostGIS migration/integration test access, and agreed draft-versus-saved semantics. The current `STATE.json` workstream phase does not grant acceptance of this task.
