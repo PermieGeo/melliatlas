@@ -11,8 +11,8 @@ from typing import LiteralString
 
 import pytest
 
-from melliatlas.persistence.weather_config import read_weather_configuration
-from melliatlas.sources.providers.open_meteo.settings import WeatherTransportSettings
+from melliatlas.persistence.weather.config import read_weather_configuration
+from melliatlas.sources.providers.weather.settings import WeatherTransportSettings
 
 
 class WeatherCursor:

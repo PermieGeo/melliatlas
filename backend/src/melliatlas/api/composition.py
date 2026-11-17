@@ -26,8 +26,8 @@ from melliatlas.sources.api import (
 from melliatlas.territories.api import CountryCode
 
 if TYPE_CHECKING:
-    from melliatlas.sources.providers.open_meteo.settings import WeatherTransportSettings
     from melliatlas.sources.providers.synthetic import SyntheticFixtureProvider
+    from melliatlas.sources.providers.weather.settings import WeatherTransportSettings
 
 
 class SourceProviderMode(StrEnum):
@@ -110,9 +110,9 @@ def compose_weather_reader(
     """Opt into Open-Meteo reads without creating a global source registry."""
     if not enabled:
         return None
-    from melliatlas.sources.providers.open_meteo import OpenMeteoForecastReader
-    from melliatlas.sources.providers.open_meteo.http import get_public_forecast
-    from melliatlas.sources.providers.open_meteo.settings import SOURCE_URI
+    from melliatlas.sources.providers.weather import OpenMeteoForecastReader
+    from melliatlas.sources.providers.weather.http import get_public_forecast
+    from melliatlas.sources.providers.weather.settings import SOURCE_URI
 
     return OpenMeteoForecastReader(
         get_public_forecast if options is None else partial(get_public_forecast, settings=options),

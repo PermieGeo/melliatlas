@@ -8,7 +8,7 @@ from melliatlas.api.composition import SourceProviderMode, compose_weather_reade
 from melliatlas.api.reference_loader import read_iso_region_directory
 from melliatlas.persistence.geography import PostgisTerritoryCatalog
 from melliatlas.sources.api import WeatherForecastReader
-from melliatlas.sources.providers.open_meteo.settings import WeatherTransportSettings
+from melliatlas.sources.providers.weather.settings import WeatherTransportSettings
 from melliatlas.territories.region_directory import RegionDirectoryCatalog
 
 
@@ -64,7 +64,7 @@ def _configured_weather_reader() -> WeatherForecastReader | None:
         return compose_weather_reader(True)
 
     from melliatlas.persistence.postgres import connection_factory
-    from melliatlas.persistence.weather_config import read_weather_configuration
+    from melliatlas.persistence.weather.config import read_weather_configuration
 
     dsn = os.environ["MELLIATLAS_DATABASE_URL"]
     enabled, timeout, max_body, docs = read_weather_configuration(connection_factory(dsn))

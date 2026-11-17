@@ -55,7 +55,7 @@ Missing hourly values stay `None`, never zero. `SourceReadError` means unknown
 weather availability, not calm wind or no pesticide exposure.
 
 The Open-Meteo implementation decodes only one 24-hour forecast with 10-m wind
-speed/direction, gusts and precipitation. Provider-owned `open_meteo/http.py`
+speed/direction, gusts and precipitation. Provider-owned `weather/http.py`
 uses a shared fixed-origin transport helper; only the API composition root can
 instantiate it. PostgreSQL `0004_weather_provider_configuration.sql` stores an
 optional enable/timeout/byte budget and allowlisted attribution URL. The ASGI
@@ -94,3 +94,5 @@ operator approval of the captured bytes; no source ID is inferred from a
 canonical territory ID. The existing Saturn reader then sends the approved
 source ID as `beekeperSearchFilter.district` for the user's manual request.
 External endpoint compatibility and use rights remain independently gated.
+
+The source-specific HTTP weather implementation resides in `sources/providers/weather/` and retains Open-Meteo-specific configuration in its concrete settings adapter. This package is distinct from the persistence-owned weather policy and from provider-neutral `sources/api.py`. WGS84 coordinates are validated through the shared geographic primitives.

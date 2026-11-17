@@ -34,16 +34,18 @@ def test_only_pinned_live_transports_may_import_network_client(tmp_path: Path) -
 def test_dependency_matrix_matches_current_implementation_plan() -> None:
     # This independently locked policy must change only with an approved dependency review.
     assert ALLOWED_DEPENDENCIES == {
-        "territories": frozenset(),
-        "planning": frozenset({"territories"}),
-        "sources": frozenset({"territories", "planning"}),
-        "analyzers": frozenset({"territories", "sources", "planning"}),
-        "engine": frozenset({"sources", "analyzers", "planning"}),
-        "agent": frozenset({"engine", "planning", "sources"}),
-        "jobs": frozenset({"agent", "engine", "planning", "territories"}),
-        "persistence": frozenset({"jobs", "territories"}),
+        "geography": frozenset(),
+        "territories": frozenset({"geography"}),
+        "planning": frozenset({"territories", "geography"}),
+        "sources": frozenset({"territories", "planning", "geography"}),
+        "analyzers": frozenset({"territories", "sources", "planning", "geography"}),
+        "engine": frozenset({"sources", "analyzers", "planning", "geography"}),
+        "agent": frozenset({"engine", "planning", "sources", "geography"}),
+        "jobs": frozenset({"agent", "engine", "planning", "territories", "geography"}),
+        "persistence": frozenset({"jobs", "territories", "geography"}),
         "api": frozenset(
             {
+                "geography",
                 "territories",
                 "planning",
                 "sources",
@@ -173,7 +175,7 @@ def test_concrete_provider_import_is_only_allowed_in_composition_root(tmp_path: 
 
 
 def test_provider_facade_is_not_public_to_unrelated_routes(tmp_path: Path) -> None:
-    for provider in ("synthetic", "saturn", "open_meteo"):
+    for provider in ("synthetic", "saturn", "weather"):
         issues = _violations(
             tmp_path,
             "api",

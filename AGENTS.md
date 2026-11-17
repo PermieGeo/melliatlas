@@ -7,7 +7,8 @@
 - Do not edit any `AGENTS.md` without an explicit developer request. Do not expand the authorized task without approval.
 
 ## Architecture
-- Organize by cohesive capabilities with clear owners and small public boundaries. Do not introduce a package or abstraction solely to satisfy a diagram.
+- Organize by cohesive capabilities with clear owners and small public boundaries.
+- Never place a concrete implementation in an abstract contract/interface layer (`api.py`, ports or protocol declarations); keep implementations in capability-owned, clearly named modules and inject them at composition boundaries. Do not introduce a package or abstraction solely to satisfy a diagram.
 - Import other modules through declared public APIs, not private implementations. Keep dependency direction explicit, acyclic, and enforceable in tests.
 - Keep domain decisions independent of HTTP frameworks, database adapters, and external transport. Inject I/O collaborators at composition boundaries.
 - Avoid global mutable registries, service locators, hidden side effects, speculative wrappers, and generic `common` modules. Extract shared code only when concrete consumers justify it.
@@ -37,3 +38,4 @@
 - Never weaken tests, disable checks, or add exceptions merely to obtain a pass. Changes to enforcement must preserve or strengthen required invariants and include regression evidence; relaxing an approved invariant requires explicit approval.
 - New runtime dependencies require justification and developer approval. A task-scoped dev/test dependency may be added with a recorded rationale when it does not change runtime behavior or weaken checks.
 - Run applicable formatting, lint, strict type, architecture, test, and build checks. Report exactly what ran and any environment limitations; never claim unverified results.
+

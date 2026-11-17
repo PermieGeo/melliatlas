@@ -91,3 +91,5 @@ The read-only `PostgisTerritoryCatalog` exposes the optional translation on
 geometry, reference version or source authority. API consumers choose a locale;
 missing translations fall back to source names. This is a UI display field,
 not a new verified administrative inventory or Saturn identity.
+
+Source-code lookup dispatch is configured in `source_registry.py` by provider ID and supported country; each entry contains parameterized, reviewed SQL for a concrete mapping table. Unsupported combinations return no mapping without querying PostgreSQL. Provider-specific SQL is never embedded in public `api.py` contracts. Operational weather policy is read from `persistence/weather/config.py`.

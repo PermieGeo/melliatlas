@@ -9,7 +9,7 @@ import pytest
 
 from melliatlas.api.app import AppSettings, create_app
 from melliatlas.sources.api import SourceReadError, WeatherForecast
-from melliatlas.sources.providers.open_meteo import OpenMeteoForecastReader
+from melliatlas.sources.providers.weather import OpenMeteoForecastReader
 
 
 def _payload() -> bytes:

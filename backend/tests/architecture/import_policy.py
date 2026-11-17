@@ -6,16 +6,18 @@ from pathlib import Path
 
 # These dependencies are direct imports, not transitive permission to reach an implementation.
 ALLOWED_DEPENDENCIES: dict[str, frozenset[str]] = {
-    "territories": frozenset(),
-    "planning": frozenset({"territories"}),
-    "sources": frozenset({"territories", "planning"}),
-    "analyzers": frozenset({"territories", "sources", "planning"}),
-    "engine": frozenset({"sources", "analyzers", "planning"}),
-    "agent": frozenset({"engine", "planning", "sources"}),
-    "jobs": frozenset({"agent", "engine", "planning", "territories"}),
-    "persistence": frozenset({"jobs", "territories"}),
+    "geography": frozenset(),
+    "territories": frozenset({"geography"}),
+    "planning": frozenset({"territories", "geography"}),
+    "sources": frozenset({"territories", "planning", "geography"}),
+    "analyzers": frozenset({"territories", "sources", "planning", "geography"}),
+    "engine": frozenset({"sources", "analyzers", "planning", "geography"}),
+    "agent": frozenset({"engine", "planning", "sources", "geography"}),
+    "jobs": frozenset({"agent", "engine", "planning", "territories", "geography"}),
+    "persistence": frozenset({"jobs", "territories", "geography"}),
     "api": frozenset(
         {
+            "geography",
             "territories",
             "planning",
             "sources",
@@ -44,10 +46,10 @@ COMPOSITION_ROOT_PROVIDER_IMPORTS = frozenset(
     {
         "melliatlas.sources.providers.synthetic",
         "melliatlas.sources.providers.saturn",
-        "melliatlas.sources.providers.open_meteo",
+        "melliatlas.sources.providers.weather",
         "melliatlas.sources.providers.saturn.http",
-        "melliatlas.sources.providers.open_meteo.http",
-        "melliatlas.sources.providers.open_meteo.settings",
+        "melliatlas.sources.providers.weather.http",
+        "melliatlas.sources.providers.weather.settings",
     }
 )
 
@@ -159,8 +161,8 @@ def find_violations(source_root: Path) -> list[str]:
                         and imported == "melliatlas.sources.providers.saturn"
                     )
                     or (
-                        source_module == "melliatlas.api.providers.open_meteo.routes"
-                        and imported == "melliatlas.sources.providers.open_meteo"
+                        source_module == "melliatlas.api.providers.weather.routes"
+                        and imported == "melliatlas.sources.providers.weather"
                     )
                 )
                 if not composition_import:

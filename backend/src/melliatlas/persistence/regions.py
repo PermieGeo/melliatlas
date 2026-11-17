@@ -6,9 +6,10 @@ No implicit database migrations, network collection, or administrative geometry 
 import asyncio
 from collections.abc import Sequence
 from datetime import date
-from typing import Final, LiteralString
+from typing import Final, LiteralString, Mapping
 
 from melliatlas.persistence.api import ConnectionFactory
+from melliatlas.persistence.source_registry import SOURCE_MAPPING_QUERIES, SourceMappingQueries
 from melliatlas.territories.api import (
     CatalogDepthUnsupported,
     CountryCode,
@@ -32,26 +33,14 @@ class PostgresRegionCatalog:
         SELECT id, country_code, name, reference_id, valid_on
         FROM melliatlas_region WHERE id = %s
     """
-    _SOURCE_CODE: Final[LiteralString] = """
-        SELECT saturn.subject_id
-        FROM melliatlas_source_saturn AS saturn
-        JOIN melliatlas_region AS region ON region.id = saturn.region_id
-        WHERE saturn.region_id = %s AND region.country_code = 'RU'
-    """
 
-    _DISTRICT_CODE: Final[LiteralString] = """
-        SELECT mapping.provider_district_code
-        FROM melliatlas_source_saturn_district AS mapping
-        JOIN melliatlas_admin_geometry AS district
-          ON district.territory_id = mapping.district_id AND district.kind = 'district'
-        JOIN melliatlas_source_saturn AS subject
-          ON subject.region_id = district.region_id
-        WHERE mapping.district_id = %s AND district.region_id = %s
-          AND district.country_code = 'RU'
-    """
-
-    def __init__(self, connect: ConnectionFactory) -> None:
+    def __init__(
+        self,
+        connect: ConnectionFactory,
+        source_mappings: Mapping[str, SourceMappingQueries] = SOURCE_MAPPING_QUERIES,
+    ) -> None:
         self._connect = connect
+        self._source_mappings = source_mappings
 
     def _read(
         self, sql: LiteralString, parameters: Sequence[object]
@@ -127,23 +116,27 @@ class PostgresRegionCatalog:
     async def find_code(
         self, *, source_id: str, country: CountryCode, region_id: str
     ) -> int | None:
-        if source_id != "saturn" or country is not CountryCode.RU:
+        source = self._source_mappings.get(source_id)
+        if source is None or country not in source.supported_countries:
             return None
-        rows = await asyncio.to_thread(self._read, self._SOURCE_CODE, (region_id,))
+        rows = await asyncio.to_thread(self._read, source.region, (region_id, country.value))
         if not rows:
             return None
         if len(rows) != 1 or len(rows[0]) != 1 or type(rows[0][0]) is not int:
-            raise ReferenceUnavailableError("Invalid Saturn region mapping")
+            raise ReferenceUnavailableError("Invalid source region mapping")
         return rows[0][0]
 
     async def find_district_code(
         self, *, source_id: str, country: CountryCode, region_id: str, district_id: str
     ) -> int | None:
-        if source_id != "saturn" or country is not CountryCode.RU:
+        source = self._source_mappings.get(source_id)
+        if source is None or country not in source.supported_countries:
             return None
-        rows = await asyncio.to_thread(self._read, self._DISTRICT_CODE, (district_id, region_id))
+        rows = await asyncio.to_thread(
+            self._read, source.district, (district_id, region_id, country.value)
+        )
         if not rows:
             return None
         if len(rows) != 1 or len(rows[0]) != 1 or type(rows[0][0]) is not int:
-            raise ReferenceUnavailableError("Invalid reviewed Saturn district mapping")
+            raise ReferenceUnavailableError("Invalid reviewed source district mapping")
         return rows[0][0]

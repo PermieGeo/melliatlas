@@ -5,15 +5,15 @@ variables, UTC timestamps and metric units belong to the validated forecast
 contract. Geography is supplied by the explicit end-user request.
 """
 
-from math import isfinite
 from urllib.parse import urlencode
 
+from melliatlas.geography import is_wgs84_position
 from melliatlas.sources.providers.http_transport import (
     JsonTransportFailures,
     read_fixed_origin_json,
 )
-from melliatlas.sources.providers.open_meteo.failures import WeatherReadFailure
-from melliatlas.sources.providers.open_meteo.settings import (
+from melliatlas.sources.providers.weather.failures import WeatherReadFailure
+from melliatlas.sources.providers.weather.settings import (
     FORECAST_ENDPOINT,
     FORECAST_HOURS,
     WeatherTransportSettings,
@@ -37,9 +37,7 @@ def get_public_forecast(
     latitude: float, longitude: float, *, settings: WeatherTransportSettings = DEFAULT_SETTINGS
 ) -> bytes:
     """Send only validated WGS84 coordinates to the fixed weather origin."""
-    if not (isfinite(latitude) and isfinite(longitude)) or not (
-        -90 <= latitude <= 90 and -180 <= longitude <= 180
-    ):
+    if not is_wgs84_position(longitude, latitude):
         raise ValueError("Invalid WGS84 forecast coordinates")
     params = urlencode(
         {

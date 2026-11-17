@@ -12,6 +12,7 @@ from starlette.concurrency import run_in_threadpool
 
 from melliatlas.agent import ReplanDecisionKind, ReplanOutcome
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse
+from melliatlas.geography import LATITUDE_MAX, LATITUDE_MIN, LONGITUDE_MAX, LONGITUDE_MIN
 from melliatlas.jobs import (
     InvalidInvestigationRequest,
     InvestigationOutcomeKind,
@@ -43,8 +44,8 @@ class ScenarioListingDto(BaseModel):
 class StartingPointDto(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
-    latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
+    longitude: float = Field(ge=LONGITUDE_MIN, le=LONGITUDE_MAX, allow_inf_nan=False)
+    latitude: float = Field(ge=LATITUDE_MIN, le=LATITUDE_MAX, allow_inf_nan=False)
 
 
 class InvestigationCreateDto(BaseModel):

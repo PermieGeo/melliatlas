@@ -78,3 +78,5 @@ failures do not silently downgrade to the bundled inventory.
 ADM2 districts. `Territory.name` remains the original source/catalog label.
 No localization may change geographic identity, source version, hierarchy,
 completeness or authority. When `name_ru` is absent, clients display `name`.
+
+Country display metadata is owned by `territories/countries.py` and exported by the territories facade; HTTP routes enumerate that configuration rather than hardcoding individual country responses. WGS84 bounds and coordinate dimension live in the provider-neutral `geography` capability.

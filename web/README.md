@@ -131,3 +131,9 @@ Manual Saturn dates auto-adjust their opposite bound if a change would exceed
 the backend's 31-day request limit. A limited Smolensk ADM2 localization uses
 an optional server-provided `name_ru` while English still uses the unchanged
 source `name`; apply migration `0006` before the localized DB-backed API runs.
+
+### Investigation lifecycle enums
+
+The wire-level investigation statuses and outcomes come from the Python backend
+enums. `src/api/generated/investigationEnums.ts` is generated, not manually
+maintained. See the backend README for the regeneration command.

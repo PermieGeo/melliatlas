@@ -8,9 +8,16 @@ import asyncio
 import json
 from dataclasses import replace
 from datetime import date
-from math import isfinite
 from typing import Final, LiteralString, TypeGuard
 
+from melliatlas.geography import (
+    BOUNDARY_SIMPLIFICATION_DEGREES,
+    GEOJSON_COORDINATE_PRECISION,
+    MIN_LINEAR_RING_POSITIONS,
+    POSITION_DIMENSIONS,
+    WGS84_CRS,
+    is_wgs84_position,
+)
 from melliatlas.persistence.regions import PostgresRegionCatalog
 from melliatlas.territories.api import (
     CountryCode,
@@ -37,7 +44,7 @@ def _is_dict(value: object) -> TypeGuard[dict[str, object]]:
 
 
 def _position(value: object) -> tuple[float, float]:
-    if not _is_list(value) or len(value) != 2:
+    if not _is_list(value) or len(value) != POSITION_DIMENSIONS:
         raise ValueError("Invalid coordinate")
     longitude, latitude = value
     if isinstance(longitude, bool) or not isinstance(longitude, (int, float)):
@@ -45,7 +52,7 @@ def _position(value: object) -> tuple[float, float]:
     if isinstance(latitude, bool) or not isinstance(latitude, (int, float)):
         raise ValueError("Invalid coordinate value")
     x, y = float(longitude), float(latitude)
-    if not isfinite(x) or not isfinite(y) or abs(x) > 180 or abs(y) > 90:
+    if not is_wgs84_position(x, y):
         raise ValueError("Invalid WGS84 coordinate")
     return x, y
 
@@ -54,7 +61,7 @@ def _ring(value: object) -> list[tuple[float, float]]:
     if not _is_list(value):
         raise ValueError("Invalid polygon ring")
     coords = [_position(point) for point in value]
-    if len(coords) < 4 or coords[0] != coords[-1]:
+    if len(coords) < MIN_LINEAR_RING_POSITIONS or coords[0] != coords[-1]:
         raise ValueError("Unclosed polygon ring")
     return coords
 
@@ -125,7 +132,7 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
         LIMIT 2
     """
     _GEOMETRY: Final[LiteralString] = """
-        SELECT reference_id, ST_AsGeoJSON(ST_SimplifyPreserveTopology(boundary, 0.002), 5)
+        SELECT reference_id, ST_AsGeoJSON(ST_SimplifyPreserveTopology(boundary, %s), %s)
         FROM melliatlas_admin_geometry WHERE territory_id = %s
     """
 
@@ -182,12 +189,7 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
     async def locate_point(
         self, *, country: CountryCode, longitude: float, latitude: float
     ) -> TerritoryAtPoint | None:
-        if (
-            not isfinite(longitude)
-            or not isfinite(latitude)
-            or not -180 <= longitude <= 180
-            or not -90 <= latitude <= 90
-        ):
+        if not is_wgs84_position(longitude, latitude):
             raise ValueError("Invalid WGS84 point")
         regions = await asyncio.to_thread(
             self._read, self._CONTAINING_REGIONS, (country.value, longitude, latitude)
@@ -241,7 +243,11 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
         region = await self.get(territory_id)
         if region is None:
             raise TerritoryNotFound(territory_id)
-        rows = await asyncio.to_thread(self._read, self._GEOMETRY, (territory_id,))
+        rows = await asyncio.to_thread(
+            self._read,
+            self._GEOMETRY,
+            (BOUNDARY_SIMPLIFICATION_DEGREES, GEOJSON_COORDINATE_PRECISION, territory_id),
+        )
         if not rows:
             return None
         if (
@@ -260,5 +266,5 @@ class PostgisTerritoryCatalog(PostgresRegionCatalog):
             territory_id=territory_id,
             geometry=geo,
             reference_id=rows[0][0],
-            coordinate_system="EPSG:4326",
+            coordinate_system=WGS84_CRS,
         )

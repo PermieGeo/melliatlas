@@ -12,9 +12,16 @@ from datetime import datetime, timedelta, timezone
 from math import isfinite
 from typing import TypeGuard
 
+from melliatlas.geography import (
+    LATITUDE_MAX,
+    LATITUDE_MIN,
+    LONGITUDE_MAX,
+    LONGITUDE_MIN,
+    is_wgs84_position,
+)
 from melliatlas.sources.api import ForecastHour, SourceReadError, WeatherForecast
-from melliatlas.sources.providers.open_meteo.failures import WeatherReadFailure
-from melliatlas.sources.providers.open_meteo.settings import (
+from melliatlas.sources.providers.weather.failures import WeatherReadFailure
+from melliatlas.sources.providers.weather.settings import (
     FORECAST_HOURS,
     MAX_ALLOWED_BODY_BYTES,
     SOURCE_URI,
@@ -73,9 +80,7 @@ class OpenMeteoForecastReader:
         self._source_uri = source_uri
 
     def forecast(self, *, latitude: float, longitude: float) -> WeatherForecast:
-        if not (isfinite(latitude) and isfinite(longitude)) or not (
-            -90 <= latitude <= 90 and -180 <= longitude <= 180
-        ):
+        if not is_wgs84_position(longitude, latitude):
             raise ValueError("Forecast coordinates must be finite WGS84")
         try:
             raw = self._transport(latitude, longitude)
@@ -87,8 +92,8 @@ class OpenMeteoForecastReader:
                 raise ValueError("Upstream returned a forecast error")
             if root.get("timezone") != "GMT" or root.get("utc_offset_seconds") != 0:
                 raise ValueError("Expected UTC forecast")
-            grid_lat = _finite(root.get("latitude"), minimum=-90, maximum=90)
-            grid_lon = _finite(root.get("longitude"), minimum=-180, maximum=180)
+            grid_lat = _finite(root.get("latitude"), minimum=LATITUDE_MIN, maximum=LATITUDE_MAX)
+            grid_lon = _finite(root.get("longitude"), minimum=LONGITUDE_MIN, maximum=LONGITUDE_MAX)
             units = _record(root.get("hourly_units"))
             for field, unit in _EXPECTED_UNITS.items():
                 if units.get(field) != unit:

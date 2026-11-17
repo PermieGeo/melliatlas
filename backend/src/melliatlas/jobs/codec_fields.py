@@ -6,7 +6,7 @@ capability APIs. Keep other field decoders private to this module.
 
 from datetime import date, datetime
 from math import isfinite
-from typing import Literal, TypeGuard
+from typing import Final, Literal, TypeGuard
 
 from melliatlas.agent.api import ReplanDecision, ReplanDecisionKind, ReplanOutcome, ReplanResult
 from melliatlas.planning.api import (
@@ -174,18 +174,23 @@ def _stored_optional_timestamp(value: object, field: str) -> datetime | None:
     return timestamp
 
 
+_REPORTED_HAZARD_CLASSES: Final[dict[int, Literal[1, 2, 3]]] = {1: 1, 2: 2, 3: 3}
+
+
 def _stored_reported_product(value: object) -> ReportedTreatmentProduct:
     item = stored_object(value, "reported treatment product")
     hazard = item["bee_hazard_class"]
-    if hazard is not None and (type(hazard) is not int or hazard not in (1, 2, 3)):
-        raise ValueError("Stored bee hazard class must be a reported value from 1 to 3")
     reported_hazard: Literal[1, 2, 3] | None = None
-    if hazard == 1:
-        reported_hazard = 1
-    elif hazard == 2:
-        reported_hazard = 2
-    elif hazard == 3:
-        reported_hazard = 3
+    if hazard is not None:
+        if type(hazard) is not int:
+            raise ValueError("Stored bee hazard class must be a reported value from 1 to 3")
+        # Map only validated integers to the narrow Literal type; bool is not a hazard class.
+        try:
+            reported_hazard = _REPORTED_HAZARD_CLASSES[hazard]
+        except KeyError as exc:
+            raise ValueError(
+                "Stored bee hazard class must be a reported value from 1 to 3"
+            ) from exc
     name = item["name"]
     crop = item["crop"]
     return ReportedTreatmentProduct(

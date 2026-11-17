@@ -1,7 +1,6 @@
 """Bounded and deterministic ecological replanning over injected observations."""
 
-from math import isfinite
-
+from melliatlas.geography import is_wgs84_position
 from melliatlas.planning import (
     CandidateSite,
     EcologyStatus,
@@ -37,12 +36,7 @@ class DeterministicPlanner:
             if site.id in seen:
                 raise ValueError("Duplicate candidate site ID")
             seen.add(site.id)
-            if not (
-                isfinite(site.longitude)
-                and isfinite(site.latitude)
-                and -180 <= site.longitude <= 180
-                and -90 <= site.latitude <= 90
-            ):
+            if not is_wgs84_position(site.longitude, site.latitude):
                 raise ValueError("Candidate site coordinate must be finite WGS84")
 
         ordered = tuple(sorted(candidates, key=lambda item: (item.forage_window.start, item.id)))

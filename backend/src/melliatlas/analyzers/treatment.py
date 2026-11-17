@@ -1,11 +1,11 @@
 """Approximate field-treatment screening with explicit uncertainty."""
 
 from datetime import timedelta
-from math import cos, isfinite, radians
+from math import isfinite
 
 from shapely.geometry import Point, shape
-from shapely.ops import transform
 
+from melliatlas.geography import approximate_distance_to_boundary_km, is_wgs84_position
 from melliatlas.planning import (
     CandidateSite,
     ReportedTreatmentProduct,
@@ -29,10 +29,8 @@ def screen_treatment_notices(
     """
     if not isfinite(watch_radius_km) or not 0 < watch_radius_km <= MAX_DEMO_WATCH_RADIUS_KM:
         raise ValueError("watch_radius_km must be finite and within (0, 50]")
-    if not isfinite(site.longitude) or not isfinite(site.latitude):
-        raise ValueError("Site coordinates must be finite")
-    if not -180 <= site.longitude <= 180 or not -90 <= site.latitude <= 90:
-        raise ValueError("Site coordinates must be WGS84")
+    if not is_wgs84_position(site.longitude, site.latitude):
+        raise ValueError("Site coordinates must be finite WGS84")
     if not site.id:
         raise ValueError("Site ID is required")
 
@@ -59,25 +57,14 @@ def screen_treatment_notices(
                 proximity = TreatmentProximity.FIELD_INTERSECTION
                 distance = 0.0
             else:
-                # A local metric approximation is a screening aid, not a safety boundary.
-                earth_radius_km = 6371.0088
-                latitude_scale = cos(radians(site.latitude))
-
-                def to_local(lon: float, lat: float, z: float | None = None) -> tuple[float, float]:
-                    return (
-                        earth_radius_km * radians(lon - site.longitude) * latitude_scale,
-                        earth_radius_km * radians(lat - site.latitude),
-                    )
-
-                if (
-                    abs(site.latitude) > 80
-                    or polygon.bounds[2] - polygon.bounds[0] > 5
-                    or polygon.bounds[3] - polygon.bounds[1] > 5
-                ):
+                # Wide or polar geometries cannot support a reliable local approximation.
+                distance = approximate_distance_to_boundary_km(
+                    polygon, site.longitude, site.latitude
+                )
+                if distance is None:
                     proximity = TreatmentProximity.UNKNOWN_GEOMETRY
                     warnings.append("Geometry extent prevents local distance screening")
                 else:
-                    distance = transform(to_local, polygon).distance(Point(0, 0))
                     proximity = (
                         TreatmentProximity.NEAR_REPORTED_FIELD
                         if distance <= watch_radius_km

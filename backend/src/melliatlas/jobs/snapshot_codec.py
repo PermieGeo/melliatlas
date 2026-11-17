@@ -5,7 +5,8 @@ from dataclasses import asdict
 from datetime import date, datetime
 from uuid import UUID
 
-from melliatlas.agent.api import ReplanDecisionKind, ReplanOutcome
+from melliatlas.agent.api import ReplanDecisionKind
+from melliatlas.geography import POSITION_DIMENSIONS
 from melliatlas.planning.api import EcologyStatus
 from melliatlas.territories.api import CountryCode
 
@@ -27,6 +28,7 @@ from .models import (
     InvestigationSnapshot,
     InvestigationStatus,
 )
+from .outcomes import REPLAN_OUTCOME_TO_INVESTIGATION
 
 
 def serialize_completed_snapshot(snapshot: InvestigationSnapshot) -> str:
@@ -56,7 +58,7 @@ def deserialize_completed_snapshot(payload: str) -> InvestigationSnapshot:
     starting_point: tuple[float, float] | None = None
     if coordinates is not None:
         values = stored_list(coordinates, "starting_point")
-        if len(values) != 2:
+        if len(values) != POSITION_DIMENSIONS:
             raise ValueError("Stored starting_point must contain exactly two coordinates")
         starting_point = (
             stored_number(values[0], "starting_point.longitude"),
@@ -102,11 +104,7 @@ def deserialize_completed_snapshot(payload: str) -> InvestigationSnapshot:
     if snapshot.replanning is not None:
         if snapshot.replanning.plan != snapshot.plan:
             raise ValueError("Stored replanning plan disagrees with investigation plan")
-        expected_outcome = {
-            ReplanOutcome.PLAN_FOUND: InvestigationOutcomeKind.PLAN_FOUND,
-            ReplanOutcome.NO_FEASIBLE_ALTERNATIVE: InvestigationOutcomeKind.NO_FEASIBLE_ALTERNATIVE,
-            ReplanOutcome.CHECK_LIMIT_REACHED: InvestigationOutcomeKind.INSUFFICIENT_EVIDENCE,
-        }[snapshot.replanning.outcome]
+        expected_outcome = REPLAN_OUTCOME_TO_INVESTIGATION[snapshot.replanning.outcome]
         if snapshot.outcome is not expected_outcome:
             raise ValueError("Stored replanning outcome disagrees with investigation outcome")
     if snapshot.treatment_review is not None:

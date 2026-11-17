@@ -9,6 +9,7 @@ features:
       - backend/src/melliatlas/territories/region_directory.py#RegionDirectoryCatalog
       - backend/src/melliatlas/persistence/regions.py#PostgresRegionCatalog
       - backend/src/melliatlas/persistence/geography.py#PostgisTerritoryCatalog
+      - backend/src/melliatlas/geography/coordinates.py#is_wgs84_position
       - backend/src/melliatlas/territories/api.py#TerritoryPointLocator
       - backend/src/melliatlas/api/routes_territories.py#create_territory_router
       - web/src/App.tsx
@@ -114,6 +115,7 @@ features:
       - web/src/components/LiveAreaAnalysis.tsx
       - web/src/components/MapPanel.tsx
       - backend/src/melliatlas/persistence/regions.py#PostgresRegionCatalog
+      - backend/src/melliatlas/persistence/source_registry.py
     test_files:
       - backend/tests/unit/test_saturn_treatment_screening.py
       - backend/tests/contract/test_saturn_live_http.py
@@ -130,8 +132,8 @@ features:
     spec_paths: [docs/specs/active/subspecs/subspec-01-web-mvp.md]
     owners:
       - backend/src/melliatlas/sources/api.py#WeatherForecastReader
-      - backend/src/melliatlas/sources/providers/open_meteo/forecast.py#OpenMeteoForecastReader
-      - backend/src/melliatlas/api/providers/open_meteo/routes.py#create_weather_router
+      - backend/src/melliatlas/sources/providers/weather/forecast.py#OpenMeteoForecastReader
+      - backend/src/melliatlas/api/providers/weather/routes.py#create_weather_router
       - web/src/components/WeatherPanel.tsx
       - web/src/geo/selection.ts
     test_files:
@@ -145,6 +147,7 @@ features:
     owners:
       - backend/src/melliatlas/analyzers/treatment.py#screen_treatment_notices
       - backend/src/melliatlas/jobs/memory.py#InMemoryInvestigationService
+      - backend/src/melliatlas/jobs/outcomes.py
     test_files:
       - backend/tests/contract/test_combined_investigations_http.py
       - backend/tests/unit/test_saturn_treatment_screening.py

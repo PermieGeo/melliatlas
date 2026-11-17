@@ -5,6 +5,13 @@ from math import isfinite
 from shapely.errors import GEOSException
 from shapely.geometry import Point, shape
 
+from melliatlas.geography import (
+    LATITUDE_MAX,
+    LATITUDE_MIN,
+    LONGITUDE_MAX,
+    LONGITUDE_MIN,
+    is_wgs84_position,
+)
 from melliatlas.planning.api import CandidateSite, EcologyOverlap, EcologyZone
 
 
@@ -12,12 +19,7 @@ def find_ecology_overlaps(
     site: CandidateSite, zones: tuple[EcologyZone, ...]
 ) -> tuple[EcologyOverlap, ...]:
     """Identify point-in-polygon overlaps without assigning legal or eligibility policy."""
-    if not (
-        isfinite(site.longitude)
-        and isfinite(site.latitude)
-        and -180 <= site.longitude <= 180
-        and -90 <= site.latitude <= 90
-    ):
+    if not is_wgs84_position(site.longitude, site.latitude):
         raise ValueError("Candidate coordinates must be finite WGS84 longitude/latitude")
     if not site.id:
         raise ValueError("Candidate site ID must not be empty")
@@ -35,10 +37,10 @@ def find_ecology_overlaps(
         min_lon, min_lat, max_lon, max_lat = polygon.bounds
         if (
             not all(isfinite(value) for value in polygon.bounds)
-            or min_lon < -180
-            or max_lon > 180
-            or min_lat < -90
-            or max_lat > 90
+            or min_lon < LONGITUDE_MIN
+            or max_lon > LONGITUDE_MAX
+            or min_lat < LATITUDE_MIN
+            or max_lat > LATITUDE_MAX
         ):
             raise ValueError("Invalid WGS84 fictional ecology geometry coordinates")
         if polygon.covers(point):

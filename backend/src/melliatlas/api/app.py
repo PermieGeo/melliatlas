@@ -16,12 +16,12 @@ from melliatlas.api.composition import (
     compose_sources,
     compose_weather_reader,
 )
-from melliatlas.api.providers.open_meteo.routes import (
+from melliatlas.api.providers.saturn.routes import create_saturn_router, saturn_capability
+from melliatlas.api.providers.weather.routes import (
     WeatherReaderState,
     create_weather_router,
     weather_capability,
 )
-from melliatlas.api.providers.saturn.routes import create_saturn_router, saturn_capability
 from melliatlas.api.public import ApiErrorCode, ErrorDetail, ErrorResponse, HealthResponse
 from melliatlas.api.reference_loader import read_reference_documents
 from melliatlas.api.routes_investigations import create_investigation_router

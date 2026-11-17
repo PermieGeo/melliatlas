@@ -137,8 +137,8 @@ existing live-source panel without changing W01 acceptance or synthetic study
 results. This is an independent source observation, not a new planning engine.
 
 **Boundary:** `sources.api.WeatherForecastReader` and typed `WeatherForecast`
-use `sources.providers.open_meteo.OpenMeteoForecastReader` through
-`api.composition.compose_weather_reader`. `sources.providers.open_meteo.http` is the sole
+use `sources.providers.weather.OpenMeteoForecastReader` through
+`api.composition.compose_weather_reader`. `sources.providers.weather.http` is the sole
 fixed-origin transport; it requests 24 UTC hours, has strict time/size bounds,
 and never follows redirects. `AppSettings.weather_live_enabled=False` and
 `MELLIATLAS_WEATHER_LIVE_ENABLED=true` govern opt-in availability. Open-Meteo
@@ -472,3 +472,20 @@ validation, name matching, explicit overrides, idempotency and conflicts;
 bounded single GET. The existing district HTTP contract and 100-record tests
 remain authoritative. Manual live capture, real PostGIS import and source
 permission are deployment gates, not outcomes of the fixture tests.
+
+### W01 maintenance — capability boundaries and generated enum contract
+
+**Public contracts and integration design:** `jobs.api.InvestigationStatus` and
+`InvestigationOutcomeKind` remain the authoritative wire value enums.
+`backend/scripts/export_investigation_enums.py` generates the TypeScript literal
+values and runtime validator lists; a backend contract test rejects drift.
+`territories` owns supported-country metadata rather than returning fixed country
+responses inside the HTTP handler. `persistence/source_registry.py` dispatches
+reviewed provider/country mappings without dynamic SQL identifiers.
+`geography` owns shared coordinate constraints and approximate local metric
+screening while `sources/providers/weather/` owns the concrete weather client.
+
+**Tests and acceptance:** existing weather, Saturn, country and investigation
+HTTP contracts must remain unchanged. The generated-enum drift test, shared
+WGS84 unit tests, architecture import policy and existing regression suites
+are required. W01 acceptance is unchanged pending independent approval.

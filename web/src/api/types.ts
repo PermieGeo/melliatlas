@@ -1,3 +1,9 @@
+import type { WGS84_CRS } from "../geo/constants";
+import type {
+  InvestigationStatus,
+  Outcome,
+} from "./generated/investigationEnums";
+
 /** Wire contracts mirror FastAPI InvestigationResponse and territory DTOs. */
 /** ISO 3166-1 alpha-2 code supplied by the country catalog, not a closed UI enum. */
 export type CountryCode = string;
@@ -6,9 +12,10 @@ export type CountryCode = string;
 export const SATURN_PAGE_SIZE = 10;
 export const SATURN_RECORD_LIMIT = 100;
 export const SATURN_PAGE_COUNT = SATURN_RECORD_LIMIT / SATURN_PAGE_SIZE;
-export type InvestigationStatus = "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
-export type Outcome =
-  "PLAN_FOUND" | "INSUFFICIENT_EVIDENCE" | "NO_FEASIBLE_ALTERNATIVE";
+export type {
+  InvestigationStatus,
+  Outcome,
+} from "./generated/investigationEnums";
 export type EcologyStatus = "ELIGIBLE" | "EXCLUDED" | "CAUTION" | "UNKNOWN";
 export type Proximity =
   | "FIELD_INTERSECTION"
@@ -54,7 +61,7 @@ export interface TerritoryAtPoint {
 export interface TerritoryGeometry {
   territory_id: string;
   reference_id: string;
-  coordinate_system: "EPSG:4326";
+  coordinate_system: typeof WGS84_CRS;
   geometry: ReferenceShape;
 }
 
