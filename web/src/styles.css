@@ -323,6 +323,16 @@ h3 {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+}
+.map-basemap-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.map-basemap-control input {
+  margin: 0;
 }
 .legend-dot {
   display: inline-block;

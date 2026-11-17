@@ -77,48 +77,13 @@ async function request<T>(
   init?: RequestInit,
 ): Promise<ApiResult<T>> {
   if (signal.aborted) return abortedResult();
+  let response: Response;
   try {
-    const response = await fetch(path, {
+    response = await fetch(path, {
       ...init,
       signal,
       headers: { Accept: "application/json", ...init?.headers },
     });
-    if (signal.aborted) return abortedResult();
-    let payload: unknown;
-    try {
-      payload = await response.json();
-    } catch (error) {
-      if (signal.aborted || isAbort(error)) return abortedResult();
-      return {
-        kind: "error",
-        status: response.status,
-        code: "INVALID_RESPONSE",
-        message: "Ответ API не является JSON",
-      };
-    }
-    if (signal.aborted) return abortedResult();
-    if (!response.ok) {
-      const details = errorMessage(payload);
-      return {
-        kind: "error",
-        status: response.status,
-        code: details?.code ?? "HTTP_ERROR",
-        message: details?.message ?? `HTTP ${response.status}`,
-      };
-    }
-    try {
-      return { kind: "ok", data: decode(payload) };
-    } catch (error) {
-      if (error instanceof WireError) {
-        return {
-          kind: "error",
-          status: response.status,
-          code: "INVALID_RESPONSE",
-          message: error.message,
-        };
-      }
-      throw error;
-    }
   } catch (error) {
     if (signal.aborted || isAbort(error)) return abortedResult();
     return {
@@ -126,6 +91,49 @@ async function request<T>(
       status: null,
       code: "NETWORK_ERROR",
       message: "API недоступен. Проверьте запуск backend.",
+    };
+  }
+  if (signal.aborted) return abortedResult();
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch (error) {
+    if (signal.aborted || isAbort(error)) return abortedResult();
+    return {
+      kind: "error",
+      status: response.status,
+      code: "INVALID_RESPONSE",
+      message: "Ответ API не является JSON",
+    };
+  }
+  if (signal.aborted) return abortedResult();
+  if (!response.ok) {
+    const details = errorMessage(payload);
+    return {
+      kind: "error",
+      status: response.status,
+      code: details?.code ?? "HTTP_ERROR",
+      message: details?.message ?? `HTTP ${response.status}`,
+    };
+  }
+  try {
+    return { kind: "ok", data: decode(payload) };
+  } catch (error) {
+    if (signal.aborted || isAbort(error)) return abortedResult();
+    if (error instanceof WireError) {
+      return {
+        kind: "error",
+        status: response.status,
+        code: "INVALID_RESPONSE",
+        message: error.message,
+      };
+    }
+    // An unexpected decoder defect is not a transport failure or a malformed wire value.
+    return {
+      kind: "error",
+      status: response.status,
+      code: "CLIENT_ERROR",
+      message: "Внутренняя ошибка обработки ответа API.",
     };
   }
 }

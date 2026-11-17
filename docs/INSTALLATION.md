@@ -266,3 +266,11 @@ English UI for the original name. This is a temporary localization seed, not a
 claim about current administrative status or completeness. Apply `0005`
 separately to enable reviewed Saturn district-code mapping; no Saturn codes
 are inserted by this localization migration.
+
+## Optional integrated migration and startup verification
+
+For an isolated database (not the main `melliatlas` database), run the
+[PostGIS startup smoke check](TESTS.md#opt-in-migrated-postgis-startup-smoke-check)
+after provisioning the test database. It verifies migrations `0001` onward,
+including weather `forecast_url` from `0007`, against the real FastAPI lifespan.
+Running normal unit tests does not apply migrations to the configured development DB.

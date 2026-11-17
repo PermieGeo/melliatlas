@@ -131,3 +131,22 @@ discovery, manual coordinates, attribution and invalid response handling. Use
 the canonical `run-tests.sh` to run the full verification set after installing
 backend and Web development dependencies. A real Open-Meteo response and
 commercial reuse are **not** established by mocked contract tests.
+
+## Opt-in migrated PostGIS startup smoke check
+
+Run only against a dedicated disposable PostgreSQL/PostGIS database with a name
+ending in `_test`. The command applies every numbered SQL migration in order and
+starts the real ASGI entrypoint with DB-managed live-weather configuration, but
+makes no requests to external weather or treatment providers. It can write to
+and modify the explicitly supplied test database; it never changes the main DB.
+
+```sh
+MELLIATLAS_TEST_POSTGIS_DSN='postgresql://user:password@127.0.0.1:5433/melliatlas_test' \
+  python backend/scripts/smoke_postgis_startup.py
+```
+
+Create and provision the separate test database before invoking the command.
+The script refuses a database whose actual `current_database()` name does not
+end in `_test`. Ordinary `run-tests.sh` is offline and does not run this opt-in
+integration test. A passing smoke check does not validate source-provider
+availability, coverage, or a deployed user's migration state.

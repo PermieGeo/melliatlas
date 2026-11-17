@@ -108,6 +108,46 @@ describe("FastAPI response boundary", () => {
     expect(invalid).toMatchObject({ kind: "error", code: "INVALID_RESPONSE" });
   });
 
+  it("does not confuse an unexpected decoding defect with transport failure", async () => {
+    const response = new Response(
+      JSON.stringify({ code: "RU", name: "Russia" }),
+    );
+    vi.spyOn(response, "json").mockResolvedValueOnce([
+      {
+        get code() {
+          throw new TypeError("decoder access failed");
+        },
+      },
+    ]);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => response),
+    );
+    const result = await listCountries(new AbortController().signal);
+    expect(result).toMatchObject({
+      kind: "error",
+      status: 200,
+      code: "CLIENT_ERROR",
+    });
+    if (result.kind === "error") {
+      expect(result.message).not.toContain("decoder access failed");
+    }
+  });
+
+  it("reports failed fetch as NETWORK_ERROR", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("Failed to fetch");
+      }),
+    );
+    expect(await listCountries(new AbortController().signal)).toMatchObject({
+      kind: "error",
+      status: null,
+      code: "NETWORK_ERROR",
+    });
+  });
+
   it("reads countries and handles cancellation without turning it into an HTTP failure", async () => {
     const fetchMock = vi.fn(async (_path: string, options: RequestInit) => {
       if (options.signal?.aborted)
