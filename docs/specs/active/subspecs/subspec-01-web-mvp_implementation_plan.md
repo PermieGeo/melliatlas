@@ -6,7 +6,7 @@
 - **Requirements approval:** APPROVED — original W01 browser scope.
 - **Implementation authorization:** AUTHORIZED — original W01 scope only; the new saved-place task remains design-only until explicit approval.
 - **Acceptance:** PENDING.
-- **Selected bounded task:** [Saved place and editable bbox](../tasks/web-saved-place-bbox/task.md) with [task plan](../tasks/web-saved-place-bbox/task-plan.md); only read-only backend geometry groundwork is implemented.
+- **Selected bounded task:** [Saved place and editable bbox](../tasks/web-saved-place-bbox/task.md) with [task plan](../tasks/web-saved-place-bbox/task-plan.md); backend read-only geography and a disconnected, owner-scoped storage adapter are prepared.
 
 This document is a stable entrypoint for the selected Web workstream, not a chronology of completed increments. For the selected bounded task read only its task/plan, shared normative requirements and the explicitly listed module contracts and code. Do not re-open previous task history by default.
 
@@ -36,7 +36,7 @@ The existing server/client code permits a one-calendar-year source filter; docum
 
 **Selected task:** `WEB-PLACE-01`, [requirements](../tasks/web-saved-place-bbox/task.md) and [integration design](../tasks/web-saved-place-bbox/task-plan.md).
 
-Only the read-only geographic rectangle/district contract is currently implemented. Saved-place persistence and UI workflow remain gated by approval of user ownership/security, the place repository and CRUD transport contracts, migration/integration checks, and realistic map-layer coverage. Do not create a Tauri runtime dependency, general workflow engine or new country/provider registry as part of this slice.
+The read-only rectangle/district contract is implemented. Owner-scoped private place values, an optional storage adapter and migration are prepared, but **not wired to any HTTP route or startup path**. Activation and the UI workflow remain gated by explicit approval of user ownership/security, CRUD transport contracts, real PostGIS verification and available regional map coverage. Do not create a Tauri runtime dependency, general workflow engine or new country/provider registry as part of this slice.
 
 ## 4. Current TDD evidence and verification
 

@@ -147,6 +147,10 @@ MELLIATLAS_TEST_POSTGIS_DSN='postgresql://user:password@127.0.0.1:5433/melliatla
 
 Create and provision the separate test database before invoking the command.
 The script refuses a database whose actual `current_database()` name does not
-end in `_test`. Ordinary `run-tests.sh` is offline and does not run this opt-in
+end in `_test`. It also exercises private saved-place CRUD, owner isolation,
+revision conflicts, rereads over independent DB connections and deletion using
+temporary synthetic region geometry and record IDs. The synthetic rows are
+cleaned up after the test; all migrations remain applied in the disposable DB.
+Ordinary `run-tests.sh` is offline and does not run this opt-in
 integration test. A passing smoke check does not validate source-provider
 availability, coverage, or a deployed user's migration state.

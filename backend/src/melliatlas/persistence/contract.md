@@ -113,3 +113,9 @@ provider-specific forecast adapter and validates its URLs before external I/O.
 ## Read-only area intersections
 
 `PostgisTerritoryCatalog` optionally implements `TerritoryAreaDistrictLookup` using imported WGS84 ADM1/ADM2 data and a separate, bounded, positive-area ADM2 read. It verifies that the selected region has imported geometry before the query; missing geometry fails closed. This operation is read-only, not proof of independent ADM2 completeness or production-ready saved-place persistence. Its spatial SQL is internal to persistence; clients consume the typed `territories.api` protocol.
+
+## Private saved places (prepared, not exposed)
+
+`PostgisSavedPlaceRepository` implements the `places.api.SavedPlaceRepository` port through explicitly injected PostgreSQL connections. Each operation requires an independently authorized, non-nil owner UUID; a missing or foreign record is indistinguishable, and updates/deletes use optimistic revision checks. Creation and updates require one unambiguous, imported ADM1 boundary containing the WGS84 center. The server derives rectangle geometry from the validated place dimensions; districts and analysis results are not persisted as place identity. Every write commits atomically or rolls back, and infrastructure errors do not expose private coordinates.
+
+Migration `0008_saved_places.sql` creates the owner-scoped table, bounded WGS84 geometries and indexes. It is opt-in and cannot enable any HTTP route by itself. `melliatlas.main:app` does not construct or use this adapter. An authentication/isolation boundary must supply the owner UUID before public CRUD is authorized. The optional test-database smoke check exercises real PostGIS semantics; mock tests alone are insufficient evidence of durability, correctness or access control.

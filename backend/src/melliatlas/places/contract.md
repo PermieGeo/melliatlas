@@ -1,0 +1,7 @@
+# Saved Place Capability Contract
+
+The public boundary is `places/api.py` and the validation facade is `places/__init__.py`. A `SavedPlaceDraft` identifies a named WGS84 point, its canonical RU/BY region and a bounded axis-aligned analysis rectangle. A `SavedPlace` adds a non-nil UUID, immutable owner identity, monotonically increasing revision and timezone-aware timestamps. Draft validation trims the name, rejects control characters and invalid coordinates or sizes, and preserves the existing analysis-area 30 km limit.
+
+`SavedPlaceRepository` is an owner-scoped persistence port. All reads and writes require an explicit owner UUID; records of other owners are indistinguishable from absent records. Updates and deletes require the current revision and reject stale changes rather than silently overwriting them. Invalid drafts, missing/foreign places, stale revisions, unavailable reviewed regional geometry, and infrastructure failures have distinct typed errors. Source-provider identifiers, district completeness and weather results are not part of saved-place identity.
+
+No authentication mechanism, HTTP endpoint, server startup registration or browser storage behavior is authorized by this capability. The caller must derive `owner_id` from an independently approved authentication/isolation boundary, never from an untrusted request body. No application should expose private coordinates until that boundary is approved and tested.
