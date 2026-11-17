@@ -20,10 +20,10 @@
 
 ## Selected task context: saved place and editable bbox
 
-- [Task requirements](active/tasks/web-saved-place-bbox/task.md) — user workflow, scope and observable oracles, currently design-only.
-- [Task plan](active/tasks/web-saved-place-bbox/task-plan.md) — public-boundary proposal, persistence/privacy gates and tests before implementation.
+- [Task requirements](active/tasks/web-saved-place-bbox/task.md) — user workflow, scope and observable oracles, with read-only geographic groundwork; saved-place storage remains gated.
+- [Task plan](active/tasks/web-saved-place-bbox/task-plan.md) — available read-only bounds/intersection contract, future persistence/privacy gates and tests.
 
-The selected task path in `STATE.json` is a **context selector**, not a claim that the new feature has been built or accepted. Ordinary task work must not read other task pairs or `archive/` without a concrete dependency or an explicitly requested historical review. Stable shared behavior stays in the workstream sub-spec and source contracts.
+The selected task path in `STATE.json` is a **context selector**, not a claim that the complete saved-place feature has been built or accepted. Ordinary task work must not read other task pairs or `archive/` without a concrete dependency or an explicitly requested historical review. Stable shared behavior stays in the workstream sub-spec and source contracts.
 
 ## Completion and history
 

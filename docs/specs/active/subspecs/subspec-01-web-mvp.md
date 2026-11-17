@@ -7,7 +7,7 @@
 - **Parent stage:** [`MVP-01`](../../umbrella_spec_melliatlas.md#mvp-01--working-sustainable-beekeeping-mvp)
 - **Related active workstream:** [Backend sub-spec](subspec-01-backend-planning.md)
 - **Implementation plan:** [MVP-01 Web plan](subspec-01-web-mvp_implementation_plan.md)
-- **Selected next-task design (not yet implemented or accepted):** [Saved place and editable bbox](../tasks/web-saved-place-bbox/task.md). This design does not replace the currently approved W01 requirements or authorize new storage dependencies.
+- **Selected next task (partially implemented, not accepted):** [Saved place and editable bbox](../tasks/web-saved-place-bbox/task.md). Only read-only geographic groundwork is available. This task does not replace the approved W01 requirements or authorize new storage dependencies.
 
 ## 1. User journey and scope
 

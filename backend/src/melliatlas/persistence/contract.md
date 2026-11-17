@@ -109,3 +109,7 @@ provider rows introduced by `0004` and augmented by `0007`. The public
 Exactly one enabled provider can be selected; malformed rows and multiple
 active providers fail closed. The API composition boundary selects an approved
 provider-specific forecast adapter and validates its URLs before external I/O.
+
+## Read-only area intersections
+
+`PostgisTerritoryCatalog` optionally implements `TerritoryAreaDistrictLookup` using imported WGS84 ADM1/ADM2 data and a separate, bounded, positive-area ADM2 read. It verifies that the selected region has imported geometry before the query; missing geometry fails closed. This operation is read-only, not proof of independent ADM2 completeness or production-ready saved-place persistence. Its spatial SQL is internal to persistence; clients consume the typed `territories.api` protocol.

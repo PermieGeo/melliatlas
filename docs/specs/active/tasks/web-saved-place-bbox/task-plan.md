@@ -1,6 +1,6 @@
 # WEB-PLACE-01 — Task Implementation Plan
 
-- **Status:** DESIGN ONLY — no new backend or UI implementation is claimed.
+- **Status:** PARTIAL IMPLEMENTATION — read-only geographical bounds and district lookup; saved-place CRUD and UI remain pending.
 - **Normative context:** [task](task.md), [Web sub-spec](../../subspecs/subspec-01-web-mvp.md), [umbrella](../../../umbrella_spec_melliatlas.md).
 - **Task ID:** `WEB-PLACE-01`; proposed criteria `PLACE-A01`–`PLACE-A05`.
 
@@ -8,7 +8,9 @@
 
 **Current interfaces to inspect before coding:** `backend/src/melliatlas/territories/api.py` + `contract.md`, `backend/src/melliatlas/persistence/api.py` + `contract.md`, `backend/src/melliatlas/api/contract.md`, `web/src/api/{types,client,validation}.ts` + `contract.md`, and geographic invariants in `backend/src/melliatlas/geography/coordinates.py`. Read concrete `persistence/geography.py`, `api/routes_territories.py`, `web/src/{App,components/MapPanel}.tsx` and their tests **only when changing those modules**. Use public APIs/contracts for remaining dependencies.
 
-**Proposed backend public boundary (requires approval):** a `SavedPlaceRepository` port for owner-scoped create/read/list/rename/update/delete, immutable `SavedPlace` and `AnalysisArea` typed values and an independent `IntersectingDistricts` geographic query returning reviewed district identities plus explicit coverage status. Place IDs must not encode coordinates or provider IDs. The geographic query must use server-authoritative geometry and reject invalid/out-of-region or ambiguous datasets; exact SQL belongs to persistence implementations, never `contract.md`.
+**Implemented read-only geographic boundary:** `melliatlas.geography.make_analysis_bounds` and `territories.api.TerritoryAreaDistrictLookup` are public typed entrypoints. `persistence.area_districts.PostgisAreaDistrictLookup` performs positive-area intersection of all imported ADM2 boundaries with the bounded rectangle; `api.routes_territories` exposes the opt-in `POST /api/v1/territories/intersecting-districts` body-only read. Coverage remains `MISSING` or `UNVERIFIED` until independently verified. Tests: `backend/tests/unit/test_{analysis_area_bounds,postgis_area_districts}.py` and `backend/tests/contract/test_area_district_http.py`. PostGIS integration with real source geometries remains outstanding.
+
+**Proposed saved-place boundary (requires approval):** a `SavedPlaceRepository` port for owner-scoped create/read/list/rename/update/delete, immutable `SavedPlace` and `AnalysisArea` values. Place IDs must not encode coordinates or provider IDs. Saved-place geometry and ownership require server-authoritative verification. Exact SQL belongs to persistence implementations, never `contract.md`.
 
 **Proposed transport (not implemented):** same-origin `/api/v1/places` CRUD with typed DTO validation and stable error codes, plus read-only bbox/district resolution as an operation with distinct incomplete coverage. Never expose other users' saved coordinates. Until owner authentication/authorization is available, permit persistence only in an explicitly confined single-user/loopback development deployment. A publicly reachable unauthenticated list-by-ID or list-all endpoint is prohibited. Define ownership, access checks, CSRF/cross-origin policy and deletion behavior before choosing concrete API shapes.
 
@@ -18,7 +20,7 @@
 
 ## Scope and sequencing
 
-1. First establish place/domain/transport contracts and failing backend tests, then migration + persistence and real PostGIS checks.
+1. Agree on owner/authorization and SavedPlace CRUD transport contracts, then migration, persistence and real PostGIS checks. Existing read-only area intersections must not be mistaken for saved-place storage.
 2. Add a focused React place hook and a draft/bbox map interaction with keyboard-accessible resize/dimension inputs. Reuse existing country/region catalog and current API client.
 3. Add save, selection, rename/delete, persisted reopen and district overlays. Do not integrate a new national gazetteer or large regional base-layer ingestion in this task.
 
@@ -38,4 +40,4 @@ Run relevant unit/contract/architecture checks plus `sh ./run-tests.sh` and brow
 
 ## Exit evidence and developer gates
 
-No implementation acceptance is recorded by preparing this plan. Before writing the first feature code PATCH, approve the exact normative change, privacy/ownership strategy and public API shape. After implementation, retain only the current integration design and executable evidence; Git and `archive/` retain any significant superseded decisions.
+No feature acceptance is recorded. The read-only, unsaved area query does not require user ownership or a data migration. Saved-place persistence and public CRUD remain blocked until the developer approves the exact ownership/privacy strategy and transport contract. After implementation, retain only current integration design and executable evidence; Git and `archive/` retain significant superseded decisions.

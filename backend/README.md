@@ -144,3 +144,6 @@ TypeScript counterparts. From the repository root, run
 when changing an enum. The backend contract test detects an outdated generated
 `web/src/api/generated/investigationEnums.ts`.
 
+## Read-only analysis rectangle and district intersection
+
+`POST /api/v1/territories/intersecting-districts` accepts a WGS84 center and a rectangle up to 30 × 30 km and returns all imported ADM2 districts whose polygon has **positive-area** overlap. District identities may belong to adjacent regions; no Saturn identifiers are required. Query responses distinguish no known districts (`MISSING`) from imported, **unverified** district coverage (`UNVERIFIED`); neither implies complete regional coverage. The operation requires already imported ADM1/ADM2 reference geometry and does not persist personal locations. See the [territory contract](src/melliatlas/territories/contract.md) and [HTTP contract](src/melliatlas/api/contract.md). Real PostGIS verification is still required before relying on actual intersections.
