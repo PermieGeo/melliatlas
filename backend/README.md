@@ -125,7 +125,7 @@ Migration `0005_saturn_district_mapping.sql` creates a deliberately empty
 mapping of canonical, imported district IDs to independently reviewed Saturn
 provider district codes. Unlike canonical territory IDs and geoBoundaries
 shape IDs, these codes must not be guessed. An area read requires a validated
-RU district belonging to its selected region and dates no longer than 31 days.
+RU district belonging to its selected region and dates no longer than one calendar year.
 An absent mapping returns 409 without sending a region-wide request; a
 missing configured database returns 503. Experimental `UpdateMap` date filters
 are not verified spraying dates or evidence of complete district coverage.
@@ -143,3 +143,4 @@ TypeScript counterparts. From the repository root, run
 `PYTHONPATH=backend/src python backend/scripts/export_investigation_enums.py`
 when changing an enum. The backend contract test detects an outdated generated
 `web/src/api/generated/investigationEnums.ts`.
+

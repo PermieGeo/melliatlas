@@ -16,5 +16,6 @@
       "phase": "READY_FOR_IMPLEMENTATION"
     }
   ],
-  "featureAcceptances": []
+  "featureAcceptances": [],
+  "selectedTaskPath": "docs/specs/active/tasks/web-saved-place-bbox/task.md"
 }

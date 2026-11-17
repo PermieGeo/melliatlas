@@ -101,6 +101,10 @@
           }
         }
       }
+    },
+    "selectedTaskPath": {
+      "type": "string",
+      "pattern": "^docs/specs/active/tasks/[a-z0-9-]+/task\\.md$"
     }
   }
 }

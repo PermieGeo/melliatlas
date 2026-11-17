@@ -7,6 +7,7 @@
 - **Parent stage:** [`MVP-01`](../../umbrella_spec_melliatlas.md#mvp-01--working-sustainable-beekeeping-mvp)
 - **Related active workstream:** [Backend sub-spec](subspec-01-backend-planning.md)
 - **Implementation plan:** [MVP-01 Web plan](subspec-01-web-mvp_implementation_plan.md)
+- **Selected next-task design (not yet implemented or accepted):** [Saved place and editable bbox](../tasks/web-saved-place-bbox/task.md). This design does not replace the currently approved W01 requirements or authorize new storage dependencies.
 
 ## 1. User journey and scope
 
@@ -57,11 +58,11 @@ The country selector is independent of source applicability. Country/region/dist
 ## 5. Dependencies, gaps and explicit gates
 
 - **Implemented API:** `GET /api/v1/territories/countries`, `/regions`, `/districts`, `/geometry/{territory_id}` and `POST/GET /api/v1/investigations`, plus read-only `GET /api/v1/investigations/scenarios?country=...` and the experimental, opt-in `GET /api/v1/sources` / `POST /api/v1/sources/saturn/treatments`. Contract details are owned by [`backend/src/melliatlas/api/contract.md`](../../../../backend/src/melliatlas/api/contract.md), the Python DTOs and OpenAPI, not this proposal.
-- **Known gaps:** the new experimental `GET /api/v1/sources` lists only explicitly enabled Saturn for RU; there is no general source registry, paginated investigation history or verified complete RU/BY reference dataset. Executable synthetic scenario identifiers, territory associations and supported seasons are exposed by the new read-only discovery operation; it does not provide reference geography, permissions or real source coverage. Completed snapshots are durable only with an explicitly configured and independently verified PostGIS store.
-- **Web authorization:** the developer additionally requested a bounded RU-only live notice preview alongside the W01 fictional-browser slice. The preview remains opt-in and separate from investigation decisions. Backend acceptance and umbrella MVP-01 acceptance are still pending. Runtime credentials, live sources and third-party data reuse remain separately gated.
+- **Known gaps:** the experimental `GET /api/v1/sources` advertises explicitly enabled Saturn (RU only) and weather (when configured); it does not claim complete source coverage, paginated investigation history or verified complete RU/BY reference dataset. Executable synthetic scenario identifiers, territory associations and supported seasons are exposed by the new read-only discovery operation; it does not provide reference geography, permissions or real source coverage. Completed snapshots are durable only with an explicitly configured and independently verified PostGIS store.
+- **Web authorization:** the W01 slice includes an explicitly enabled, bounded RU-only live notice preview alongside the fictional browser investigation. The preview remains opt-in and separate from investigation decisions. Backend acceptance and umbrella MVP-01 acceptance are still pending. Runtime credentials, live sources and third-party data reuse remain separately gated.
 - **Environmental evidence:** no verified/current Saturn API contract, permission to reuse live Saturn data, validated pesticide drift or weather-based exposure model is delivered by MVP-01. No synthetic treatment result provides a permission or safety conclusion.
 
-## W01 operator-approved follow-up behavior
+## Current W01 territory and source safeguards
 
 The browser may persist only public geographic selection IDs and camera state.
 Restoration requires server-confirmed country, region and district identity.
@@ -75,7 +76,7 @@ region. Source filter accuracy and rights are not established by the demo.
 The map and adjoining analysis panels occupy the available content width.
 
 
-## W01 follow-up — compact map-first interaction (partial)
+## Current W01 map and weather presentation (partial)
 
 In the main live-source workspace, the beekeeper title and tagline belong in
 the masthead, not the navigation sidebar. The map is modestly taller and has a
@@ -89,7 +90,7 @@ Smolensk districts may come from optional reviewed `name_ru`; missing labels
 fall back to the original imported name. A honey-orange, grey and charcoal
 palette changes only presentation, not source semantics or readiness.
 
-## W01 follow-up — operator-reviewed Smolensk Saturn district mappings
+## Current Smolensk Saturn district mapping safeguards
 
 The local administrator may explicitly capture one public Saturn directory
 response for subject 55 and review a proposed Smolensk ADM2 district-to-source
@@ -99,3 +100,4 @@ districts remain unavailable, preserving the district-only scope requirement
 and the 100-record manual page limit. Historical source examples do not
 establish current provider operation, complete district coverage or permission
 to collect; the workflow performs no implicit network request on startup.
+
