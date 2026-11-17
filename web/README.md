@@ -20,7 +20,7 @@ npm run dev
 
 Open `http://127.0.0.1:5173`. Vite proxies `/api` to `http://127.0.0.1:8000`. The repository snapshot does not include an npm lockfile; commit an actual resolved lockfile before claiming reproducible frontend installation.
 
-**Network and privacy:** the current `MapPanel` creates an OpenStreetMap remote tile layer by default. Opening/moving the map can contact that external service. A disabled/offline basemap is not yet configured. Private investigation `starting_point` coordinates are sent only in the POST body and are not kept in browser localStorage, URL parameters or telemetry. Public territory IDs and the general map camera may be stored as separate local preferences. Explicitly saved private places are a proposed future feature, not current behavior.
+**Network and privacy:** OpenStreetMap remote tiles are disabled by default. The user may explicitly enable an online basemap for the current map session; enabling it shares the viewed map area with the tile provider. Turning it off removes the tile layer. A complete offline basemap is not yet available. Private investigation `starting_point` coordinates are sent only in the POST body and are not kept in browser localStorage, URL parameters or telemetry. Public territory IDs and the general map camera may be stored as separate local preferences. Explicitly saved private places are a proposed future feature, not current behavior.
 
 ## Current behavior and limitations
 

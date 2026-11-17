@@ -181,8 +181,9 @@ const en = {
   mapLabel: "Investigation map",
   mapProposed: "Proposed stop",
   mapSelected: "Selected",
+  mapOnlineBasemap: "Online basemap",
   mapNote:
-    "Select a region or district to zoom to its imported boundary. Map tiles come from OpenStreetMap; the last viewed map area is saved only in this browser.",
+    "Select a region or district to zoom to its imported boundary. Online OpenStreetMap tiles are off by default; enabling them shares the viewed area with that provider. The last map camera is saved only in this browser.",
   mapStartingPoint: "Your point (current request only)",
   planReady: "Provisional plan prepared",
   noPlan: "No supported plan",
@@ -448,8 +449,9 @@ const ru: Record<keyof typeof en, string> = {
   mapLabel: "Карта исследования",
   mapProposed: "Предлагаемая стоянка",
   mapSelected: "Выбрана",
+  mapOnlineBasemap: "Онлайн-подложка",
   mapNote:
-    "Выберите область или район для приближения к загруженной границе. Тайлы загружаются из OpenStreetMap, а последний вид карты сохраняется только в этом браузере.",
+    "Выберите область или район для приближения к загруженной границе. Тайлы OpenStreetMap по умолчанию выключены; включение передаёт сервису просматриваемую область. Последний вид карты сохраняется только в этом браузере.",
   mapStartingPoint: "Ваша точка (только для текущего запроса)",
   planReady: "Предварительный план сформирован",
   noPlan: "План не сформирован",

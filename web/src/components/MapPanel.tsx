@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import type {
   Position,
@@ -39,7 +39,7 @@ interface Props {
   onPoint: (point: Position) => void;
 }
 
-/** Show OSM map tiles and restore the last browser-local camera position. */
+/** Restore the browser-local camera without contacting a remote tile provider by default. */
 export function MapPanel({
   locale,
   stops,
@@ -50,6 +50,7 @@ export function MapPanel({
   onSelect,
   onPoint,
 }: Props) {
+  const [onlineBasemap, setOnlineBasemap] = useState(false);
   const host = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const overlays = useRef<L.LayerGroup | null>(null);
@@ -85,10 +86,6 @@ export function MapPanel({
         zoom: instance.getZoom(),
       });
     });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: MAX_MAP_ZOOM,
-      attribution: "© OpenStreetMap contributors",
-    }).addTo(instance);
     instance.on("click", (event: L.LeafletMouseEvent) => {
       pointCallback.current({
         longitude: Number(
@@ -110,6 +107,21 @@ export function MapPanel({
       treatmentLayer.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance || !onlineBasemap) return;
+    const tiles = L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: MAX_MAP_ZOOM,
+        attribution: "© OpenStreetMap contributors",
+      },
+    ).addTo(instance);
+    return () => {
+      instance.removeLayer(tiles);
+    };
+  }, [onlineBasemap]);
 
   useEffect(() => {
     const layer = overlays.current;
@@ -220,9 +232,18 @@ export function MapPanel({
         role="application"
         aria-label={t(locale, "mapLabel")}
       />
-      <div className="map-legend" aria-hidden="true">
-        <span className="legend-dot" /> {t(locale, "mapProposed")}
-        <span className="legend-dot legend-selected" />{" "}
+      <div className="map-legend">
+        <label className="map-basemap-control">
+          <input
+            type="checkbox"
+            checked={onlineBasemap}
+            onChange={(event) => setOnlineBasemap(event.target.checked)}
+          />
+          {t(locale, "mapOnlineBasemap")}
+        </label>
+        <span className="legend-dot" aria-hidden="true" />{" "}
+        {t(locale, "mapProposed")}
+        <span className="legend-dot legend-selected" aria-hidden="true" />{" "}
         {t(locale, "mapSelected")}
         {saturnNotices.some((notice) => notice.geometry !== null) && (
           <>

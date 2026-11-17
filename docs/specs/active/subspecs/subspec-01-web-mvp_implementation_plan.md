@@ -25,7 +25,7 @@ Source-of-truth contracts: [HTTP API contract](../../../../backend/src/melliatla
 
 ## 2. Current implementation and unmet guarantees
 
-`web/src/App.tsx` coordinates country, region, selected territory/point, the opt-in live source previews and the separate synthetic investigation. `MapPanel`, `ReferenceControls`, `LiveAreaAnalysis`, `WeatherPanel` and `Timeline` display the existing workflow. Browser code does not store private selected points. Viewport and validated public territory preferences have separate local persistence. The current map unconditionally requests the OpenStreetMap remote tile layer; the planned offline/local-map policy is **not** implemented.
+`web/src/App.tsx` coordinates country, region, selected territory/point, the opt-in live source previews and the separate synthetic investigation. `MapPanel`, `ReferenceControls`, `LiveAreaAnalysis`, `WeatherPanel` and `Timeline` display the existing workflow. Browser code does not store private selected points. Viewport and validated public territory preferences have separate local persistence. The OpenStreetMap remote tile layer is now explicitly opt-in per map session; there is no full offline basemap or regional thematic dataset yet.
 
 The UI does **not** yet save private analysis places, offer editable 15–30 km bbox, load a complete regional thematic dataset, discover every district intersecting a rectangle, or persist analytic snapshots locally. Browser and live PostGIS verification, external-source access/reuse rights, feature acceptance and production authentication remain open gates.
 
