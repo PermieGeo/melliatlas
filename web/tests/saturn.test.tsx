@@ -143,7 +143,7 @@ describe("Saturn live capability boundary", () => {
       />,
     );
     await screen.findByText(
-      "Select a Russian region in the left panel before loading Saturn notices.",
+      "Select an imported Russian region and a source-mapped district above before loading Saturn notices.",
     );
     expect(
       screen.getByRole("button", { name: "Read one live page" }),

@@ -26,7 +26,7 @@ Source-of-truth contracts: [HTTP API contract](../../../../backend/src/melliatla
 
 ## 2. Current implementation and unmet guarantees
 
-`web/src/App.tsx` coordinates country, region, selected territory/point, the opt-in live source previews and the separate synthetic investigation. `MapPanel`, `ReferenceControls`, `LiveAreaAnalysis`, `WeatherPanel` and `Timeline` display the existing workflow. Browser code does not store private selected points. Viewport and validated public territory preferences have separate local persistence. The OpenStreetMap remote tile layer is now explicitly opt-in per map session; there is no full offline basemap or regional thematic dataset yet.
+`web/src/App.tsx` coordinates country, region, selected territory/point, the opt-in live source previews and the separate synthetic investigation. `WorkspaceHeader`, `PlaceSearchToolbar`, `MapPanel`, `ReferenceControls`, `LiveAreaAnalysis`, `WeatherPanel` and `Timeline` display the existing workflow in a place-first shell. Country/settings sit in the header, region/coordinate entry above the map, analysis/weather to its right and an honest disconnected saved-places area below the map. Browser code does not store private selected points. Viewport and validated public territory preferences have separate local persistence. The Web OpenStreetMap basemap loads immediately and discloses third-party viewport sharing with an opt-out; there is no offline basemap or regional thematic dataset yet.
 
 The UI offers an **unsaved** editable 15–30 km analysis rectangle, region-verified manual WGS84 coordinate entry and an explicit read-only lookup of imported districts, without claiming complete ADM2 coverage. It does **not** yet save private analysis places, load a complete regional thematic dataset, render all district boundary overlays, or persist analytic snapshots locally. Browser and live PostGIS verification, external-source access/reuse rights, feature acceptance and production authentication remain open gates.
 
@@ -40,7 +40,7 @@ The read-only rectangle/district contract and unsaved Web preview are implemente
 
 ## 4. Current TDD evidence and verification
 
-Existing browser component/API tests include `web/tests/{workflow,reference-navigation,reference-geometry,weather,saturn,live-area-analysis}.test.tsx` where present, plus the project Playwright scenario `web/e2e/workspace.spec.ts`. Relevant backend contracts include `backend/tests/contract/{test_territory_http,test_administrative_geometry,test_saturn_district_scope,test_open_meteo_live_http}.py`. The selected task plan lists **new** tests required before its implementation, without pretending they exist.
+Existing browser component/API tests include `web/tests/{workflow,reference-navigation,reference-geometry,weather,saturn,live-area-analysis,place-workspace}.test.tsx` where present, plus the project Playwright scenario `web/e2e/workspace.spec.ts`. Relevant backend contracts include `backend/tests/contract/{test_territory_http,test_administrative_geometry,test_saturn_district_scope,test_open_meteo_live_http}.py`. The selected task plan lists **new** tests required before its implementation, without pretending they exist.
 
 TDD is required for new behavior: a failing behavior test, then implementation, then the relevant unit/contract/integration checks and canonical `run-tests.sh`. A passing mocked suite does not prove a migrated PostGIS or live browser startup. Acceptance still requires developer review and verification of the actual storage and map behavior.
 

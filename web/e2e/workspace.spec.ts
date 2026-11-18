@@ -86,14 +86,12 @@ test("keeps the fictional map/timeline readable when online tiles fail", async (
   ).toBeVisible();
   await page.getByRole("button", { name: /Стоянка 2,/ }).click();
   await expect(page.getByText(/Стоянка: fixture-site-beta/)).toBeVisible();
-  expect(external).toHaveLength(0);
   const basemap = page.getByRole("checkbox", { name: "Онлайн-подложка" });
   await expect(page.locator(".map-legend")).not.toHaveAttribute(
     "aria-hidden",
     "true",
   );
-  await expect(basemap).not.toBeChecked();
-  await basemap.check();
+  await expect(basemap).toBeChecked();
   await expect.poll(() => external.length).toBeGreaterThan(0);
   await basemap.uncheck();
   await expect(basemap).not.toBeChecked();
@@ -104,7 +102,7 @@ test("works as a readable narrow-screen workflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /Поиск медоносных угодий/ }),
+    page.getByRole("heading", { name: /Места и анализ/ }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Проанализировать выбранную местность" }),
@@ -215,9 +213,8 @@ test("fits imported region and district boundaries and restores the last viewpor
     "aria-hidden",
     "true",
   );
-  await expect(basemap).not.toBeChecked();
-  await expect(page.locator(".leaflet-tile[src]")).toHaveCount(0);
-  await basemap.check();
+  await expect(basemap).toBeChecked();
+  await expect(page.locator(".leaflet-tile[src]").first()).toBeVisible();
   await expect
     .poll(() => page.locator(".leaflet-tile[src]").first().getAttribute("src"))
     .toContain(`/${savedZoom}/`);

@@ -2,6 +2,23 @@
 export type Locale = "ru" | "en";
 
 const en = {
+  workspacePlacesHeading: "Places and analysis",
+  workspaceSettings: "Settings",
+  workspaceFindPlace: "Region and coordinates",
+  workspaceCoordinateSearch: "Find a point by coordinates",
+  workspaceCoordinateExample: "54.947, 31.080",
+  workspaceFindOnMap: "Find on map",
+  workspaceSearchNeedsRegion: "Choose a region to enable coordinate entry.",
+  workspaceSearchNote:
+    "Use latitude, longitude (decimal dot), or a semicolon between decimal-comma values. Settlement search is not yet available.",
+  workspaceAnalysisTools: "Period and sources",
+  workspaceSaturnScope:
+    "Saturn is requested only when you press Analyze with an imported, source-mapped district selected above. This is not yet a query for the whole draft bbox.",
+  workspaceSavedPlaces: "Saved places",
+  workspaceNotAvailable: "Not connected",
+  workspacePlacesPending:
+    "The place storage API is not enabled. Your draft is temporary and will disappear when you reload.",
+  workspaceContextPanel: "Place details and analysis",
   draftAreaTitle: "Unsaved analysis area",
   draftAreaStart: "Create area draft",
   draftAreaCancel: "Discard draft",
@@ -136,7 +153,7 @@ const en = {
   saturnTitle: "Saturn: public treatment notices",
   saturnCode: "Saturn region mapping",
   saturnSelectRegion:
-    "Select a Russian region in the left panel before loading Saturn notices.",
+    "Select an imported Russian region and a source-mapped district above before loading Saturn notices.",
   saturnCodeHint:
     "The backend resolves the selected region using verified Saturn mappings; an unmapped region is not queried.",
   saturnRead: "Read one live page",
@@ -218,8 +235,10 @@ const en = {
   mapProposed: "Proposed stop",
   mapSelected: "Selected",
   mapOnlineBasemap: "Online basemap",
+  mapTileUnavailable:
+    "Map tiles could not be loaded. Local boundaries and analysis controls remain available.",
   mapNote:
-    "Select a region or district to zoom to its imported boundary. Online OpenStreetMap tiles are off by default; enabling them shares the viewed area with that provider. The last map camera is saved only in this browser.",
+    "The Web map uses online OpenStreetMap tiles by default. Tile requests share the viewed area with OpenStreetMap; switch off Online basemap for a private tile-free view. The last map camera is stored in this browser.",
   mapStartingPoint: "Your point (current request only)",
   planReady: "Provisional plan prepared",
   noPlan: "No supported plan",
@@ -300,6 +319,24 @@ const en = {
 } as const;
 
 const ru: Record<keyof typeof en, string> = {
+  workspacePlacesHeading: "Места и анализ",
+  workspaceSettings: "Настройки",
+  workspaceFindPlace: "Регион и координаты",
+  workspaceCoordinateSearch: "Найти точку по координатам",
+  workspaceCoordinateExample: "54.947, 31.080",
+  workspaceFindOnMap: "Найти на карте",
+  workspaceSearchNeedsRegion:
+    "Сначала выбери область — тогда станет доступен ввод координат.",
+  workspaceSearchNote:
+    "Введи широту, долготу (с точкой); при десятичной запятой разделяй значения точкой с запятой. Поиск населённых пунктов пока не подключён.",
+  workspaceAnalysisTools: "Период и источники",
+  workspaceSaturnScope:
+    "Запрос Сатурн запускается только кнопкой анализа после выбора района с проверенным сопоставлением в верхней панели. Запрос всего bbox пока не реализован.",
+  workspaceSavedPlaces: "Сохранённые места",
+  workspaceNotAvailable: "Не подключено",
+  workspacePlacesPending:
+    "Серверный API сохранения мест пока отключён. Черновик временный и пропадёт после обновления страницы.",
+  workspaceContextPanel: "Место и анализ",
   draftAreaTitle: "Черновик области анализа",
   draftAreaStart: "Создать черновик",
   draftAreaCancel: "Отменить черновик",
@@ -437,7 +474,7 @@ const ru: Record<keyof typeof en, string> = {
   saturnTitle: "Сатурн: сообщения об обработках",
   saturnCode: "Сопоставление региона с Сатурн",
   saturnSelectRegion:
-    "Сначала выбери регион России в левой панели, затем загрузи уведомления Сатурн.",
+    "Сначала выбери область России и район с сопоставлением к Сатурн в верхней панели.",
   saturnCodeHint:
     "Backend сопоставляет регион с проверенным кодом Сатурн. Если соответствие отсутствует, запрос не выполняется.",
   saturnRead: "Загрузить одну страницу",
@@ -520,8 +557,10 @@ const ru: Record<keyof typeof en, string> = {
   mapProposed: "Предлагаемая стоянка",
   mapSelected: "Выбрана",
   mapOnlineBasemap: "Онлайн-подложка",
+  mapTileUnavailable:
+    "Тайлы карты не загружаются. Загруженные границы и инструменты анализа остаются доступны.",
   mapNote:
-    "Выберите область или район для приближения к загруженной границе. Тайлы OpenStreetMap по умолчанию выключены; включение передаёт сервису просматриваемую область. Последний вид карты сохраняется только в этом браузере.",
+    "В web-версии тайлы OpenStreetMap загружаются сразу. Запросы тайлов передают сервису просматриваемую область; выключи «Онлайн-подложка» для работы без внешних тайлов. Последний вид карты хранится в этом браузере.",
   mapStartingPoint: "Ваша точка (только для текущего запроса)",
   planReady: "Предварительный план сформирован",
   noPlan: "План не сформирован",

@@ -1,21 +1,10 @@
-import type {
-  Country,
-  CountryCode,
-  ScenarioListing,
-  Territory,
-} from "../api/types";
-import { ReferenceControls } from "./ReferenceControls";
-import type { TerritoryNavigation } from "../hooks/useTerritoryReference";
-import { countryName, t } from "../i18n";
+import type { ScenarioListing } from "../api/types";
+import { t } from "../i18n";
 import type { Locale, TranslationKey } from "../i18n";
 
 /** Controls for live-source discovery and optional server-advertised fictional studies. */
 interface Props {
   locale: Locale;
-  countries: Country[];
-  country: CountryCode;
-  regions: Territory[];
-  referenceNavigation: TerritoryNavigation;
   scenarios: ScenarioListing[];
   territory: string;
   scenarioId: string;
@@ -24,11 +13,7 @@ interface Props {
   selectedScenario: ScenarioListing | null;
   busy: boolean;
   canSubmit: boolean;
-  countryMessage: TranslationKey;
-  referenceMessage: TranslationKey;
-  onRetryRegions: () => void;
   scenariosMessage: TranslationKey;
-  onCountry: (value: CountryCode) => void;
   onTerritory: (value: string) => void;
   onScenario: (value: string) => void;
   onSeasonStart: (value: string) => void;
@@ -47,9 +32,6 @@ interface Props {
 export function InvestigationControls(props: Props) {
   const {
     locale,
-    countries,
-    country,
-    regions,
     scenarios,
     territory,
     scenarioId,
@@ -67,37 +49,9 @@ export function InvestigationControls(props: Props) {
     ).entries(),
   );
   return (
-    <aside className="controls" aria-label={tr("setup")}>
-      <div className="form-group">
-        <label htmlFor="country">{tr("country")}</label>
-        <select
-          id="country"
-          value={country}
-          onChange={(event) => props.onCountry(event.target.value)}
-          disabled={countries.length === 0}
-        >
-          {countries.length === 0 && (
-            <option value="">{tr("selectCountry")}</option>
-          )}
-          {countries.map((item) => (
-            <option key={item.code} value={item.code}>
-              {countryName(locale, item.code, item.name)}
-            </option>
-          ))}
-        </select>
-        {countries.length === 0 && (
-          <p className="field-help" role="status">
-            {tr(props.countryMessage)}
-          </p>
-        )}
-      </div>
-      <ReferenceControls
-        locale={locale}
-        regions={regions}
-        navigation={props.referenceNavigation}
-        catalogMessage={props.referenceMessage}
-        onRetryRegions={props.onRetryRegions}
-      />
+    <section className="controls" aria-label={tr("workspaceAnalysisTools")}>
+      <h2>{tr("workspaceAnalysisTools")}</h2>
+      <p className="field-help">{tr("workspaceSaturnScope")}</p>
       <div className="form-group source-date-range">
         <label>{tr("analysisDateRange")}</label>
         <div className="date-range">
@@ -231,6 +185,6 @@ export function InvestigationControls(props: Props) {
           )}
         </details>
       )}
-    </aside>
+    </section>
   );
 }

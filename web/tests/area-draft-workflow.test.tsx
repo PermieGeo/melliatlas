@@ -253,3 +253,27 @@ describe("verified coordinate entry", () => {
     expect(state.current.coordinateStatus).toBe("idle");
   });
 });
+
+describe("place-first coordinate navigation", () => {
+  it("opens a verified unsaved draft without requiring map-edit mode first", async () => {
+    const fetchMock = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({ region_id: "ru:region:smo", district_id: null }),
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { result: state } = renderHook(() =>
+      useAreaDraft("RU", "ru:region:smo"),
+    );
+    expect(state.current.editing).toBe(false);
+    await act(async () => state.current.selectCoordinates("54.947", "31.080"));
+    expect(state.current.editing).toBe(true);
+    expect(state.current.draft).toMatchObject({
+      center: { latitude: 54.947, longitude: 31.08 },
+      widthKm: 15,
+      heightKm: 15,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});

@@ -693,9 +693,7 @@ it("reconciles edited source interval and keeps Analyze available", async () => 
   ).toBe("2027-02-15");
   expect(analyze.hasAttribute("disabled")).toBe(false);
   expect(screen.getByText("Исходная точка")).toBeTruthy();
-  expect(
-    screen.getByRole("heading", { name: "Поиск медоносных угодий" }),
-  ).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Места и анализ" })).toBeTruthy();
   expect(screen.queryByText("Версия справочника:")).toBeNull();
   expect(
     screen.queryByText("Необязательное демонстрационное исследование"),
