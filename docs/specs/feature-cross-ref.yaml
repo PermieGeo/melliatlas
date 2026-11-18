@@ -72,6 +72,7 @@ features:
       - backend/tests/unit/test_navigation_diagnostics.py
       - web/tests/reference-navigation.test.tsx
       - web/tests/territory-preference.test.ts
+      - web/tests/place-workspace.test.tsx
       - web/tests/analysis-draft.test.ts
       - web/tests/area-draft-workflow.test.tsx
       - web/tests/area-district-boundary.test.tsx
@@ -289,6 +290,8 @@ features:
     stages: [MVP-01]
     spec_paths: [docs/specs/active/subspecs/subspec-01-web-mvp.md]
     owners:
+      - web/src/components/WorkspaceHeader.tsx
+      - web/src/components/PlaceSearchToolbar.tsx
       - web/src/components/MapPanel.tsx
       - web/src/components/Timeline.tsx
       - web/src/components/ReferenceControls.tsx

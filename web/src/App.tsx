@@ -14,6 +14,8 @@ import type {
   Territory,
 } from "./api/types";
 import { InvestigationControls } from "./components/InvestigationControls";
+import { WorkspaceHeader } from "./components/WorkspaceHeader";
+import { PlaceSearchToolbar } from "./components/PlaceSearchToolbar";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { MapPanel } from "./components/MapPanel";
 import { AreaDraftPanel } from "./components/AreaDraftPanel";
@@ -353,97 +355,30 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <header className="masthead">
-        <div className="brand">
-          <span className="brand-icon" aria-hidden="true">
-            ✳
-          </span>
-          <span>
-            Melli<span className="brand-accent">Atlas</span>
-          </span>
-        </div>
-        <div className="header-context">
-          <h1>{tr("heading")}</h1>
-          <p>{tr("introduction")}</p>
-        </div>
-        <div className="header-actions">
-          <label htmlFor="language">{tr("language")}</label>
-          <select
-            id="language"
-            value={locale}
-            onChange={(event) =>
-              setLocale(event.target.value === "en" ? "en" : "ru")
-            }
-          >
-            <option value="ru">RU</option>
-            <option value="en">EN</option>
-          </select>
-          <span className="header-version">MVP · W01</span>
-        </div>
-      </header>
-      <div className="workspace">
-        <InvestigationControls
-          locale={locale}
-          countries={countries}
-          country={country}
-          regions={regions}
-          referenceNavigation={{
-            ...referenceNavigation,
-            selectRegion: chooseRegion,
-            selectDistrict: chooseDistrict,
-          }}
-          scenarios={scenarios}
-          territory={territory}
-          scenarioId={scenarioId}
-          seasonStart={seasonStart}
-          seasonEnd={seasonEnd}
-          selectedScenario={selectedScenario}
-          busy={investigation.busy}
-          canSubmit={canSubmit}
-          countryMessage={countryMessage}
-          referenceMessage={referenceMessage}
-          onRetryRegions={() =>
-            setRegionRequestVersion((version) => version + 1)
-          }
-          scenariosMessage={scenariosMessage}
-          onCountry={chooseCountry}
-          onTerritory={chooseTerritory}
-          onScenario={chooseScenario}
-          onSeasonStart={(value) => {
-            reset();
-            setSeasonStart(value);
-          }}
-          onSeasonEnd={(value) => {
-            reset();
-            setSeasonEnd(value);
-          }}
-          onSubmit={begin}
-          canAnalyze={canAnalyze}
-          onAnalyze={analyze}
-          sourceDateStart={sourceRange.start}
-          sourceDateEnd={sourceRange.end}
-          onSourceDateStart={(value) => {
-            setSourceRange((current) =>
-              updateSourceDateRange(current, "start", value),
-            );
-            setAnalysisRequest(null);
-            setSaturnNotices([]);
-          }}
-          onSourceDateEnd={(value) => {
-            setSourceRange((current) =>
-              updateSourceDateRange(current, "end", value),
-            );
-            setAnalysisRequest(null);
-            setSaturnNotices([]);
-          }}
-          analysisHint={analysisHint}
-        />
+      <WorkspaceHeader
+        locale={locale}
+        countries={countries}
+        country={country}
+        countryMessage={countryMessage}
+        onCountry={chooseCountry}
+        onLocale={setLocale}
+      />
+      <PlaceSearchToolbar
+        locale={locale}
+        regions={regions}
+        navigation={{
+          ...referenceNavigation,
+          selectRegion: chooseRegion,
+          selectDistrict: chooseDistrict,
+        }}
+        catalogMessage={referenceMessage}
+        onRetryRegions={() => setRegionRequestVersion((version) => version + 1)}
+        coordinateStatus={areaDraft.coordinateStatus}
+        onCoordinatesEdited={areaDraft.invalidateCoordinates}
+        onCoordinates={(lat, lon) => void areaDraft.selectCoordinates(lat, lon)}
+      />
+      <div className="workspace workspace--places">
         <main className="canvas-column">
-          <WeatherPanel
-            country={country}
-            locale={locale}
-            point={weatherPoint}
-          />
           <section className="map-section" aria-label={tr("mapLabel")}>
             <div className="section-header">
               <div>
@@ -491,29 +426,20 @@ export default function App() {
               onPoint={selectMapPoint}
               onDraftResize={areaDraft.resize}
             />
-            <AreaDraftPanel
-              locale={locale}
-              regionSelected={Boolean(referenceNavigation.regionId)}
-              editing={areaDraft.editing}
-              draft={areaDraft.draft}
-              preview={areaDraft.preview}
-              boundaryDistrictId={districtBoundary.districtId}
-              boundaryStatus={districtBoundary.status}
-              boundaryErrorCode={districtBoundary.errorCode}
-              onDistrictBoundary={(id) => void districtBoundary.select(id)}
-              status={areaDraft.status}
-              errorCode={areaDraft.errorCode}
-              coordinateStatus={areaDraft.coordinateStatus}
-              onCoordinatesEdited={areaDraft.invalidateCoordinates}
-              onCoordinates={(lat, lon) =>
-                void areaDraft.selectCoordinates(lat, lon)
-              }
-              onStart={areaDraft.start}
-              onCancel={areaDraft.cancel}
-              onWidth={(width) => areaDraft.resize("widthKm", width)}
-              onHeight={(height) => areaDraft.resize("heightKm", height)}
-              onCheck={() => void areaDraft.checkDistricts()}
-            />
+          </section>
+          <section
+            className="saved-places-panel"
+            aria-label={tr("workspaceSavedPlaces")}
+          >
+            <div className="section-header">
+              <h2>{tr("workspaceSavedPlaces")}</h2>
+              <span className="workspace-pending-label">
+                {tr("workspaceNotAvailable")}
+              </span>
+            </div>
+            <p className="field-help" role="status">
+              {tr("workspacePlacesPending")}
+            </p>
           </section>
           {mapPointMessage && (
             <p role="status" className="field-help">
@@ -545,13 +471,6 @@ export default function App() {
               </span>
             </div>
           )}
-          <LiveAreaAnalysis
-            locale={locale}
-            country={country}
-            regionId={referenceNavigation.regionId}
-            request={analysisRequest}
-            onNotices={setSaturnNotices}
-          />
           {investigation.result && (
             <Timeline
               locale={locale}
@@ -570,6 +489,83 @@ export default function App() {
             />
           )}
         </main>
+        <aside
+          className="context-column"
+          aria-label={tr("workspaceContextPanel")}
+        >
+          <AreaDraftPanel
+            locale={locale}
+            regionSelected={Boolean(referenceNavigation.regionId)}
+            editing={areaDraft.editing}
+            draft={areaDraft.draft}
+            preview={areaDraft.preview}
+            boundaryDistrictId={districtBoundary.districtId}
+            boundaryStatus={districtBoundary.status}
+            boundaryErrorCode={districtBoundary.errorCode}
+            onDistrictBoundary={(id) => void districtBoundary.select(id)}
+            status={areaDraft.status}
+            errorCode={areaDraft.errorCode}
+            onStart={areaDraft.start}
+            onCancel={areaDraft.cancel}
+            onWidth={(width) => areaDraft.resize("widthKm", width)}
+            onHeight={(height) => areaDraft.resize("heightKm", height)}
+            onCheck={() => void areaDraft.checkDistricts()}
+          />
+          <InvestigationControls
+            locale={locale}
+            scenarios={scenarios}
+            territory={territory}
+            scenarioId={scenarioId}
+            seasonStart={seasonStart}
+            seasonEnd={seasonEnd}
+            selectedScenario={selectedScenario}
+            busy={investigation.busy}
+            canSubmit={canSubmit}
+            scenariosMessage={scenariosMessage}
+            onTerritory={chooseTerritory}
+            onScenario={chooseScenario}
+            onSeasonStart={(value) => {
+              reset();
+              setSeasonStart(value);
+            }}
+            onSeasonEnd={(value) => {
+              reset();
+              setSeasonEnd(value);
+            }}
+            onSubmit={begin}
+            canAnalyze={canAnalyze}
+            onAnalyze={analyze}
+            sourceDateStart={sourceRange.start}
+            sourceDateEnd={sourceRange.end}
+            onSourceDateStart={(value) => {
+              setSourceRange((current) =>
+                updateSourceDateRange(current, "start", value),
+              );
+              setAnalysisRequest(null);
+              setSaturnNotices([]);
+            }}
+            onSourceDateEnd={(value) => {
+              setSourceRange((current) =>
+                updateSourceDateRange(current, "end", value),
+              );
+              setAnalysisRequest(null);
+              setSaturnNotices([]);
+            }}
+            analysisHint={analysisHint}
+          />
+          <WeatherPanel
+            country={country}
+            locale={locale}
+            point={weatherPoint}
+          />
+          <LiveAreaAnalysis
+            locale={locale}
+            country={country}
+            regionId={referenceNavigation.regionId}
+            request={analysisRequest}
+            onNotices={setSaturnNotices}
+          />
+        </aside>
       </div>
       <footer className="footer-note">{tr("footer")}</footer>
     </div>

@@ -1,9 +1,9 @@
 # WEB-PLACE-01 — Saved analysis place and editable bbox
 
 - **Task ID:** `WEB-PLACE-01`.
-- **Status:** PARTIAL IMPLEMENTATION — read-only geographic bounds/district lookup, an unsaved React area-draft preview with verified coordinate entry, and an inactive owner-scoped persistence adapter; private saved-place CRUD remains gated.
+- **Status:** PARTIAL IMPLEMENTATION — place-first Web layout, read-only geographic bounds/district lookup, an unsaved React area-draft preview with verified coordinate entry, and an inactive owner-scoped persistence adapter; private saved-place CRUD remains gated.
 - **Workstream:** `mvp-01-web`; [current Web sub-spec](../../subspecs/subspec-01-web-mvp.md); [task plan](task-plan.md).
-- **Existing requirement anchors:** `MVP01-WEB-R01`, `MVP01-WEB-R02`, `MVP01-WEB-R08`. New saved-place and data-handling behavior must be incorporated into approved normative requirements before implementation.
+- **Existing requirement anchors:** `MVP01-WEB-R01`, `MVP01-WEB-R02`, `MVP01-WEB-R08`, `MVP01-WEB-R12`, `MVP01-WEB-R13`. New saved-place and data-handling behavior must be incorporated into approved normative requirements before implementation.
 - **Acceptance:** NOT CLAIMED. This task defines an independently testable first redesign slice, not the full planned product.
 
 ## User-visible outcome
@@ -12,7 +12,7 @@ A beekeeper selects a country and an **administrative region** (for example Smol
 
 ## Bounded behavior proposed for approval
 
-1. Place the country selector and settings access in the top-right header. Below, present **Region** and a combined settlement-or-coordinate search. Search remains disabled until a valid region is selected; distinguish missing region geography from an empty search result. A coordinate input must be validated against WGS84 and the selected region before becoming a place draft. Settlement lookup and full regional thematic layers are separate follow-up capabilities unless an independently licensed catalog already exists.
+1. Place the country selector and settings access in the top-right header. Below, present **Region** and a combined settlement-or-coordinate search. Search remains disabled until a valid region is selected; distinguish missing region geography from an empty search result. A coordinate input must be validated against WGS84 and the selected region before becoming a place draft. The current Web search accepts a coordinate pair and reports that settlement lookup is unavailable; a regional gazetteer and thematic layers require separate approved capabilities.
 2. Clicking the map creates or moves **one active draft point** and centers a default **15 km × 15 km** bbox around it. A draft can be resized interactively or by dimension input, with each dimension no larger than **30 km** and greater than zero; display width, height and computed area in km². Respect longitude scaling and geographic edge cases; do not equate a degree of longitude with a degree of latitude.
 3. Repeated clicks while editing move the existing draft, not persisted places. After saving, a later click starts a new draft. Editing an existing saved place is an explicit action, with cancel/rollback behavior. A saved point is distinguished from its analysis rectangle. Selecting a search result recenters the map **without changing its zoom**; this alone does not save the place.
 4. Saving requires a nonempty user name and valid point/bbox. Backend persistence uses stable IDs and verifies geometry server-side. Upon saving, identify **all reviewed ADM2 districts with positive-area overlap with the bbox** and highlight their boundaries; do not stop after one or two districts or rely on a point-only district lookup. Keep a distinct state when coverage is missing or ambiguous. District identities will later scope source discovery, including country-specific alternatives to RU-only Saturn for Belarus.

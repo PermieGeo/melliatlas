@@ -32,6 +32,8 @@ This workstream does **not** port the former administration interface, map compo
 | `MVP01-WEB-R10` | Discover executable synthetic scenarios and their country, territory and inclusive supported season from the backend. No scenario identifiers, fixture territory IDs or fixture years may be embedded in production browser code; empty country coverage is an explicit state. | `MVP-01.R02`, `R09` |
 | `MVP01-WEB-R11` | When explicitly enabled, expose a manually triggered RU-only public Saturn notice preview through a bounded backend adapter, allowing explicit follow-up page reads without automatic crawling. Discover source availability by country, keep live reports separate from synthetic investigations, preserve provenance and uncertainty, and fail visibly on unavailable upstream data. Never imply complete coverage or reuse authorization. | `MVP-01.R05`, `R08`; `SYS-02`, `SYS-14` |
 | `MVP01-WEB-R08` | Preserve predictable empty/loading/error states, mobile/touch usability, visible focus and basic screen-reader semantics; do not expose protected source contents or private apiary coordinates in logs, query strings or telemetry. | `MVP-01.R01`, `R09`; `SYS-14` |
+| `MVP01-WEB-R12` | Make the place-first workspace discoverable: country and settings in the global header; region and coordinate search above the central map; editable area controls, period, source availability and weather in a contextual analysis column; saved-place area below the map with a truthful unavailable state until protected CRUD exists. Do not imply that the synthetic investigation or a source-specific district selection already analyzes the entire bbox. Settlement lookup must be identified as unsupported until licensed data and a public contract exist. | `MVP-01.R01`, `R08`; `WEB-PLACE-01` |
+| `MVP01-WEB-R13` | Show a usable online Web basemap immediately, identify the external tile provider and viewed-area disclosure in the interface, and provide a discoverable opt-out without hiding geography overlays or accessible results. Do not claim offline tiles or conceal the privacy consequence of navigation to a private point. | `MVP-01.R01`, `R09`; `SYS-14` |
 
 ## 3. UX composition
 
@@ -40,6 +42,14 @@ The default view is a **map-first workspace**, not a list of provider operations
 Use restrained, distinct encodings for *reported notice*, *demonstration exclusion*, *caution*, *unknown* and *selected alternative*. Do not present a single red/green 'safe/unsafe' gradient. A source attribution is inspectable without requiring the user to understand ingestion internals. A map tile failure must not erase the accessible stop and evidence list.
 
 The country selector is independent of source applicability. Country/region/district navigation and **validated real geography** must be distinguished from **synthetic planning evidence**. When a reference is unavailable (`503`), the UI displays a bounded explanation rather than fictional boundaries. A clearly labeled development demonstration can still be run through the existing fixture API when its parameters are explicitly selected.
+
+### Place-first target and implementation boundaries
+
+The product's 17 November 2026 UX concept v0.2 defines a **target layout and journey**, not proof that all capabilities are available. The user begins with a country and administrative region, locates a point (coordinate entry first; settlement names only after approved regional catalog), edits a 15×15 km rectangle up to 30×30 km, then saves a named place with all known positive-area district intersections. The map is primary. A contextual column shows the analysis period, weather availability and source status. A separate saved-places area and a day-based timeline/history are future parts of the same place-centered flow.
+
+The first shell slice must preserve a functioning synthetic investigation, district-scoped manual Saturn requests and optional weather independently of the unsaved bbox. It must visibly explain when sources require a reviewed district, when data or storage is unavailable, and when a request has **not** been made. Do not activate owner-scoped CRUD, settlement search, thematic layers, 15-day forecast, source-wide bbox collection, offline storage, or an exposure/safety score merely to fill the target layout.
+
+The Web basemap defaults to an attributed OpenStreetMap remote tile layer to give immediate geographic context. This changes the previous per-session opt-in policy: requests reveal the current map viewport to the external tile provider, potentially including a privately viewed area. The user can disable tiles immediately from a visible control. The client still must not put private draft coordinates into navigation URLs, logs or telemetry; the UI and operator documentation must disclose the tile-provider limitation.
 
 ## 4. Acceptance scenarios
 
@@ -54,6 +64,8 @@ The country selector is independent of source applicability. Country/region/dist
 | `MVP01-WEB-A07` | Browser checks cover touch viewport, keyboard navigation, focus handling, synthetic labeling, evidence attribution and absence of private point data in navigable URLs/logs. |
 | `MVP01-WEB-A08` | EN/RU UI switching, third-country API fixture, server-provided season bounds, absence of scenarios, and cancellation after country changes are tested without a country-specific browser branch. |
 | `MVP01-WEB-A09` | With live reading explicitly enabled, RU advertises Saturn and one manual page can display source-attributed notices or an explicit error; BY has no Saturn capability and causes no provider I/O, including for direct cross-country POST requests. An empty page is never treated as complete. |
+| `MVP01-WEB-A10` | In desktop and narrow-browser layouts, country/settings are global, region-scoped coordinate entry precedes the map and is disabled until region selection, the map remains primary, and right-side (stacked on mobile) analysis controls and a truthful saved-place unavailable state are visible. A verified coordinate search sets an unsaved draft without a place write or URL coordinate. |
+| `MVP01-WEB-A11` | On initial Web display, attributed OSM tiles are requested without extra navigation; the visible basemap toggle removes them, and the disclosure explains which viewed area leaves the browser. The map, district outlines and accessible investigation remain usable without tiles. |
 
 ## 5. Dependencies, gaps and explicit gates
 

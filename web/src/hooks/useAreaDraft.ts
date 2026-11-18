@@ -110,25 +110,20 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     setCoordinateFocus(null);
     setEditing(false);
   };
-  const selectPoint = (center: Position) => {
-    if (!editing || !country || !regionId) return false;
+  const applyCenter = (center: Position, focus: boolean) => {
+    if (!country || !regionId) return false;
     const widthKm = draft?.widthKm ?? DEFAULT_DRAFT_DIMENSION_KM;
     const heightKm = draft?.heightKm ?? DEFAULT_DRAFT_DIMENSION_KM;
-    const rectangle = provisionalDraftRectangle(center, widthKm, heightKm);
-    if (rectangle === null) return false;
+    if (!provisionalDraftRectangle(center, widthKm, heightKm)) return false;
     invalidate();
-    setCoordinateFocus(null);
-    setStoredDraft({
-      country,
-      regionId,
-      center,
-      widthKm,
-      heightKm,
-    });
+    setStoredDraft({ country, regionId, center, widthKm, heightKm });
+    setCoordinateFocus(focus ? center : null);
     return true;
   };
+  const selectPoint = (center: Position) =>
+    editing ? applyCenter(center, false) : false;
   const selectCoordinates = async (latitude: string, longitude: string) => {
-    if (!editing || !country || !regionId) return;
+    if (!country || !regionId) return;
     invalidateCoordinates();
     const center = parseDraftCoordinates(latitude, longitude);
     const widthKm = draft?.widthKm ?? DEFAULT_DRAFT_DIMENSION_KM;
@@ -162,8 +157,8 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
       setCoordinateStatus("outside");
       return;
     }
-    if (selectPoint(center)) {
-      setCoordinateFocus(center);
+    if (applyCenter(center, true)) {
+      setEditing(true);
     }
   };
   const resize = (axis: "widthKm" | "heightKm", value: number) => {

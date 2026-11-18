@@ -46,7 +46,7 @@ interface Props {
   onDraftResize: (axis: "widthKm" | "heightKm", value: number) => void;
 }
 
-/** Restore the browser-local camera without contacting a remote tile provider by default. */
+/** Show an attributed Web basemap; the user can disable third-party tile requests. */
 export function MapPanel({
   locale,
   stops,
@@ -62,7 +62,8 @@ export function MapPanel({
   onPoint,
   onDraftResize,
 }: Props) {
-  const [onlineBasemap, setOnlineBasemap] = useState(false);
+  const [onlineBasemap, setOnlineBasemap] = useState(true);
+  const [basemapFailed, setBasemapFailed] = useState(false);
   const host = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const overlays = useRef<L.LayerGroup | null>(null);
@@ -150,7 +151,10 @@ export function MapPanel({
         maxZoom: MAX_MAP_ZOOM,
         attribution: "© OpenStreetMap contributors",
       },
-    ).addTo(instance);
+    );
+    tiles.on("tileerror", () => setBasemapFailed(true));
+    tiles.on("load", () => setBasemapFailed(false));
+    tiles.addTo(instance);
     return () => {
       instance.removeLayer(tiles);
     };
@@ -393,6 +397,11 @@ export function MapPanel({
           </>
         )}
       </div>
+      {onlineBasemap && basemapFailed && (
+        <p role="status" className="map-tile-error">
+          {t(locale, "mapTileUnavailable")}
+        </p>
+      )}
       <p className="map-note">{t(locale, "mapNote")}</p>
     </div>
   );
