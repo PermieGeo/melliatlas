@@ -13,6 +13,10 @@ interface Props {
   errorCode: string | null;
   coordinateStatus: "idle" | "checking" | "invalid" | "outside" | "unavailable";
   preview: AreaDistrictResult | null;
+  boundaryDistrictId: string | null;
+  boundaryStatus: "idle" | "loading" | "ready" | "failed";
+  boundaryErrorCode: string | null;
+  onDistrictBoundary: (districtId: string) => void;
   onStart: () => void;
   onCoordinatesEdited: () => void;
   onCoordinates: (latitude: string, longitude: string) => void;
@@ -31,6 +35,10 @@ export function AreaDraftPanel({
   status,
   errorCode,
   preview,
+  boundaryDistrictId,
+  boundaryStatus,
+  boundaryErrorCode,
+  onDistrictBoundary,
   coordinateStatus,
   onStart,
   onCoordinatesEdited,
@@ -172,8 +180,8 @@ export function AreaDraftPanel({
         </p>
       )}
       {preview && (
-        <div role="status" className="area-draft-results">
-          <p>
+        <div className="area-draft-results">
+          <p role="status">
             {t(locale, "draftAreaDistricts", {
               count: preview.districts.length,
             })}
@@ -183,11 +191,35 @@ export function AreaDraftPanel({
               ? tr("draftAreaMissing")
               : tr("draftAreaUnverified")}
           </p>
-          <ul>
+          <ul className="area-draft-district-list">
             {preview.districts.map((district) => (
-              <li key={district.id}>{district.name}</li>
+              <li key={district.id}>
+                <span>{district.name}</span>
+                <button
+                  type="button"
+                  aria-pressed={boundaryDistrictId === district.id}
+                  onClick={() => onDistrictBoundary(district.id)}
+                >
+                  {boundaryDistrictId === district.id
+                    ? tr("draftAreaHideBoundary")
+                    : tr("draftAreaShowBoundary")}
+                </button>
+              </li>
             ))}
           </ul>
+          {boundaryStatus === "loading" && (
+            <p className="field-help">{tr("draftAreaBoundaryLoading")}</p>
+          )}
+          {boundaryStatus === "failed" && (
+            <p role="alert" className="field-help">
+              {t(locale, "draftAreaBoundaryUnavailable", {
+                code: boundaryErrorCode ?? "UNKNOWN",
+              })}
+            </p>
+          )}
+          {boundaryStatus === "ready" && (
+            <p className="field-help">{tr("draftAreaBoundaryShown")}</p>
+          )}
         </div>
       )}
       <p className="field-help">{tr("draftAreaUnsaved")}</p>

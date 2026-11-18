@@ -52,6 +52,7 @@ features:
       - web/src/components/ReferenceControls.tsx
       - web/src/components/AreaDraftPanel.tsx
       - web/src/hooks/useAreaDraft.ts
+      - web/src/hooks/useAreaDistrictBoundary.ts
       - web/src/geo/analysisDraft.ts
       - web/src/api/client.ts
       - web/src/api/validation.ts
@@ -73,6 +74,7 @@ features:
       - web/tests/territory-preference.test.ts
       - web/tests/analysis-draft.test.ts
       - web/tests/area-draft-workflow.test.tsx
+      - web/tests/area-district-boundary.test.tsx
       - web/tests/area-district-client.test.ts
   - feature_id: MAP.BASEMAP
     implementation_status: planned

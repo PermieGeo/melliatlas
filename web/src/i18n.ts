@@ -25,6 +25,13 @@ const en = {
   draftAreaChecking: "Checking imported districts…",
   draftAreaError: "Area lookup unavailable ({code}). Coverage is unknown.",
   draftAreaDistricts: "Imported intersecting districts: {count}",
+  draftAreaShowBoundary: "Show boundary",
+  draftAreaHideBoundary: "Hide boundary",
+  draftAreaBoundaryLoading: "Loading selected district boundary…",
+  draftAreaBoundaryUnavailable:
+    "Cannot display this district boundary ({code}).",
+  draftAreaBoundaryShown:
+    "Showing one imported district boundary; area coverage remains unverified.",
   draftAreaMissing:
     "No district geometry was returned. Coverage is missing or incomplete.",
   draftAreaUnverified:
@@ -316,6 +323,12 @@ const ru: Record<keyof typeof en, string> = {
   draftAreaChecking: "Проверка импортированных районов…",
   draftAreaError: "Не удалось прочитать районы ({code}). Полнота неизвестна.",
   draftAreaDistricts: "Известных пересекающихся районов: {count}",
+  draftAreaShowBoundary: "Показать границу",
+  draftAreaHideBoundary: "Скрыть границу",
+  draftAreaBoundaryLoading: "Загрузка границы выбранного района…",
+  draftAreaBoundaryUnavailable: "Не удалось показать границу района ({code}).",
+  draftAreaBoundaryShown:
+    "Показана граница одного района; полнота покрытия не подтверждена.",
   draftAreaMissing: "Границы районов отсутствуют или неполны.",
   draftAreaUnverified:
     "Показаны только известные пересечения; полнота данных не подтверждена.",

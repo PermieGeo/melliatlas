@@ -39,6 +39,7 @@ interface Props {
   draftBounds: DraftRectangle | null;
   privateFocus: Position | null;
   referenceGeometry: TerritoryGeometry | null;
+  previewDistrictGeometry: TerritoryGeometry | null;
   saturnNotices: SaturnNotice[];
   onSelect: (siteId: string) => void;
   onPoint: (point: Position) => void;
@@ -55,6 +56,7 @@ export function MapPanel({
   draftBounds,
   privateFocus,
   referenceGeometry,
+  previewDistrictGeometry,
   saturnNotices,
   onSelect,
   onPoint,
@@ -65,6 +67,7 @@ export function MapPanel({
   const map = useRef<L.Map | null>(null);
   const overlays = useRef<L.LayerGroup | null>(null);
   const boundaryLayer = useRef<L.GeoJSON | null>(null);
+  const previewDistrictLayer = useRef<L.GeoJSON | null>(null);
   const treatmentLayer = useRef<L.LayerGroup | null>(null);
   const draftLayer = useRef<L.LayerGroup | null>(null);
   const pointCallback = useRef(onPoint);
@@ -119,6 +122,7 @@ export function MapPanel({
       map.current = null;
       overlays.current = null;
       boundaryLayer.current = null;
+      previewDistrictLayer.current = null;
       treatmentLayer.current = null;
       draftLayer.current = null;
     };
@@ -301,6 +305,28 @@ export function MapPanel({
       });
     }
   }, [referenceGeometry]);
+
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance) return;
+    if (previewDistrictLayer.current) {
+      instance.removeLayer(previewDistrictLayer.current);
+      previewDistrictLayer.current = null;
+    }
+    if (!previewDistrictGeometry) return;
+    // Public reference outlines never change the draft's current map camera.
+    const boundary = L.geoJSON(previewDistrictGeometry.geometry, {
+      style: { className: "ma-area-preview-district" },
+      interactive: false,
+    }).addTo(instance);
+    previewDistrictLayer.current = boundary;
+    return () => {
+      instance.removeLayer(boundary);
+      if (previewDistrictLayer.current === boundary) {
+        previewDistrictLayer.current = null;
+      }
+    };
+  }, [previewDistrictGeometry]);
 
   useEffect(() => {
     const instance = map.current;
