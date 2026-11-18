@@ -7,7 +7,7 @@ const en = {
   draftAreaCancel: "Discard draft",
   draftAreaNeedsRegion: "Select a region before creating an area.",
   draftAreaClickHint:
-    "Click the map or enter coordinates to set the draft center.",
+    "Click the map or enter coordinates for the center. Drag the edge handles to resize, or use the dimension fields.",
   draftAreaIntro: "Select a region, then create a temporary area on the map.",
   draftAreaLatitude: "Latitude (WGS84)",
   draftAreaLongitude: "Longitude (WGS84)",
@@ -298,7 +298,7 @@ const ru: Record<keyof typeof en, string> = {
   draftAreaCancel: "Отменить черновик",
   draftAreaNeedsRegion: "Для создания области сначала выберите регион.",
   draftAreaClickHint:
-    "Нажмите на карту или введите координаты, чтобы установить центр.",
+    "Нажмите на карту или введите координаты центра. Размеры можно изменить маркерами границ или в полях ниже.",
   draftAreaIntro: "Выберите регион, затем создайте временную область на карте.",
   draftAreaLatitude: "Широта (WGS84)",
   draftAreaLongitude: "Долгота (WGS84)",

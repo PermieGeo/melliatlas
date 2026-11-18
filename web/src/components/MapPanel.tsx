@@ -7,6 +7,7 @@ import type {
   TerritoryGeometry,
 } from "../api/types";
 import { t } from "../i18n";
+import { dimensionFromDraftEdge } from "../geo/analysisDraft";
 import type { DraftRectangle } from "../geo/analysisDraft";
 import type { Locale } from "../i18n";
 import {
@@ -41,6 +42,7 @@ interface Props {
   saturnNotices: SaturnNotice[];
   onSelect: (siteId: string) => void;
   onPoint: (point: Position) => void;
+  onDraftResize: (axis: "widthKm" | "heightKm", value: number) => void;
 }
 
 /** Restore the browser-local camera without contacting a remote tile provider by default. */
@@ -56,6 +58,7 @@ export function MapPanel({
   saturnNotices,
   onSelect,
   onPoint,
+  onDraftResize,
 }: Props) {
   const [onlineBasemap, setOnlineBasemap] = useState(false);
   const host = useRef<HTMLDivElement>(null);
@@ -65,6 +68,7 @@ export function MapPanel({
   const treatmentLayer = useRef<L.LayerGroup | null>(null);
   const draftLayer = useRef<L.LayerGroup | null>(null);
   const pointCallback = useRef(onPoint);
+  const resizeCallback = useRef(onDraftResize);
   const privateCamera = useRef(false);
   const focusTreatment = () => {
     const instance = map.current;
@@ -78,6 +82,7 @@ export function MapPanel({
       });
   };
   pointCallback.current = onPoint;
+  resizeCallback.current = onDraftResize;
 
   useEffect(() => {
     if (!host.current) return;
@@ -217,11 +222,60 @@ export function MapPanel({
         }),
       );
     }
+    if (draftPoint && draftBounds) {
+      const east = draftBounds.longitudeRanges.at(-1)?.[1];
+      const addResizeHandle = (
+        axis: "widthKm" | "heightKm",
+        position: Position,
+      ) => {
+        const anchor = L.latLng(position.latitude, position.longitude);
+        const marker = L.marker(anchor, {
+          draggable: true,
+          bubblingMouseEvents: false,
+          keyboard: true,
+          title: t(
+            locale,
+            axis === "widthKm" ? "draftAreaWidth" : "draftAreaHeight",
+          ),
+          icon: L.divIcon({
+            className: `ma-draft-resize-handle ma-draft-resize-${axis}`,
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
+          }),
+        });
+        marker.bindTooltip(
+          t(locale, axis === "widthKm" ? "draftAreaWidth" : "draftAreaHeight"),
+        );
+        marker.on("click", (event: L.LeafletMouseEvent) =>
+          L.DomEvent.stopPropagation(event),
+        );
+        marker.on("dragend", () => {
+          const moved = marker.getLatLng();
+          marker.setLatLng(anchor);
+          const dimension = dimensionFromDraftEdge(draftPoint, axis, {
+            latitude: moved.lat,
+            longitude: moved.lng,
+          });
+          if (dimension !== null) resizeCallback.current(axis, dimension);
+        });
+        layer.addLayer(marker);
+      };
+      if (east !== undefined) {
+        addResizeHandle("widthKm", {
+          latitude: draftPoint.latitude,
+          longitude: east,
+        });
+      }
+      addResizeHandle("heightKm", {
+        latitude: draftBounds.north,
+        longitude: draftPoint.longitude,
+      });
+    }
     return () => {
       instance.removeLayer(layer);
       if (draftLayer.current === layer) draftLayer.current = null;
     };
-  }, [draftBounds, draftPoint]);
+  }, [draftBounds, draftPoint, locale]);
 
   useEffect(() => {
     const instance = map.current;

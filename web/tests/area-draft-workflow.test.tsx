@@ -86,6 +86,31 @@ describe("region-scoped unsaved area workflow", () => {
     expect(state.current.editing).toBe(false);
   });
 
+  it("preserves resized dimensions when the map moves an existing draft", async () => {
+    const fetchMock = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify(result)),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { result: state } = renderHook(() =>
+      useAreaDraft("RU", "ru:region:smo"),
+    );
+    act(() => state.current.start());
+    act(() => state.current.selectPoint({ latitude: 54, longitude: 32 }));
+    act(() => state.current.resize("widthKm", 30));
+    act(() => state.current.resize("heightKm", 25));
+    await act(async () => state.current.checkDistricts());
+    expect(state.current.preview).not.toBeNull();
+    act(() => state.current.selectPoint({ latitude: 54.1, longitude: 32.25 }));
+    expect(state.current.draft).toMatchObject({
+      center: { latitude: 54.1, longitude: 32.25 },
+      widthKm: 30,
+      heightKm: 25,
+    });
+    expect(state.current.preview).toBeNull();
+    expect(state.current.status).toBe("idle");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps invalid dimensions unchanged and cancels a draft without persistence", () => {
     const { result: state } = renderHook(() =>
       useAreaDraft("RU", "ru:region:smo"),
@@ -138,6 +163,36 @@ describe("verified coordinate entry", () => {
       latitude: 54.1,
       longitude: 32.25,
     });
+  });
+
+  it("preserves dimensions for verified coordinate entry and rejects polar overflow before I/O", async () => {
+    const fetchMock = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({ region_id: "ru:region:smo", district_id: null }),
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { result: state } = renderHook(() =>
+      useAreaDraft("RU", "ru:region:smo"),
+    );
+    act(() => state.current.start());
+    act(() => state.current.selectPoint({ latitude: 54, longitude: 32 }));
+    act(() => state.current.resize("heightKm", 30));
+    act(() => state.current.resize("widthKm", 20));
+    expect(state.current.selectPoint({ latitude: 89.9, longitude: 32 })).toBe(
+      false,
+    );
+    await act(async () => state.current.selectCoordinates("89.9", "32"));
+    expect(state.current.coordinateStatus).toBe("invalid");
+    expect(fetchMock).not.toHaveBeenCalled();
+    await act(async () => state.current.selectCoordinates("54.2", "32.1"));
+    expect(state.current.draft).toMatchObject({
+      center: { latitude: 54.2, longitude: 32.1 },
+      widthKm: 20,
+      heightKm: 30,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("rejects a point in a different region, keeping an existing draft unchanged", async () => {

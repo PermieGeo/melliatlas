@@ -308,13 +308,18 @@ test("previews a private unsaved rectangle without publishing a place API", asyn
   await page.locator(".map-canvas").click({ position: { x: 200, y: 200 } });
   await expect(page.locator(".ma-analysis-draft")).toHaveCount(1);
   await expect(page.getByLabel("Ширина (км)")).toHaveValue("15");
+  await expect(page.locator(".ma-draft-resize-widthKm")).toHaveCount(1);
+  await expect(page.locator(".ma-draft-resize-heightKm")).toHaveCount(1);
+  await page.getByLabel("Ширина (км)").fill("20");
+  await page.locator(".map-canvas").click({ position: { x: 300, y: 300 } });
+  await expect(page.getByLabel("Ширина (км)")).toHaveValue("20");
   await page
     .getByRole("button", { name: "Найти пересекающиеся районы" })
     .click();
   await expect(page.getByText("Example district")).toBeVisible();
   expect(captured).toHaveLength(1);
   expect(captured[0]?.path).not.toContain("latitude");
-  expect(captured[0]?.body).toContain('"width_km":15');
+  expect(captured[0]?.body).toContain('"width_km":20');
   expect(new URL(page.url()).search).toBe("");
   await page.getByRole("button", { name: "Отменить черновик" }).click();
   await expect(page.locator(".ma-analysis-draft")).toHaveCount(0);

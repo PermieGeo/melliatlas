@@ -112,11 +112,9 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
   };
   const selectPoint = (center: Position) => {
     if (!editing || !country || !regionId) return false;
-    const rectangle = provisionalDraftRectangle(
-      center,
-      DEFAULT_DRAFT_DIMENSION_KM,
-      DEFAULT_DRAFT_DIMENSION_KM,
-    );
+    const widthKm = draft?.widthKm ?? DEFAULT_DRAFT_DIMENSION_KM;
+    const heightKm = draft?.heightKm ?? DEFAULT_DRAFT_DIMENSION_KM;
+    const rectangle = provisionalDraftRectangle(center, widthKm, heightKm);
     if (rectangle === null) return false;
     invalidate();
     setCoordinateFocus(null);
@@ -124,8 +122,8 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
       country,
       regionId,
       center,
-      widthKm: DEFAULT_DRAFT_DIMENSION_KM,
-      heightKm: DEFAULT_DRAFT_DIMENSION_KM,
+      widthKm,
+      heightKm,
     });
     return true;
   };
@@ -133,14 +131,9 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     if (!editing || !country || !regionId) return;
     invalidateCoordinates();
     const center = parseDraftCoordinates(latitude, longitude);
-    if (
-      !center ||
-      !provisionalDraftRectangle(
-        center,
-        DEFAULT_DRAFT_DIMENSION_KM,
-        DEFAULT_DRAFT_DIMENSION_KM,
-      )
-    ) {
+    const widthKm = draft?.widthKm ?? DEFAULT_DRAFT_DIMENSION_KM;
+    const heightKm = draft?.heightKm ?? DEFAULT_DRAFT_DIMENSION_KM;
+    if (!center || !provisionalDraftRectangle(center, widthKm, heightKm)) {
       setCoordinateStatus("invalid");
       return;
     }

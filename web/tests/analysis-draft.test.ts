@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  dimensionFromDraftEdge,
   parseDraftCoordinates,
   provisionalDraftRectangle,
   validDraftDimension,
@@ -33,6 +34,53 @@ describe("unsaved WGS84 analysis draft", () => {
     expect(bounds?.longitudeRanges).toHaveLength(2);
     expect(bounds?.longitudeRanges[0]?.[1]).toBe(180);
     expect(bounds?.longitudeRanges[1]?.[0]).toBe(-180);
+  });
+
+  it("derives drag-resized dimensions using the same local WGS84 scale as the outline", () => {
+    const center = { longitude: 32, latitude: 54 };
+    const bounds = provisionalDraftRectangle(center, 15, 25);
+    if (!bounds) throw new Error("Missing bounds");
+    const east = bounds.longitudeRanges.at(-1)?.[1];
+    if (east === undefined) throw new Error("Missing eastern edge");
+    expect(
+      dimensionFromDraftEdge(center, "widthKm", {
+        longitude: east,
+        latitude: center.latitude,
+      }),
+    ).toBe(15);
+    expect(
+      dimensionFromDraftEdge(center, "heightKm", {
+        longitude: center.longitude,
+        latitude: bounds.north,
+      }),
+    ).toBe(25);
+    expect(
+      dimensionFromDraftEdge(center, "widthKm", {
+        longitude: center.longitude + 10,
+        latitude: center.latitude,
+      }),
+    ).toBe(30);
+    expect(dimensionFromDraftEdge(center, "heightKm", center)).toBe(0.1);
+    expect(
+      dimensionFromDraftEdge(center, "widthKm", {
+        longitude: Infinity,
+        latitude: 54,
+      }),
+    ).toBeNull();
+  });
+
+  it("measures dragged edges across the antimeridian without a world-spanning width", () => {
+    const center = { longitude: 179.99, latitude: 10 };
+    const bounds = provisionalDraftRectangle(center, 15, 15);
+    if (!bounds) throw new Error("Missing bounds");
+    const east = bounds.longitudeRanges.at(-1)?.[1];
+    if (east === undefined) throw new Error("Missing eastern edge");
+    expect(
+      dimensionFromDraftEdge(center, "widthKm", {
+        longitude: east,
+        latitude: center.latitude,
+      }),
+    ).toBe(15);
   });
 
   it("rejects invalid coordinates, polar rectangles, dimensions and non-finite inputs", () => {

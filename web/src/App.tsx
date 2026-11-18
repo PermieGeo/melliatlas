@@ -486,6 +486,7 @@ export default function App() {
               saturnNotices={saturnNotices}
               onSelect={investigation.setSelectedSite}
               onPoint={selectMapPoint}
+              onDraftResize={areaDraft.resize}
             />
             <AreaDraftPanel
               locale={locale}

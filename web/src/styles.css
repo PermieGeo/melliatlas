@@ -899,6 +899,21 @@ h3 {
   fill: #f6ba59;
   fill-opacity: 1;
 }
+/* Drag handles remain optional: numeric dimension inputs provide keyboard access. */
+.ma-draft-resize-handle {
+  background: #fff9ed;
+  border: 2px solid #b26416;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 85%);
+  cursor: grab;
+}
+.ma-draft-resize-handle:focus-visible {
+  outline: 3px solid #422b19;
+  outline-offset: 3px;
+}
+.ma-draft-resize-handle.leaflet-drag-target {
+  cursor: grabbing;
+}
 .area-draft-panel {
   margin-top: 12px;
   padding: 14px;
