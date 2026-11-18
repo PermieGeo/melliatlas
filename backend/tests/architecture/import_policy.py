@@ -7,6 +7,7 @@ from pathlib import Path
 # These dependencies are direct imports, not transitive permission to reach an implementation.
 ALLOWED_DEPENDENCIES: dict[str, frozenset[str]] = {
     "geography": frozenset(),
+    "places": frozenset({"geography", "territories"}),
     "territories": frozenset({"geography"}),
     "planning": frozenset({"territories", "geography"}),
     "sources": frozenset({"territories", "planning", "geography"}),
@@ -14,10 +15,11 @@ ALLOWED_DEPENDENCIES: dict[str, frozenset[str]] = {
     "engine": frozenset({"sources", "analyzers", "planning", "geography"}),
     "agent": frozenset({"engine", "planning", "sources", "geography"}),
     "jobs": frozenset({"agent", "engine", "planning", "territories", "geography"}),
-    "persistence": frozenset({"jobs", "territories", "geography"}),
+    "persistence": frozenset({"jobs", "territories", "geography", "places"}),
     "api": frozenset(
         {
             "geography",
+            "places",
             "territories",
             "planning",
             "sources",

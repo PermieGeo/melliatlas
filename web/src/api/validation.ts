@@ -12,6 +12,7 @@ import {
 } from "./generated/investigationEnums";
 import type {
   Assessment,
+  AreaDistrictResult,
   Country,
   CountryCode,
   GeoPosition,
@@ -182,6 +183,63 @@ function isIsoDate(value: string): boolean {
   return (
     Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
   );
+}
+
+/** Validate spatial response geometry and provenance before displaying district names. */
+export function decodeAreaDistrictResult(value: unknown): AreaDistrictResult {
+  const item = record(value, "areaDistricts");
+  const south = numeric(item.south, "areaDistricts.south");
+  const north = numeric(item.north, "areaDistricts.north");
+  if (south < -90 || north > 90 || south >= north)
+    throw new WireError("areaDistricts.latitude");
+  const longitudeRanges = list(
+    item.longitude_ranges,
+    "areaDistricts.longitude_ranges",
+    (raw, path) => {
+      if (!Array.isArray(raw) || raw.length !== 2) throw new WireError(path);
+      const west = numeric(raw[0], `${path}[0]`);
+      const east = numeric(raw[1], `${path}[1]`);
+      if (west < -180 || east > 180 || west >= east) throw new WireError(path);
+      const interval: [number, number] = [west, east];
+      return interval;
+    },
+  );
+  if (longitudeRanges.length < 1 || longitudeRanges.length > 2)
+    throw new WireError("areaDistricts.longitude_ranges");
+  const nominalAreaKm2 = numeric(
+    item.nominal_area_km2,
+    "areaDistricts.nominal_area_km2",
+  );
+  if (nominalAreaKm2 <= 0 || nominalAreaKm2 > 900)
+    throw new WireError("areaDistricts.nominal_area_km2");
+  const districts = list(
+    item.districts,
+    "areaDistricts.districts",
+    (raw, path) => {
+      const district = record(raw, path);
+      return {
+        id: nonEmpty(district.id, `${path}.id`),
+        region_id: nonEmpty(district.region_id, `${path}.region_id`),
+        name: nonEmpty(district.name, `${path}.name`),
+        reference_id: nonEmpty(district.reference_id, `${path}.reference_id`),
+      };
+    },
+  );
+  if (
+    new Set(districts.map((district) => district.id)).size !== districts.length
+  )
+    throw new WireError("areaDistricts.districts");
+  return {
+    coverage: oneOf(item.coverage, "areaDistricts.coverage", [
+      "MISSING",
+      "UNVERIFIED",
+    ]),
+    south,
+    north,
+    longitude_ranges: longitudeRanges,
+    nominal_area_km2: nominalAreaKm2,
+    districts,
+  };
 }
 
 export function decodeTerritories(value: unknown): Territory[] {

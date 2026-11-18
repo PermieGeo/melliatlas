@@ -884,3 +884,67 @@ h3 {
 .analysis-action {
   justify-content: center;
 }
+
+/* The provisional analysis rectangle is not a verified cadastral boundary. */
+.ma-analysis-draft {
+  stroke: #b26416;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  fill: #f1ac4b;
+  fill-opacity: 0.13;
+}
+.ma-analysis-draft-point {
+  stroke: #422b19;
+  stroke-width: 2;
+  fill: #f6ba59;
+  fill-opacity: 1;
+}
+/* Drag handles remain optional: numeric dimension inputs provide keyboard access. */
+.ma-draft-resize-handle {
+  background: #fff9ed;
+  border: 2px solid #b26416;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 85%);
+  cursor: grab;
+}
+.ma-draft-resize-handle:focus-visible {
+  outline: 3px solid #422b19;
+  outline-offset: 3px;
+}
+.ma-draft-resize-handle.leaflet-drag-target {
+  cursor: grabbing;
+}
+.area-draft-panel {
+  margin-top: 12px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.area-draft-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.area-draft-header h3 {
+  margin: 0;
+}
+.area-draft-dimensions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.area-draft-dimensions label {
+  display: grid;
+  gap: 4px;
+}
+.area-draft-dimensions input {
+  max-width: 120px;
+}
+.area-draft-results ul {
+  margin: 8px 0;
+  padding-left: 22px;
+}

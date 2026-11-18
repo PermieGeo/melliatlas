@@ -1,5 +1,6 @@
 import {
   decodeCountries,
+  decodeAreaDistrictResult,
   decodeSources,
   decodeSaturnPage,
   decodeWeatherForecast,
@@ -12,6 +13,7 @@ import {
 } from "./validation";
 import type {
   Country,
+  AreaDistrictResult,
   ExternalSource,
   SaturnNoticePage,
   WeatherForecast,
@@ -180,6 +182,36 @@ export function resolveTerritoryPoint(
         country,
         longitude: point.longitude,
         latitude: point.latitude,
+      }),
+    },
+  );
+}
+
+/** Send unsaved private coordinates in a POST body; the server does not persist them. */
+export function lookupIntersectingDistricts(
+  draft: {
+    country: CountryCode;
+    regionId: string;
+    center: Position;
+    widthKm: number;
+    heightKm: number;
+  },
+  signal: AbortSignal,
+): Promise<ApiResult<AreaDistrictResult>> {
+  return request(
+    "/api/v1/territories/intersecting-districts",
+    signal,
+    decodeAreaDistrictResult,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        country: draft.country,
+        region_id: draft.regionId,
+        latitude: draft.center.latitude,
+        longitude: draft.center.longitude,
+        width_km: draft.widthKm,
+        height_km: draft.heightKm,
       }),
     },
   );

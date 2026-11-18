@@ -35,6 +35,7 @@ def test_dependency_matrix_matches_current_implementation_plan() -> None:
     # This independently locked policy must change only with an approved dependency review.
     assert ALLOWED_DEPENDENCIES == {
         "geography": frozenset(),
+        "places": frozenset({"geography", "territories"}),
         "territories": frozenset({"geography"}),
         "planning": frozenset({"territories", "geography"}),
         "sources": frozenset({"territories", "planning", "geography"}),
@@ -42,10 +43,11 @@ def test_dependency_matrix_matches_current_implementation_plan() -> None:
         "engine": frozenset({"sources", "analyzers", "planning", "geography"}),
         "agent": frozenset({"engine", "planning", "sources", "geography"}),
         "jobs": frozenset({"agent", "engine", "planning", "territories", "geography"}),
-        "persistence": frozenset({"jobs", "territories", "geography"}),
+        "persistence": frozenset({"jobs", "territories", "geography", "places"}),
         "api": frozenset(
             {
                 "geography",
+                "places",
                 "territories",
                 "planning",
                 "sources",

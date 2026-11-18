@@ -222,3 +222,105 @@ test("fits imported region and district boundaries and restores the last viewpor
     .poll(() => page.locator(".leaflet-tile[src]").first().getAttribute("src"))
     .toContain(`/${savedZoom}/`);
 });
+
+test("previews a private unsaved rectangle without publishing a place API", async ({
+  page,
+}) => {
+  const region = {
+    id: "ru:region:smolensk",
+    country: "RU",
+    kind: "region",
+    name: "Смоленская область",
+    parent_id: null,
+    reference_id: "reviewed-v1",
+    valid_on: "2026-01-01",
+    geometry_status: "available",
+  };
+  const captured: Array<{ path: string; body: string | null }> = [];
+  await page.route("**/api/v1/territories/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith("/countries")) {
+      await route.fulfill({ json: [{ code: "RU", name: "Russia" }] });
+    } else if (url.pathname.endsWith("/regions")) {
+      await route.fulfill({ json: [region] });
+    } else if (url.pathname.endsWith("/districts")) {
+      await route.fulfill({
+        status: 409,
+        json: {
+          error: { code: "CATALOG_DEPTH_UNSUPPORTED", message: "No districts" },
+        },
+      });
+    } else if (url.pathname.includes("/geometry/")) {
+      await route.fulfill({
+        json: {
+          territory_id: region.id,
+          reference_id: region.reference_id,
+          coordinate_system: "EPSG:4326",
+          geometry: {
+            type: "Polygon",
+            coordinates: [
+              [
+                [30, 53],
+                [35, 53],
+                [35, 57],
+                [30, 57],
+                [30, 53],
+              ],
+            ],
+          },
+        },
+      });
+    } else if (url.pathname.endsWith("/intersecting-districts")) {
+      captured.push({
+        path: url.pathname + url.search,
+        body: route.request().postData(),
+      });
+      await route.fulfill({
+        json: {
+          coverage: "UNVERIFIED",
+          south: 53.9,
+          north: 54.1,
+          longitude_ranges: [[31.9, 32.1]],
+          nominal_area_km2: 225,
+          districts: [
+            {
+              id: "ru:district:a",
+              region_id: region.id,
+              name: "Example district",
+              reference_id: "reviewed-v1",
+            },
+          ],
+        },
+      });
+    } else {
+      await route.fulfill({ status: 404 });
+    }
+  });
+  await page.goto("/");
+  await expect(
+    page.getByRole("button", { name: "Создать черновик" }),
+  ).toBeDisabled();
+  await page.getByLabel("Область / регион").selectOption(region.id);
+  await expect(
+    page.getByRole("button", { name: "Создать черновик" }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Создать черновик" }).click();
+  await page.locator(".map-canvas").click({ position: { x: 200, y: 200 } });
+  await expect(page.locator(".ma-analysis-draft")).toHaveCount(1);
+  await expect(page.getByLabel("Ширина (км)")).toHaveValue("15");
+  await expect(page.locator(".ma-draft-resize-widthKm")).toHaveCount(1);
+  await expect(page.locator(".ma-draft-resize-heightKm")).toHaveCount(1);
+  await page.getByLabel("Ширина (км)").fill("20");
+  await page.locator(".map-canvas").click({ position: { x: 300, y: 300 } });
+  await expect(page.getByLabel("Ширина (км)")).toHaveValue("20");
+  await page
+    .getByRole("button", { name: "Найти пересекающиеся районы" })
+    .click();
+  await expect(page.getByText("Example district")).toBeVisible();
+  expect(captured).toHaveLength(1);
+  expect(captured[0]?.path).not.toContain("latitude");
+  expect(captured[0]?.body).toContain('"width_km":20');
+  expect(new URL(page.url()).search).toBe("");
+  await page.getByRole("button", { name: "Отменить черновик" }).click();
+  await expect(page.locator(".ma-analysis-draft")).toHaveCount(0);
+});

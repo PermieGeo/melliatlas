@@ -16,6 +16,7 @@ import type {
 import { InvestigationControls } from "./components/InvestigationControls";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { MapPanel } from "./components/MapPanel";
+import { AreaDraftPanel } from "./components/AreaDraftPanel";
 import { Timeline } from "./components/Timeline";
 import { LiveAreaAnalysis } from "./components/LiveAreaAnalysis";
 import type { AreaAnalysisRequest } from "./components/LiveAreaAnalysis";
@@ -31,6 +32,7 @@ import {
 } from "./geo/territoryPreference";
 import { WeatherPanel } from "./components/WeatherPanel";
 import { useInvestigation } from "./hooks/useInvestigation";
+import { useAreaDraft } from "./hooks/useAreaDraft";
 import { useTerritoryReference } from "./hooks/useTerritoryReference";
 import { t } from "./i18n";
 import type { Locale, TranslationKey } from "./i18n";
@@ -75,6 +77,7 @@ export default function App() {
       ? regionCatalog.message
       : "loadingRegions";
   const referenceNavigation = useTerritoryReference(country, regions);
+  const areaDraft = useAreaDraft(country, referenceNavigation.regionId);
   const { reset } = investigation;
   const tr = (key: TranslationKey, values?: Record<string, string | number>) =>
     t(locale, key, values);
@@ -300,6 +303,10 @@ export default function App() {
     referenceNavigation.selectDistrict(id);
   };
   const selectMapPoint = (position: Position) => {
+    if (areaDraft.editing) {
+      areaDraft.selectPoint(position);
+      return;
+    }
     pointLookup.current?.abort();
     setPoint(position);
     setMapPointMessage(null);
@@ -472,10 +479,33 @@ export default function App() {
               stops={stops}
               selectedId={investigation.selectedSite}
               startingPoint={point}
+              draftPoint={areaDraft.draft?.center ?? null}
+              draftBounds={areaDraft.bounds}
+              privateFocus={areaDraft.coordinateFocus}
               referenceGeometry={referenceNavigation.geometry}
               saturnNotices={saturnNotices}
               onSelect={investigation.setSelectedSite}
               onPoint={selectMapPoint}
+              onDraftResize={areaDraft.resize}
+            />
+            <AreaDraftPanel
+              locale={locale}
+              regionSelected={Boolean(referenceNavigation.regionId)}
+              editing={areaDraft.editing}
+              draft={areaDraft.draft}
+              preview={areaDraft.preview}
+              status={areaDraft.status}
+              errorCode={areaDraft.errorCode}
+              coordinateStatus={areaDraft.coordinateStatus}
+              onCoordinatesEdited={areaDraft.invalidateCoordinates}
+              onCoordinates={(lat, lon) =>
+                void areaDraft.selectCoordinates(lat, lon)
+              }
+              onStart={areaDraft.start}
+              onCancel={areaDraft.cancel}
+              onWidth={(width) => areaDraft.resize("widthKm", width)}
+              onHeight={(height) => areaDraft.resize("heightKm", height)}
+              onCheck={() => void areaDraft.checkDistricts()}
             />
           </section>
           {mapPointMessage && (

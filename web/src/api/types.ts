@@ -54,6 +54,21 @@ export type ReferenceMultiPolygon = {
   coordinates: GeoPosition[][][];
 };
 export type ReferenceShape = ReferencePolygon | ReferenceMultiPolygon;
+/** Read-only district overlap for an unsaved, bounded WGS84 analysis draft. */
+export interface AreaDistrictResult {
+  coverage: "MISSING" | "UNVERIFIED";
+  south: number;
+  north: number;
+  longitude_ranges: [number, number][];
+  nominal_area_km2: number;
+  districts: {
+    id: string;
+    region_id: string;
+    name: string;
+    reference_id: string;
+  }[];
+}
+
 export interface TerritoryAtPoint {
   region_id: string;
   district_id: string | null;

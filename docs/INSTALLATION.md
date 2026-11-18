@@ -274,3 +274,20 @@ For an isolated database (not the main `melliatlas` database), run the
 after provisioning the test database. It verifies migrations `0001` onward,
 including weather `forecast_url` from `0007`, against the real FastAPI lifespan.
 Running normal unit tests does not apply migrations to the configured development DB.
+
+
+## Private saved-place storage (not enabled)
+
+`backend/migrations/0008_saved_places.sql` defines a private, owner-scoped table for
+named WGS84 sites and bounded analysis rectangles. It requires the existing
+region directory (`0002`) and administrative boundary schema (`0003`), and a
+PostGIS-enabled database. The migration is **not** run at startup. Do not apply
+it to a shared or production database without an approved access model and
+reviewed migration permissions. The repository adapter is not connected to any
+HTTP route, and an arbitrary client-supplied `owner_id` must never authorize access.
+
+For integration verification use the [disposable test-database smoke check](TESTS.md#opt-in-migrated-postgis-startup-smoke-check), which applies all migrations
+and exercises isolated synthetic saved-place operations. The database name is
+verified to end in `_test` before any migration or test write. The check does
+not establish real-data coverage, deployed authentication or production
+readiness.
