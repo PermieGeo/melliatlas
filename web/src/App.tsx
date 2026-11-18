@@ -33,6 +33,7 @@ import {
 import { WeatherPanel } from "./components/WeatherPanel";
 import { useInvestigation } from "./hooks/useInvestigation";
 import { useAreaDraft } from "./hooks/useAreaDraft";
+import { useAreaDistrictBoundary } from "./hooks/useAreaDistrictBoundary";
 import { useTerritoryReference } from "./hooks/useTerritoryReference";
 import { t } from "./i18n";
 import type { Locale, TranslationKey } from "./i18n";
@@ -78,6 +79,7 @@ export default function App() {
       : "loadingRegions";
   const referenceNavigation = useTerritoryReference(country, regions);
   const areaDraft = useAreaDraft(country, referenceNavigation.regionId);
+  const districtBoundary = useAreaDistrictBoundary(areaDraft.preview);
   const { reset } = investigation;
   const tr = (key: TranslationKey, values?: Record<string, string | number>) =>
     t(locale, key, values);
@@ -483,6 +485,7 @@ export default function App() {
               draftBounds={areaDraft.bounds}
               privateFocus={areaDraft.coordinateFocus}
               referenceGeometry={referenceNavigation.geometry}
+              previewDistrictGeometry={districtBoundary.geometry}
               saturnNotices={saturnNotices}
               onSelect={investigation.setSelectedSite}
               onPoint={selectMapPoint}
@@ -494,6 +497,10 @@ export default function App() {
               editing={areaDraft.editing}
               draft={areaDraft.draft}
               preview={areaDraft.preview}
+              boundaryDistrictId={districtBoundary.districtId}
+              boundaryStatus={districtBoundary.status}
+              boundaryErrorCode={districtBoundary.errorCode}
+              onDistrictBoundary={(id) => void districtBoundary.select(id)}
               status={areaDraft.status}
               errorCode={areaDraft.errorCode}
               coordinateStatus={areaDraft.coordinateStatus}

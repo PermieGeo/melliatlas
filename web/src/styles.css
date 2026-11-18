@@ -885,6 +885,25 @@ h3 {
   justify-content: center;
 }
 
+/* District inspection overlays a single imported reference without claiming complete coverage. */
+.leaflet-overlay-pane path.ma-area-preview-district {
+  stroke: #276e83;
+  stroke-width: 3;
+  stroke-dasharray: 4 3;
+  fill: #2c91a9;
+  fill-opacity: 0.12;
+}
+.area-draft-district-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.area-draft-district-list button {
+  flex-shrink: 0;
+}
+
 /* The provisional analysis rectangle is not a verified cadastral boundary. */
 .ma-analysis-draft {
   stroke: #b26416;

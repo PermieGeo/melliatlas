@@ -251,22 +251,35 @@ test("previews a private unsaved rectangle without publishing a place API", asyn
         },
       });
     } else if (url.pathname.includes("/geometry/")) {
+      const isDistrict = decodeURIComponent(url.pathname).endsWith(
+        "ru:district:a",
+      );
       await route.fulfill({
         json: {
-          territory_id: region.id,
+          territory_id: isDistrict ? "ru:district:a" : region.id,
           reference_id: region.reference_id,
           coordinate_system: "EPSG:4326",
           geometry: {
             type: "Polygon",
-            coordinates: [
-              [
-                [30, 53],
-                [35, 53],
-                [35, 57],
-                [30, 57],
-                [30, 53],
-              ],
-            ],
+            coordinates: isDistrict
+              ? [
+                  [
+                    [31.9, 53.9],
+                    [32.1, 53.9],
+                    [32.1, 54.1],
+                    [31.9, 54.1],
+                    [31.9, 53.9],
+                  ],
+                ]
+              : [
+                  [
+                    [30, 53],
+                    [35, 53],
+                    [35, 57],
+                    [30, 57],
+                    [30, 53],
+                  ],
+                ],
           },
         },
       });
@@ -317,6 +330,14 @@ test("previews a private unsaved rectangle without publishing a place API", asyn
     .getByRole("button", { name: "Найти пересекающиеся районы" })
     .click();
   await expect(page.getByText("Example district")).toBeVisible();
+  await page.getByRole("button", { name: "Показать границу" }).click();
+  await expect(page.locator(".ma-area-preview-district")).toHaveCount(1);
+  await page.getByRole("button", { name: "Скрыть границу" }).click();
+  await expect(page.locator(".ma-area-preview-district")).toHaveCount(0);
+  await page.getByRole("button", { name: "Показать границу" }).click();
+  await expect(page.locator(".ma-area-preview-district")).toHaveCount(1);
+  await page.getByLabel("Ширина (км)").fill("25");
+  await expect(page.locator(".ma-area-preview-district")).toHaveCount(0);
   expect(captured).toHaveLength(1);
   expect(captured[0]?.path).not.toContain("latitude");
   expect(captured[0]?.body).toContain('"width_km":20');
