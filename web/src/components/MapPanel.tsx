@@ -36,6 +36,7 @@ interface Props {
   startingPoint: Position | null;
   draftPoint: Position | null;
   draftBounds: DraftRectangle | null;
+  privateFocus: Position | null;
   referenceGeometry: TerritoryGeometry | null;
   saturnNotices: SaturnNotice[];
   onSelect: (siteId: string) => void;
@@ -50,6 +51,7 @@ export function MapPanel({
   startingPoint,
   draftPoint,
   draftBounds,
+  privateFocus,
   referenceGeometry,
   saturnNotices,
   onSelect,
@@ -63,6 +65,7 @@ export function MapPanel({
   const treatmentLayer = useRef<L.LayerGroup | null>(null);
   const draftLayer = useRef<L.LayerGroup | null>(null);
   const pointCallback = useRef(onPoint);
+  const privateCamera = useRef(false);
   const focusTreatment = () => {
     const instance = map.current;
     const layer = treatmentLayer.current;
@@ -85,6 +88,7 @@ export function MapPanel({
     const saved = readMapViewport() ?? DEFAULT_VIEWPORT;
     instance.setView([saved.latitude, saved.longitude], saved.zoom);
     instance.on("moveend", () => {
+      if (privateCamera.current) return;
       const center = instance.getCenter();
       saveMapViewport({
         latitude: center.lat,
@@ -114,6 +118,19 @@ export function MapPanel({
       draftLayer.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (!privateFocus) return;
+    const instance = map.current;
+    if (!instance) return;
+    // A privately entered coordinate must not become a persisted map camera.
+    privateCamera.current = true;
+    instance.setView(
+      [privateFocus.latitude, privateFocus.longitude],
+      instance.getZoom(),
+      { animate: false },
+    );
+  }, [privateFocus]);
 
   useEffect(() => {
     const instance = map.current;

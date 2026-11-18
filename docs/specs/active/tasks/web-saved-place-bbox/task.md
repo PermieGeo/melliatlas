@@ -1,7 +1,7 @@
 # WEB-PLACE-01 — Saved analysis place and editable bbox
 
 - **Task ID:** `WEB-PLACE-01`.
-- **Status:** PARTIAL IMPLEMENTATION — read-only geographic bounds/district lookup, an unsaved React area-draft preview, and an inactive owner-scoped persistence adapter; private saved-place CRUD remains gated.
+- **Status:** PARTIAL IMPLEMENTATION — read-only geographic bounds/district lookup, an unsaved React area-draft preview with verified coordinate entry, and an inactive owner-scoped persistence adapter; private saved-place CRUD remains gated.
 - **Workstream:** `mvp-01-web`; [current Web sub-spec](../../subspecs/subspec-01-web-mvp.md); [task plan](task-plan.md).
 - **Existing requirement anchors:** `MVP01-WEB-R01`, `MVP01-WEB-R02`, `MVP01-WEB-R08`. New saved-place and data-handling behavior must be incorporated into approved normative requirements before implementation.
 - **Acceptance:** NOT CLAIMED. This task defines an independently testable first redesign slice, not the full planned product.
@@ -32,4 +32,4 @@ No mandatory Tauri/SQLite runtime integration, full offline synchronization, set
 
 ## Approval gates
 
-Read-only geographic bounds, district-query contracts and the unsaved browser draft preview are implemented. An owner-scoped PostgreSQL storage adapter and optional migration are prepared for review but **are not registered in the running backend**. Enabling saved-place CRUD still requires explicit approval of an authentication/privacy model, transport contracts, database migration/integration test access, and draft-versus-saved semantics. The current `STATE.json` workstream phase does not grant acceptance of this task.
+Read-only geographic bounds, district-query contracts, the unsaved browser draft preview, and server-verified coordinate entry are implemented. An owner-scoped PostgreSQL storage adapter and optional migration are prepared for review but **are not registered in the running backend**. Enabling saved-place CRUD still requires explicit approval of an authentication/privacy model, transport contracts, database migration/integration test access, and draft-versus-saved semantics. The current `STATE.json` workstream phase does not grant acceptance of this task.

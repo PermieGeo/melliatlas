@@ -70,3 +70,26 @@ export function provisionalDraftRectangle(
 export function validDraftDimension(value: number): boolean {
   return Number.isFinite(value) && value > 0 && value <= MAX_DRAFT_DIMENSION_KM;
 }
+
+/** Parse one latitude and one longitude field without accepting implicit numeric coercion. */
+export function parseDraftCoordinates(
+  latitudeText: string,
+  longitudeText: string,
+): Position | null {
+  const parse = (value: string): number | null => {
+    const trimmed = value.trim();
+    if (!/^[+-]?[0-9]+(?:[.,][0-9]+)?$/.test(trimmed)) return null;
+    const number = Number(trimmed.replace(",", "."));
+    return Number.isFinite(number) ? number : null;
+  };
+  const latitude = parse(latitudeText);
+  const longitude = parse(longitudeText);
+  if (
+    latitude === null ||
+    longitude === null ||
+    Math.abs(latitude) > 90 ||
+    Math.abs(longitude) > 180
+  )
+    return null;
+  return { latitude, longitude };
+}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  parseDraftCoordinates,
   provisionalDraftRectangle,
   validDraftDimension,
 } from "../src/geo/analysisDraft";
@@ -47,5 +48,32 @@ describe("unsaved WGS84 analysis draft", () => {
     expect(
       provisionalDraftRectangle({ longitude: 32, latitude: 54 }, 31, 15),
     ).toBeNull();
+  });
+});
+
+describe("manual WGS84 coordinate entry", () => {
+  it("accepts independent decimal fields in either locale without changing axis order", () => {
+    expect(parseDraftCoordinates("54,1", "32.25")).toEqual({
+      latitude: 54.1,
+      longitude: 32.25,
+    });
+    expect(parseDraftCoordinates("-0", "+180")).toEqual({
+      latitude: -0,
+      longitude: 180,
+    });
+  });
+
+  it("rejects ambiguous or out-of-range inputs before any server request", () => {
+    const invalidInputs: [string, string][] = [
+      ["", "32"],
+      ["1e2", "32"],
+      ["90.1", "32"],
+      ["54", "181"],
+      ["54.0.1", "32"],
+      ["54 1", "32"],
+    ];
+    for (const [latitude, longitude] of invalidInputs) {
+      expect(parseDraftCoordinates(latitude, longitude)).toBeNull();
+    }
   });
 });

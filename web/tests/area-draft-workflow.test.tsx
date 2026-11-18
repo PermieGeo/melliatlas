@@ -101,3 +101,100 @@ describe("region-scoped unsaved area workflow", () => {
     expect(state.current.editing).toBe(false);
   });
 });
+
+describe("verified coordinate entry", () => {
+  it("does not send invalid inputs, and verifies selected region before moving a draft", async () => {
+    const fetchMock = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({ region_id: "ru:region:smo", district_id: null }),
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { result: state } = renderHook(() =>
+      useAreaDraft("RU", "ru:region:smo"),
+    );
+    act(() => state.current.start());
+    await act(async () => state.current.selectCoordinates("bad", "32"));
+    expect(state.current.coordinateStatus).toBe("invalid");
+    expect(fetchMock).not.toHaveBeenCalled();
+    await act(async () => state.current.selectCoordinates("54,1", "32.25"));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "/api/v1/territories/resolve-point",
+    );
+    const request = fetchMock.mock.calls[0]?.[1];
+    expect(request?.method).toBe("POST");
+    expect(JSON.parse(String(request?.body))).toMatchObject({
+      country: "RU",
+      latitude: 54.1,
+      longitude: 32.25,
+    });
+    expect(state.current.draft?.center).toEqual({
+      latitude: 54.1,
+      longitude: 32.25,
+    });
+    expect(state.current.coordinateFocus).toEqual({
+      latitude: 54.1,
+      longitude: 32.25,
+    });
+  });
+
+  it("rejects a point in a different region, keeping an existing draft unchanged", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(
+        async () =>
+          new Response(
+            JSON.stringify({ region_id: "ru:region:other", district_id: null }),
+          ),
+      ),
+    );
+    const { result: state } = renderHook(() =>
+      useAreaDraft("RU", "ru:region:smo"),
+    );
+    act(() => state.current.start());
+    act(() => state.current.selectPoint({ latitude: 54, longitude: 32 }));
+    await act(async () => state.current.selectCoordinates("55", "35"));
+    expect(state.current.coordinateStatus).toBe("outside");
+    expect(state.current.draft?.center).toEqual({
+      latitude: 54,
+      longitude: 32,
+    });
+  });
+
+  it("does not apply a late coordinate response after cancel or region switch", async () => {
+    let finish: ((response: Response) => void) | undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(
+        () =>
+          new Promise<Response>((resolve) => {
+            finish = resolve;
+          }),
+      ),
+    );
+    const { result: state, rerender } = renderHook(
+      ({ region }) => useAreaDraft("RU", region),
+      { initialProps: { region: "ru:region:smo" } },
+    );
+    act(() => state.current.start());
+    let pending: Promise<void> | undefined;
+    act(() => {
+      pending = state.current.selectCoordinates("54", "32");
+    });
+    expect(state.current.coordinateStatus).toBe("checking");
+    rerender({ region: "ru:region:other" });
+    await act(async () => {
+      finish?.(
+        new Response(
+          JSON.stringify({ region_id: "ru:region:smo", district_id: null }),
+        ),
+      );
+      await pending;
+    });
+    expect(state.current.draft).toBeNull();
+    expect(state.current.coordinateFocus).toBeNull();
+    expect(state.current.coordinateStatus).toBe("idle");
+  });
+});

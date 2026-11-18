@@ -1,6 +1,6 @@
 # WEB-PLACE-01 — Task Implementation Plan
 
-- **Status:** PARTIAL IMPLEMENTATION — read-only geography and unsaved React area preview plus prepared, disconnected owner-scoped PostGIS storage; saved-place HTTP CRUD and management UI remain pending.
+- **Status:** PARTIAL IMPLEMENTATION — read-only geography and unsaved React area preview with verified coordinate input plus prepared, disconnected owner-scoped PostGIS storage; saved-place HTTP CRUD and management UI remain pending.
 - **Normative context:** [task](task.md), [Web sub-spec](../../subspecs/subspec-01-web-mvp.md), [umbrella](../../../umbrella_spec_melliatlas.md).
 - **Task ID:** `WEB-PLACE-01`; proposed criteria `PLACE-A01`–`PLACE-A05`.
 
@@ -14,7 +14,7 @@
 
 **Proposed transport (not implemented):** same-origin `/api/v1/places` CRUD with typed DTO validation and stable error codes, plus read-only bbox/district resolution as an operation with distinct incomplete coverage. Never expose other users' saved coordinates. Until owner authentication/authorization is available, permit persistence only in an explicitly confined single-user/loopback development deployment. A publicly reachable unauthenticated list-by-ID or list-all endpoint is prohibited. Define ownership, access checks, CSRF/cross-origin policy and deletion behavior before choosing concrete API shapes.
 
-**Implemented unsaved Web preview:** `web/src/hooks/useAreaDraft.ts` manages one in-memory region-scoped draft, cancellation, stale-result guards and explicit district lookups. `web/src/geo/analysisDraft.ts` computes a provisional WGS84 map rectangle; only the backend area lookup decides spatial membership. `web/src/components/AreaDraftPanel.tsx` presents size controls and missing/unverified coverage. `web/src/api/{client,types,validation}.ts` owns the typed read-only response boundary. Map clicks alter the draft only in explicit edit mode; the existing weather/Saturn point is independent. No browser draft persistence is claimed.
+**Implemented unsaved Web preview:** `web/src/hooks/useAreaDraft.ts` manages one in-memory region-scoped draft, cancellation, stale-result guards and explicit district lookups. `web/src/geo/analysisDraft.ts` computes a provisional WGS84 map rectangle; only the backend area lookup decides spatial membership. `web/src/components/AreaDraftPanel.tsx` presents size controls and missing/unverified coverage. `web/src/api/{client,types,validation}.ts` owns the typed read-only response boundary. Map clicks alter the draft only in explicit edit mode; the existing weather/Saturn point is independent. Manual latitude/longitude entry uses the existing body-only territory point resolver and requires its returned region to match the selection; invalid or unverified coordinates never move the draft. A private coordinate focus does not update browser-persisted map camera state. No browser draft persistence is claimed.
 
 **Proposed saved-place Web boundary (not implemented):** `SavedPlace` wire values will be decoded at the API boundary once an approved ownership model and CRUD transport exist. Later UI work must manage selected saved ID, pending mutations, cancellation and rollback; the map must remain independent of database/provider internals. Persist private geometry only through approved place actions.
 
@@ -32,7 +32,7 @@
 
 | Oracle | New test required before implementation |
 | --- | --- |
-| `PLACE-A01` | Web region/search disabled state, coordinate parsing and catalog unavailable cases |
+| `PLACE-A01` | Web region/search disabled state, coordinate parsing, region mismatch, unavailable geometry and canceled request cases |
 | `PLACE-A02` | Geodesic bbox center, width/height limits and date/longitude/latitude edge cases; map draft interaction |
 | `PLACE-A03` | Real PostGIS migration/CRUD persistence, ownership isolation, failed transactions, restart/reopen |
 | `PLACE-A04` | PostGIS bbox crossing 0/1/2/many districts, edge-only touching, missing/partial ADM2 reference coverage |

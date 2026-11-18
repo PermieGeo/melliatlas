@@ -481,6 +481,7 @@ export default function App() {
               startingPoint={point}
               draftPoint={areaDraft.draft?.center ?? null}
               draftBounds={areaDraft.bounds}
+              privateFocus={areaDraft.coordinateFocus}
               referenceGeometry={referenceNavigation.geometry}
               saturnNotices={saturnNotices}
               onSelect={investigation.setSelectedSite}
@@ -494,6 +495,11 @@ export default function App() {
               preview={areaDraft.preview}
               status={areaDraft.status}
               errorCode={areaDraft.errorCode}
+              coordinateStatus={areaDraft.coordinateStatus}
+              onCoordinatesEdited={areaDraft.invalidateCoordinates}
+              onCoordinates={(lat, lon) =>
+                void areaDraft.selectCoordinates(lat, lon)
+              }
               onStart={areaDraft.start}
               onCancel={areaDraft.cancel}
               onWidth={(width) => areaDraft.resize("widthKm", width)}

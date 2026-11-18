@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { lookupIntersectingDistricts } from "../api/client";
+import {
+  lookupIntersectingDistricts,
+  resolveTerritoryPoint,
+} from "../api/client";
 import type { AreaDistrictResult, CountryCode, Position } from "../api/types";
 import {
   DEFAULT_DRAFT_DIMENSION_KM,
+  parseDraftCoordinates,
   provisionalDraftRectangle,
   validDraftDimension,
 } from "../geo/analysisDraft";
@@ -21,9 +25,14 @@ interface DistrictPreview {
 }
 
 type LookupStatus = "idle" | "loading" | "ready" | "failed";
+type CoordinateStatus =
+  "idle" | "checking" | "invalid" | "outside" | "unavailable";
 
 /** Keep private analysis coordinates in React memory, never browser storage or URLs. */
 export function useAreaDraft(country: CountryCode, regionId: string) {
+  const scope = `${country}:${regionId}`;
+  const activeScope = useRef(scope);
+  activeScope.current = scope;
   const [editing, setEditing] = useState(false);
   const [storedDraft, setStoredDraft] = useState<AnalysisDraft | null>(null);
   const [preview, setPreview] = useState<DistrictPreview | null>(null);
@@ -31,6 +40,11 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const inFlight = useRef<AbortController | null>(null);
   const revision = useRef(0);
+  const coordinateRequest = useRef<AbortController | null>(null);
+  const coordinateVersion = useRef(0);
+  const [coordinateStatus, setCoordinateStatus] =
+    useState<CoordinateStatus>("idle");
+  const [coordinateFocus, setCoordinateFocus] = useState<Position | null>(null);
   const draft =
     storedDraft?.country === country && storedDraft.regionId === regionId
       ? storedDraft
@@ -44,7 +58,15 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
   );
   const currentPreview = preview?.draft === draft ? preview.result : null;
 
+  const invalidateCoordinates = () => {
+    coordinateVersion.current += 1;
+    coordinateRequest.current?.abort();
+    coordinateRequest.current = null;
+    setCoordinateStatus("idle");
+  };
+
   const invalidate = () => {
+    invalidateCoordinates();
     revision.current += 1;
     inFlight.current?.abort();
     inFlight.current = null;
@@ -57,6 +79,11 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     revision.current += 1;
     inFlight.current?.abort();
     inFlight.current = null;
+    coordinateVersion.current += 1;
+    coordinateRequest.current?.abort();
+    coordinateRequest.current = null;
+    setCoordinateStatus("idle");
+    setCoordinateFocus(null);
     setEditing(false);
     setStoredDraft(null);
     setPreview(null);
@@ -65,6 +92,8 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     return () => {
       revision.current += 1;
       inFlight.current?.abort();
+      coordinateVersion.current += 1;
+      coordinateRequest.current?.abort();
     };
   }, [country, regionId]);
 
@@ -72,11 +101,13 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     if (!country || !regionId) return;
     invalidate();
     setStoredDraft(null);
+    setCoordinateFocus(null);
     setEditing(true);
   };
   const cancel = () => {
     invalidate();
     setStoredDraft(null);
+    setCoordinateFocus(null);
     setEditing(false);
   };
   const selectPoint = (center: Position) => {
@@ -88,6 +119,7 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     );
     if (rectangle === null) return false;
     invalidate();
+    setCoordinateFocus(null);
     setStoredDraft({
       country,
       regionId,
@@ -96,6 +128,50 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
       heightKm: DEFAULT_DRAFT_DIMENSION_KM,
     });
     return true;
+  };
+  const selectCoordinates = async (latitude: string, longitude: string) => {
+    if (!editing || !country || !regionId) return;
+    invalidateCoordinates();
+    const center = parseDraftCoordinates(latitude, longitude);
+    if (
+      !center ||
+      !provisionalDraftRectangle(
+        center,
+        DEFAULT_DRAFT_DIMENSION_KM,
+        DEFAULT_DRAFT_DIMENSION_KM,
+      )
+    ) {
+      setCoordinateStatus("invalid");
+      return;
+    }
+    const controller = new AbortController();
+    coordinateRequest.current = controller;
+    const token = coordinateVersion.current;
+    const requestScope = scope;
+    setCoordinateStatus("checking");
+    const response = await resolveTerritoryPoint(
+      country,
+      center,
+      controller.signal,
+    );
+    if (
+      controller.signal.aborted ||
+      coordinateVersion.current !== token ||
+      activeScope.current !== requestScope
+    )
+      return;
+    coordinateRequest.current = null;
+    if (response.kind === "error") {
+      setCoordinateStatus(response.status === 404 ? "outside" : "unavailable");
+      return;
+    }
+    if (response.data.region_id !== regionId) {
+      setCoordinateStatus("outside");
+      return;
+    }
+    if (selectPoint(center)) {
+      setCoordinateFocus(center);
+    }
   };
   const resize = (axis: "widthKm" | "heightKm", value: number) => {
     if (!draft || !validDraftDimension(value)) return;
@@ -133,6 +209,10 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     preview: currentPreview,
     status,
     errorCode,
+    coordinateStatus,
+    coordinateFocus,
+    invalidateCoordinates,
+    selectCoordinates,
     start,
     cancel,
     selectPoint,

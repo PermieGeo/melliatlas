@@ -6,8 +6,18 @@ const en = {
   draftAreaStart: "Create area draft",
   draftAreaCancel: "Discard draft",
   draftAreaNeedsRegion: "Select a region before creating an area.",
-  draftAreaClickHint: "Click the map to set or move the draft center.",
+  draftAreaClickHint:
+    "Click the map or enter coordinates to set the draft center.",
   draftAreaIntro: "Select a region, then create a temporary area on the map.",
+  draftAreaLatitude: "Latitude (WGS84)",
+  draftAreaLongitude: "Longitude (WGS84)",
+  draftAreaApplyCoordinates: "Set center from coordinates",
+  draftAreaVerifying: "Checking region…",
+  draftAreaCoordinateInvalid:
+    "Enter valid coordinates within WGS84 and away from the poles.",
+  draftAreaCoordinateOutside: "The point is outside the selected region.",
+  draftAreaCoordinateUnavailable:
+    "The region boundary could not be verified. No point was moved.",
   draftAreaWidth: "Width (km)",
   draftAreaHeight: "Height (km)",
   draftAreaSize: "Nominal area: {area} km²",
@@ -288,8 +298,17 @@ const ru: Record<keyof typeof en, string> = {
   draftAreaCancel: "Отменить черновик",
   draftAreaNeedsRegion: "Для создания области сначала выберите регион.",
   draftAreaClickHint:
-    "Нажмите на карту, чтобы установить или переместить центр.",
+    "Нажмите на карту или введите координаты, чтобы установить центр.",
   draftAreaIntro: "Выберите регион, затем создайте временную область на карте.",
+  draftAreaLatitude: "Широта (WGS84)",
+  draftAreaLongitude: "Долгота (WGS84)",
+  draftAreaApplyCoordinates: "Установить центр по координатам",
+  draftAreaVerifying: "Проверка региона…",
+  draftAreaCoordinateInvalid:
+    "Введите допустимые координаты WGS84 вдали от полюсов.",
+  draftAreaCoordinateOutside: "Точка находится вне выбранного региона.",
+  draftAreaCoordinateUnavailable:
+    "Не удалось проверить границу региона. Точка не изменена.",
   draftAreaWidth: "Ширина (км)",
   draftAreaHeight: "Высота (км)",
   draftAreaSize: "Расчётная площадь: {area} км²",
