@@ -76,7 +76,7 @@ test("keeps the fictional map/timeline readable when online tiles fail", async (
     if (request.url().includes("tile.openstreetmap.org"))
       external.push(request.url());
   });
-  await page.goto("/");
+  await page.goto("/developer-demo");
   await page.getByText("Демо-сценарии").click();
   await expect(page.getByText(/Только вымышленные данные/)).toBeVisible();
   await expect(page.getByText(/Справочник регионов недоступен/)).toBeVisible();

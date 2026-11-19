@@ -122,15 +122,18 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
   };
   const selectPoint = (center: Position) =>
     editing ? applyCenter(center, false) : false;
-  const selectCoordinates = async (latitude: string, longitude: string) => {
-    if (!country || !regionId) return;
+  const selectCoordinates = async (
+    latitude: string,
+    longitude: string,
+  ): Promise<{ regionId: string; districtId: string | null } | null> => {
+    if (!country || !regionId) return null;
     invalidateCoordinates();
     const center = parseDraftCoordinates(latitude, longitude);
     const widthKm = draft?.widthKm ?? DEFAULT_DRAFT_DIMENSION_KM;
     const heightKm = draft?.heightKm ?? DEFAULT_DRAFT_DIMENSION_KM;
     if (!center || !provisionalDraftRectangle(center, widthKm, heightKm)) {
       setCoordinateStatus("invalid");
-      return;
+      return null;
     }
     const controller = new AbortController();
     coordinateRequest.current = controller;
@@ -147,19 +150,21 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
       coordinateVersion.current !== token ||
       activeScope.current !== requestScope
     )
-      return;
+      return null;
     coordinateRequest.current = null;
     if (response.kind === "error") {
       setCoordinateStatus(response.status === 404 ? "outside" : "unavailable");
-      return;
+      return null;
     }
     if (response.data.region_id !== regionId) {
       setCoordinateStatus("outside");
-      return;
+      return null;
     }
     if (applyCenter(center, true)) {
       setEditing(true);
+      return { regionId, districtId: response.data.district_id };
     }
+    return null;
   };
   const resize = (axis: "widthKm" | "heightKm", value: number) => {
     if (!draft || !validDraftDimension(value)) return;

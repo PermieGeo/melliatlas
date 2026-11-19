@@ -100,3 +100,22 @@ limited to the Smolensk district names shown in `0006_smolensk_district_names.sq
 ## Unsaved analysis-area district preview
 
 `lookupIntersectingDistricts` posts the selected country, canonical region ID, private center and bounded dimensions to `/api/v1/territories/intersecting-districts`. It is a read-only, explicitly requested operation; the position is never included in a URL, log, browser storage, or a saved-place mutation. `decodeAreaDistrictResult` validates the response rectangle, unique district IDs, provenance labels and the limited `MISSING` / `UNVERIFIED` coverage states. An error or an empty district array does not establish complete regional coverage. The backend spatial lookup, not the browser preview rectangle, is authoritative for region containment and district intersection. Aborts and stale responses must be discarded before presentation.
+
+## Explicit settlement lookup and source-period preference
+
+`searchSettlements(country, query, locale, signal)` sends one name query in a
+same-origin POST body to `/api/v1/sources/geocoding/settlements` only on submit.
+The decoder validates bounded unique IDs, WGS84 coordinates, country and pinned
+source attribution. Results may come from elsewhere in the same country; the
+UI checks a selected candidate using `resolveTerritoryPoint` before altering
+its region-scoped private draft. The query and coordinates are not written to
+localStorage or URLs. Failed, empty, canceled and stale searches are different
+observable outcomes; no synthetic fallback is used.
+
+`geo/sourceDatePreference.ts` persists only a validated calendar interval of at
+most one year, independently of country/region selection. It rejects corrupt
+storage without blocking an analysis. An explicit Analyze press queries the
+selected district through the original Saturn transport; missing geometry does
+not block a provider-mapped district request. The interface shows query
+progress/errors and cannot claim complete bbox coverage or safety. Weather
+forecasts remain separate, actual Open-Meteo reads rather than synthetic plans.

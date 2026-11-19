@@ -23,6 +23,7 @@ from melliatlas.planning import (
 from melliatlas.sources.api import (
     ScenarioListing,
     ScenarioProvider,
+    SettlementReader,
     TreatmentNoticeReader,
     WeatherForecastReader,
 )
@@ -94,6 +95,13 @@ def compose_sources(mode: SourceProviderMode) -> SourceComposition:
             treatment_factory=lambda scenario: _synthetic_treatment_planner(provider, scenario),
         )
     raise ValueError(f"Unsupported source provider mode: {mode}")
+
+
+def compose_settlement_reader() -> SettlementReader:
+    """Construct a bounded, request-only real geocoder without startup network I/O."""
+    from melliatlas.sources.providers.geocoding import OpenMeteoSettlementReader
+
+    return OpenMeteoSettlementReader()
 
 
 def compose_saturn_reader(enabled: bool) -> TreatmentNoticeReader | None:

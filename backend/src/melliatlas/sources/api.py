@@ -92,6 +92,28 @@ class WeatherForecastReader(Protocol):
     def forecast(self, *, latitude: float, longitude: float) -> WeatherForecast: ...
 
 
+@dataclass(frozen=True)
+class Settlement:
+    """Unverified GeoNames populated-place suggestion, not a territory membership claim."""
+
+    id: int
+    name: str
+    country: CountryCode
+    admin1: str | None
+    latitude: float
+    longitude: float
+    source_uri: str
+
+
+@runtime_checkable
+class SettlementReader(Protocol):
+    """On-demand name lookup; geographical membership is verified independently."""
+
+    def search(
+        self, *, country: CountryCode, query: str, language: str
+    ) -> tuple[Settlement, ...]: ...
+
+
 @runtime_checkable
 class ScenarioProvider(Protocol):
     """Load explicit scenarios and expose only actually executable definitions.
@@ -108,6 +130,8 @@ class ScenarioProvider(Protocol):
 
 
 __all__ = [
+    "Settlement",
+    "SettlementReader",
     "ScenarioListing",
     "ScenarioProvider",
     "TreatmentNotice",

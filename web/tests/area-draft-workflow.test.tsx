@@ -68,7 +68,7 @@ describe("region-scoped unsaved area workflow", () => {
     );
     act(() => state.current.start());
     act(() => state.current.selectPoint({ longitude: 32, latitude: 54 }));
-    let pending: Promise<void> | undefined;
+    let pending: ReturnType<typeof state.current.checkDistricts> | undefined;
     act(() => {
       pending = state.current.checkDistricts();
     });
@@ -234,7 +234,7 @@ describe("verified coordinate entry", () => {
       { initialProps: { region: "ru:region:smo" } },
     );
     act(() => state.current.start());
-    let pending: Promise<void> | undefined;
+    let pending: ReturnType<typeof state.current.selectCoordinates> | undefined;
     act(() => {
       pending = state.current.selectCoordinates("54", "32");
     });

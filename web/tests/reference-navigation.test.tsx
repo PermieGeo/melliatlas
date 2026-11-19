@@ -207,7 +207,7 @@ async function chooseRegion() {
   });
 }
 
-it("loads inline local weather automatically and only enables district-scoped analysis", async () => {
+it("loads local weather and explains missing scope before starting district analysis", async () => {
   const paths = catalogMock({ districts: "available" });
   render(<App />);
   await chooseRegion();
@@ -217,7 +217,9 @@ it("loads inline local weather automatically and only enables district-scoped an
   const analyze = screen.getByRole("button", {
     name: "Проанализировать выбранную местность",
   });
-  expect(analyze.hasAttribute("disabled")).toBe(true);
+  expect(analyze.hasAttribute("disabled")).toBe(false);
+  fireEvent.click(analyze);
+  expect(screen.getByRole("alert").textContent).toMatch(/район/);
   await screen.findByRole("option", { name: "Тестовый район" });
   fireEvent.change(screen.getByLabelText("Район"), {
     target: { value: referenceDistrict.id },

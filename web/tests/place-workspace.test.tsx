@@ -108,11 +108,12 @@ describe("place-first workspace", () => {
     expect(
       screen.getByText(/Серверный API сохранения мест пока отключён/),
     ).toBeTruthy();
+    expect(screen.queryByText("Демо-сценарии")).toBeNull();
     expect(
-      screen.getByText(/Запрос Сатурн запускается только кнопкой/),
+      screen.getByRole("button", { name: "Подсказка: Поиск" }),
     ).toBeTruthy();
 
-    const search = screen.getByLabelText("Найти точку по координатам");
+    const search = screen.getByLabelText("Поиск");
     expect(search.hasAttribute("disabled")).toBe(true);
     await waitFor(() =>
       expect(

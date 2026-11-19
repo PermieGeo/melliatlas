@@ -13,8 +13,10 @@ from fastapi.responses import JSONResponse
 from melliatlas.api.composition import (
     SourceProviderMode,
     compose_saturn_reader,
+    compose_settlement_reader,
     compose_sources,
 )
+from melliatlas.api.providers.geocoding_routes import create_geocoding_router
 from melliatlas.api.providers.saturn.routes import create_saturn_router, saturn_capability
 from melliatlas.api.providers.weather.routes import (
     WeatherReaderState,
@@ -30,7 +32,7 @@ from melliatlas.jobs import (
     InMemoryInvestigationService,
     InvestigationService,
 )
-from melliatlas.sources.api import TreatmentNoticeReader, WeatherForecastReader
+from melliatlas.sources.api import SettlementReader, TreatmentNoticeReader, WeatherForecastReader
 from melliatlas.territories import InMemoryTerritoryCatalog
 from melliatlas.territories.api import (
     SourceDistrictCodeLookup,
@@ -57,6 +59,7 @@ def create_app(
     investigations: InvestigationService | None = None,
     saturn_reader: TreatmentNoticeReader | None = None,
     weather_reader: WeatherForecastReader | None = None,
+    settlement_reader: SettlementReader | None = None,
     weather_reader_factory: Callable[[], WeatherForecastReader | None] | None = None,
     source_region_lookup: SourceTerritoryCodeLookup | None = None,
     source_district_lookup: SourceDistrictCodeLookup | None = None,
@@ -122,6 +125,7 @@ def create_app(
 
     active_catalog = territories if territories is not None else loaded_catalog
     app.include_router(create_territory_router(active_catalog))
+    app.include_router(create_geocoding_router(settlement_reader or compose_settlement_reader()))
     live_reader = (
         (saturn_reader if saturn_reader is not None else compose_saturn_reader(True))
         if config.saturn_live_enabled

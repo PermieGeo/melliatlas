@@ -23,16 +23,16 @@ import { Timeline } from "./components/Timeline";
 import { LiveAreaAnalysis } from "./components/LiveAreaAnalysis";
 import type { AreaAnalysisRequest } from "./components/LiveAreaAnalysis";
 import { isInsideArea, representativePoint } from "./geo/selection";
-import {
-  defaultSourceDateRange,
-  updateSourceDateRange,
-  validSourceDateRange,
-} from "./geo/dateRange";
+import { updateSourceDateRange, validSourceDateRange } from "./geo/dateRange";
 import {
   readTerritoryPreference,
   saveTerritoryPreference,
 } from "./geo/territoryPreference";
 import { WeatherPanel } from "./components/WeatherPanel";
+import {
+  readSourceDatePreference,
+  saveSourceDatePreference,
+} from "./geo/sourceDatePreference";
 import { useInvestigation } from "./hooks/useInvestigation";
 import { useAreaDraft } from "./hooks/useAreaDraft";
 import { useAreaDistrictBoundary } from "./hooks/useAreaDistrictBoundary";
@@ -58,7 +58,12 @@ export default function App() {
   const [scenarioId, setScenarioId] = useState("");
   const [seasonStart, setSeasonStart] = useState("");
   const [seasonEnd, setSeasonEnd] = useState("");
-  const [sourceRange, setSourceRange] = useState(defaultSourceDateRange);
+  const [sourceRange, setSourceRange] = useState(readSourceDatePreference);
+  const [analysisAttempted, setAnalysisAttempted] = useState(false);
+  const [analysisBusy, setAnalysisBusy] = useState(false);
+  const [weatherRefresh, setWeatherRefresh] = useState(0);
+  const showDeveloperDemo = window.location.pathname === "/developer-demo";
+  useEffect(() => saveSourceDatePreference(sourceRange), [sourceRange]);
   const [countryMessage, setCountryMessage] =
     useState<TranslationKey>("loadingCountries");
   const [scenariosMessage, setScenariosMessage] =
@@ -157,7 +162,7 @@ export default function App() {
     setSeasonStart("");
     setSeasonEnd("");
     setScenariosMessage("loadingScenarios");
-    if (!country) return () => controller.abort();
+    if (!country || !showDeveloperDemo) return () => controller.abort();
     void listScenarios(country, controller.signal).then((response) => {
       if (controller.signal.aborted) return;
       if (response.kind === "error") {
@@ -183,7 +188,7 @@ export default function App() {
       }
     });
     return () => controller.abort();
-  }, [country]);
+  }, [country, showDeveloperDemo]);
 
   const selectedScenario =
     scenarios.find(
@@ -206,6 +211,8 @@ export default function App() {
     pointLookup.current?.abort();
     setMapPointMessage(null);
     setAnalysisRequest(null);
+    setAnalysisAttempted(false);
+    setAnalysisBusy(false);
     if (!countries.some((item) => item.code === value)) return;
     reset();
     setPoint(null);
@@ -247,38 +254,35 @@ export default function App() {
     isInsideArea(point, selectedBoundary)
   );
   const weatherPoint =
-    pointWithinBoundary && point
+    areaDraft.draft?.center ??
+    (pointWithinBoundary && point
       ? point
       : selectedBoundary
         ? representativePoint(selectedBoundary)
-        : null;
+        : null);
   const canAnalyze = !!(
     country &&
     referenceNavigation.regionId &&
     referenceNavigation.districtId &&
-    selectedBoundary &&
-    weatherPoint &&
-    (!point || pointWithinBoundary) &&
     validSourceDateRange(sourceRange.start, sourceRange.end)
   );
   const analysisHint: TranslationKey = !referenceNavigation.regionId
     ? "analysisSelectRegion"
     : !referenceNavigation.districtId
       ? "analysisSelectDistrict"
-      : !selectedBoundary || !weatherPoint
-        ? "analysisMissingBoundary"
-        : !validSourceDateRange(sourceRange.start, sourceRange.end)
-          ? "analysisInvalidDateRange"
-          : point && !pointWithinBoundary
-            ? "analysisPointOutside"
-            : "analysisNarrowArea";
+      : !validSourceDateRange(sourceRange.start, sourceRange.end)
+        ? "analysisInvalidDateRange"
+        : "analysisReady";
   const analyze = () => {
+    setAnalysisAttempted(true);
     if (
       !canAnalyze ||
       !referenceNavigation.regionId ||
       !referenceNavigation.districtId
     )
       return;
+    setAnalysisBusy(true);
+    setWeatherRefresh((value) => value + 1);
     setAnalysisRequest({
       sequence: (analysisRequest?.sequence ?? 0) + 1,
       country,
@@ -293,6 +297,8 @@ export default function App() {
     setMapPointMessage(null);
     reset();
     setAnalysisRequest(null);
+    setAnalysisAttempted(false);
+    setAnalysisBusy(false);
     setSaturnNotices([]);
     setPoint(null);
     referenceNavigation.selectRegion(id);
@@ -302,6 +308,8 @@ export default function App() {
     setMapPointMessage(null);
     reset();
     setAnalysisRequest(null);
+    setAnalysisAttempted(false);
+    setAnalysisBusy(false);
     setSaturnNotices([]);
     setPoint(null);
     referenceNavigation.selectDistrict(id);
@@ -364,6 +372,7 @@ export default function App() {
         onLocale={setLocale}
       />
       <PlaceSearchToolbar
+        country={country}
         locale={locale}
         regions={regions}
         navigation={{
@@ -375,7 +384,19 @@ export default function App() {
         onRetryRegions={() => setRegionRequestVersion((version) => version + 1)}
         coordinateStatus={areaDraft.coordinateStatus}
         onCoordinatesEdited={areaDraft.invalidateCoordinates}
-        onCoordinates={(lat, lon) => void areaDraft.selectCoordinates(lat, lon)}
+        onCoordinates={(lat, lon) => {
+          void areaDraft.selectCoordinates(lat, lon).then((selection) => {
+            if (
+              selection?.districtId &&
+              selection.regionId === referenceNavigation.regionId
+            ) {
+              referenceNavigation.selectByPoint(
+                selection.regionId,
+                selection.districtId,
+              );
+            }
+          });
+        }}
       />
       <div className="workspace workspace--places">
         <main className="canvas-column">
@@ -533,8 +554,11 @@ export default function App() {
               setSeasonEnd(value);
             }}
             onSubmit={begin}
+            showDemo={showDeveloperDemo}
             canAnalyze={canAnalyze}
             onAnalyze={analyze}
+            analysisBusy={analysisBusy}
+            analysisAttempted={analysisAttempted}
             sourceDateStart={sourceRange.start}
             sourceDateEnd={sourceRange.end}
             onSourceDateStart={(value) => {
@@ -542,6 +566,8 @@ export default function App() {
                 updateSourceDateRange(current, "start", value),
               );
               setAnalysisRequest(null);
+              setAnalysisAttempted(false);
+              setAnalysisBusy(false);
               setSaturnNotices([]);
             }}
             onSourceDateEnd={(value) => {
@@ -549,6 +575,8 @@ export default function App() {
                 updateSourceDateRange(current, "end", value),
               );
               setAnalysisRequest(null);
+              setAnalysisAttempted(false);
+              setAnalysisBusy(false);
               setSaturnNotices([]);
             }}
             analysisHint={analysisHint}
@@ -557,6 +585,7 @@ export default function App() {
             country={country}
             locale={locale}
             point={weatherPoint}
+            refreshToken={weatherRefresh}
           />
           <LiveAreaAnalysis
             locale={locale}
@@ -564,6 +593,7 @@ export default function App() {
             regionId={referenceNavigation.regionId}
             request={analysisRequest}
             onNotices={setSaturnNotices}
+            onBusy={setAnalysisBusy}
           />
         </aside>
       </div>

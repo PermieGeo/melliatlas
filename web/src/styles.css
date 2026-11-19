@@ -1152,3 +1152,143 @@ h3 {
   color: #803f20;
   font-size: 0.8rem;
 }
+
+/* Contextual help is equally accessible by hover, click and keyboard focus. */
+.label-with-help {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+.label-with-help label {
+  margin: 0;
+}
+.context-help {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.context-help-trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border: 1px solid #aa9d8d;
+  background: #fff;
+  border-radius: 50%;
+  color: #51483c;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: help;
+}
+.context-help-trigger:focus-visible {
+  outline: 2px solid var(--honey-dark);
+  outline-offset: 2px;
+}
+.context-help-popover {
+  position: absolute;
+  z-index: 900;
+  top: calc(100% + 7px);
+  right: -4px;
+  width: min(300px, calc(100vw - 42px));
+  padding: 11px 13px;
+  border: 1px solid #bdb1a1;
+  border-radius: 9px;
+  background: #fffdf7;
+  box-shadow: 0 6px 24px #2e25182a;
+  color: #302c27;
+  font-size: 0.82rem;
+  font-weight: 450;
+  line-height: 1.5;
+  white-space: normal;
+}
+.date-range--stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 11px;
+}
+.date-range--stacked .date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+.date-range--stacked .date-field span {
+  font-size: 0.82rem;
+  color: #4d443a;
+  font-weight: 600;
+}
+.date-range--stacked input[type="date"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 43px;
+  font-size: 1rem;
+  padding: 8px 11px;
+}
+.place-search-results {
+  margin-top: 9px;
+  padding: 9px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.place-search-results ul {
+  list-style: none;
+  margin: 0 0 7px;
+  padding: 0;
+  max-height: 230px;
+  overflow-y: auto;
+}
+.place-search-results li + li {
+  border-top: 1px solid var(--line);
+}
+.place-search-results li button {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  text-align: left;
+  padding: 9px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.place-search-results li button:hover,
+.place-search-results li button:focus-visible {
+  background: var(--honey-soft);
+}
+.place-search-results li button span {
+  color: #61574a;
+  font-size: 0.78rem;
+}
+.place-search-results a {
+  font-size: 0.72rem;
+}
+.analysis-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.analysis-spinner {
+  width: 17px;
+  height: 17px;
+  border: 2px solid #d5c1a1;
+  border-top-color: #9e5815;
+  border-radius: 50%;
+  animation: ma-spin 850ms linear infinite;
+}
+@keyframes ma-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .analysis-spinner {
+    animation: none;
+  }
+}

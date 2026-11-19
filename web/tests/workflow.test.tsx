@@ -5,7 +5,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import App from "../src/App";
 import fixture from "./fixtures/combined.json";
 
@@ -55,7 +55,12 @@ vi.mock("../src/components/MapPanel", () => ({
   ),
 }));
 
+beforeEach(() => {
+  window.history.replaceState(null, "", "/developer-demo");
+});
+
 afterEach(() => {
+  window.history.replaceState(null, "", "/");
   window.localStorage.clear();
   cleanup();
   vi.unstubAllGlobals();
@@ -181,7 +186,13 @@ it("keeps technical investigation IDs off the beekeeper-facing screen", async ()
     screen
       .getByRole("button", { name: "Проанализировать выбранную местность" })
       .hasAttribute("disabled"),
-  ).toBe(true);
+  ).toBe(false);
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Проанализировать выбранную местность",
+    }),
+  );
+  expect(screen.getByRole("alert").textContent).toMatch(/регион/);
 });
 
 it("disables an unsupported BY demonstration and ignores a stale result after country switch", async () => {
