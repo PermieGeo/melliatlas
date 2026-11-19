@@ -12,6 +12,7 @@ import type { DraftRectangle } from "../geo/analysisDraft";
 import type { Locale } from "../i18n";
 import {
   DEFAULT_VIEWPORT,
+  clearMapViewport,
   MAX_MAP_ZOOM,
   readMapViewport,
   saveMapViewport,
@@ -29,7 +30,7 @@ const STARTING_POINT_MARKER_RADIUS_PX = 6;
 // Click selection precision is not cadastral or geodesic precision.
 const MAP_CLICK_COORDINATE_DECIMALS = 5;
 
-/** The selected apiary point stays in memory; only the general map camera is stored. */
+/** Store a general camera only until a potentially private point is selected. */
 interface Props {
   locale: Locale;
   stops: Stop[];
@@ -106,6 +107,9 @@ export function MapPanel({
       });
     });
     instance.on("click", (event: L.LeafletMouseEvent) => {
+      // Selecting a point revokes any saved camera and future camera persistence.
+      privateCamera.current = true;
+      clearMapViewport();
       pointCallback.current({
         longitude: Number(
           event.latlng.lng.toFixed(MAP_CLICK_COORDINATE_DECIMALS),
@@ -130,11 +134,19 @@ export function MapPanel({
   }, []);
 
   useEffect(() => {
+    if (draftPoint !== null || startingPoint !== null) {
+      privateCamera.current = true;
+      clearMapViewport();
+    }
+  }, [draftPoint, startingPoint]);
+
+  useEffect(() => {
     if (!privateFocus) return;
     const instance = map.current;
     if (!instance) return;
-    // A privately entered coordinate must not become a persisted map camera.
+    // A privately entered coordinate must not remain in the saved map camera.
     privateCamera.current = true;
+    clearMapViewport();
     instance.setView(
       [privateFocus.latitude, privateFocus.longitude],
       instance.getZoom(),
