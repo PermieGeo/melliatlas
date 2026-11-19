@@ -25,9 +25,10 @@ interface DistrictPreview {
 }
 
 type LookupStatus = "idle" | "loading" | "ready" | "failed";
-type CoordinateStatus =
+export type CoordinateStatus =
   "idle" | "checking" | "invalid" | "outside" | "unavailable";
 type VerifiedCenter = { regionId: string; districtId: string | null };
+type CoordinateOrigin = "map" | "search";
 
 /** Keep private analysis coordinates in React memory, never browser storage or URLs. */
 export function useAreaDraft(country: CountryCode, regionId: string) {
@@ -45,6 +46,8 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
   const coordinateVersion = useRef(0);
   const [coordinateStatus, setCoordinateStatus] =
     useState<CoordinateStatus>("idle");
+  const [coordinateOrigin, setCoordinateOrigin] =
+    useState<CoordinateOrigin | null>(null);
   const [coordinateFocus, setCoordinateFocus] = useState<Position | null>(null);
   const draft =
     storedDraft?.country === country && storedDraft.regionId === regionId
@@ -64,6 +67,7 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     coordinateRequest.current?.abort();
     coordinateRequest.current = null;
     setCoordinateStatus("idle");
+    setCoordinateOrigin(null);
   };
 
   const invalidate = () => {
@@ -84,6 +88,7 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     coordinateRequest.current?.abort();
     coordinateRequest.current = null;
     setCoordinateStatus("idle");
+    setCoordinateOrigin(null);
     setCoordinateFocus(null);
     setEditing(false);
     setStoredDraft(null);
@@ -125,9 +130,11 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
   const verifyCenter = async (
     center: Position | null,
     focus: boolean,
+    origin: CoordinateOrigin,
   ): Promise<VerifiedCenter | null> => {
     if (!country || !regionId) return null;
     invalidateCoordinates();
+    setCoordinateOrigin(origin);
     const widthKm = draft?.widthKm ?? DEFAULT_DRAFT_DIMENSION_KM;
     const heightKm = draft?.heightKm ?? DEFAULT_DRAFT_DIMENSION_KM;
     if (!center || !provisionalDraftRectangle(center, widthKm, heightKm)) {
@@ -166,12 +173,12 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     return null;
   };
   const selectPoint = (center: Position): Promise<VerifiedCenter | null> =>
-    editing ? verifyCenter(center, false) : Promise.resolve(null);
+    editing ? verifyCenter(center, false, "map") : Promise.resolve(null);
   const selectCoordinates = (
     latitude: string,
     longitude: string,
   ): Promise<VerifiedCenter | null> =>
-    verifyCenter(parseDraftCoordinates(latitude, longitude), true);
+    verifyCenter(parseDraftCoordinates(latitude, longitude), true, "search");
   const resize = (axis: "widthKm" | "heightKm", value: number) => {
     if (!draft || !validDraftDimension(value)) return;
     const next = { ...draft, [axis]: value };
@@ -208,7 +215,8 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     preview: currentPreview,
     status,
     errorCode,
-    coordinateStatus,
+    coordinateStatus: coordinateOrigin === "search" ? coordinateStatus : "idle",
+    mapCoordinateStatus: coordinateOrigin === "map" ? coordinateStatus : "idle",
     coordinateFocus,
     invalidateCoordinates,
     selectCoordinates,

@@ -518,6 +518,7 @@ export default function App() {
             locale={locale}
             regionSelected={Boolean(referenceNavigation.regionId)}
             editing={areaDraft.editing}
+            mapCoordinateStatus={areaDraft.mapCoordinateStatus}
             draft={areaDraft.draft}
             preview={areaDraft.preview}
             boundaryDistrictId={districtBoundary.districtId}

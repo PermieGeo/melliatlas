@@ -1,5 +1,5 @@
 import type { AreaDistrictResult } from "../api/types";
-import type { AnalysisDraft } from "../hooks/useAreaDraft";
+import type { AnalysisDraft, CoordinateStatus } from "../hooks/useAreaDraft";
 import type { Locale } from "../i18n";
 import { t } from "../i18n";
 import { FieldHelp } from "./FieldHelp";
@@ -8,6 +8,7 @@ interface Props {
   locale: Locale;
   regionSelected: boolean;
   editing: boolean;
+  mapCoordinateStatus: CoordinateStatus;
   draft: AnalysisDraft | null;
   status: "idle" | "loading" | "ready" | "failed";
   errorCode: string | null;
@@ -28,6 +29,7 @@ export function AreaDraftPanel({
   locale,
   regionSelected,
   editing,
+  mapCoordinateStatus,
   draft,
   status,
   errorCode,
@@ -69,6 +71,27 @@ export function AreaDraftPanel({
           {tr("draftAreaNeedsRegion")}
         </p>
       )}
+      {editing && mapCoordinateStatus === "checking" && (
+        <p className="field-help" role="status">
+          {tr("draftAreaVerifying")}
+        </p>
+      )}
+      {editing && mapCoordinateStatus === "invalid" && (
+        <p className="field-help" role="status">
+          {tr("draftAreaCoordinateInvalid")}
+        </p>
+      )}
+      {editing &&
+        (mapCoordinateStatus === "outside" ||
+          mapCoordinateStatus === "unavailable") && (
+          <p className="field-help" role="status">
+            {tr(
+              mapCoordinateStatus === "outside"
+                ? "draftAreaCoordinateOutside"
+                : "draftAreaCoordinateUnavailable",
+            )}
+          </p>
+        )}
       {draft && (
         <>
           <div className="area-draft-dimensions">
