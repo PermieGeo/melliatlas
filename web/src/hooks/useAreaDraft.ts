@@ -27,6 +27,7 @@ interface DistrictPreview {
 type LookupStatus = "idle" | "loading" | "ready" | "failed";
 type CoordinateStatus =
   "idle" | "checking" | "invalid" | "outside" | "unavailable";
+type VerifiedCenter = { regionId: string; districtId: string | null };
 
 /** Keep private analysis coordinates in React memory, never browser storage or URLs. */
 export function useAreaDraft(country: CountryCode, regionId: string) {
@@ -120,15 +121,13 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
     setCoordinateFocus(focus ? center : null);
     return true;
   };
-  const selectPoint = (center: Position) =>
-    editing ? applyCenter(center, false) : false;
-  const selectCoordinates = async (
-    latitude: string,
-    longitude: string,
-  ): Promise<{ regionId: string; districtId: string | null } | null> => {
+  // Map clicks and typed coordinates require the same authoritative region check.
+  const verifyCenter = async (
+    center: Position | null,
+    focus: boolean,
+  ): Promise<VerifiedCenter | null> => {
     if (!country || !regionId) return null;
     invalidateCoordinates();
-    const center = parseDraftCoordinates(latitude, longitude);
     const widthKm = draft?.widthKm ?? DEFAULT_DRAFT_DIMENSION_KM;
     const heightKm = draft?.heightKm ?? DEFAULT_DRAFT_DIMENSION_KM;
     if (!center || !provisionalDraftRectangle(center, widthKm, heightKm)) {
@@ -160,12 +159,19 @@ export function useAreaDraft(country: CountryCode, regionId: string) {
       setCoordinateStatus("outside");
       return null;
     }
-    if (applyCenter(center, true)) {
+    if (applyCenter(center, focus)) {
       setEditing(true);
       return { regionId, districtId: response.data.district_id };
     }
     return null;
   };
+  const selectPoint = (center: Position): Promise<VerifiedCenter | null> =>
+    editing ? verifyCenter(center, false) : Promise.resolve(null);
+  const selectCoordinates = (
+    latitude: string,
+    longitude: string,
+  ): Promise<VerifiedCenter | null> =>
+    verifyCenter(parseDraftCoordinates(latitude, longitude), true);
   const resize = (axis: "widthKm" | "heightKm", value: number) => {
     if (!draft || !validDraftDimension(value)) return;
     const next = { ...draft, [axis]: value };

@@ -316,7 +316,7 @@ export default function App() {
   };
   const selectMapPoint = (position: Position) => {
     if (areaDraft.editing) {
-      areaDraft.selectPoint(position);
+      void areaDraft.selectPoint(position);
       return;
     }
     pointLookup.current?.abort();
