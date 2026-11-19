@@ -2,6 +2,7 @@ import type { AreaDistrictResult } from "../api/types";
 import type { AnalysisDraft } from "../hooks/useAreaDraft";
 import type { Locale } from "../i18n";
 import { t } from "../i18n";
+import { FieldHelp } from "./FieldHelp";
 
 interface Props {
   locale: Locale;
@@ -45,7 +46,14 @@ export function AreaDraftPanel({
   return (
     <section className="area-draft-panel" aria-label={tr("draftAreaTitle")}>
       <div className="area-draft-header">
-        <h3>{tr("draftAreaTitle")}</h3>
+        <div className="label-with-help">
+          <h3>{tr("draftAreaTitle")}</h3>
+          <FieldHelp
+            locale={locale}
+            label="draftAreaTitle"
+            explanation="draftAreaClickHint"
+          />
+        </div>
         {editing ? (
           <button type="button" onClick={onCancel}>
             {tr("draftAreaCancel")}
@@ -56,13 +64,11 @@ export function AreaDraftPanel({
           </button>
         )}
       </div>
-      <p className="field-help">
-        {!regionSelected
-          ? tr("draftAreaNeedsRegion")
-          : editing
-            ? tr("draftAreaClickHint")
-            : tr("draftAreaIntro")}
-      </p>
+      {!regionSelected && (
+        <p className="field-help" role="status">
+          {tr("draftAreaNeedsRegion")}
+        </p>
+      )}
       {draft && (
         <>
           <div className="area-draft-dimensions">

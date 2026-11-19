@@ -49,6 +49,7 @@ COMPOSITION_ROOT_PROVIDER_IMPORTS = frozenset(
         "melliatlas.sources.providers.synthetic",
         "melliatlas.sources.providers.saturn",
         "melliatlas.sources.providers.weather",
+        "melliatlas.sources.providers.geocoding",
         "melliatlas.sources.providers.saturn.http",
         "melliatlas.sources.providers.weather.http",
         "melliatlas.sources.providers.weather.settings",

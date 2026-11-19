@@ -401,3 +401,48 @@ it("warns about more than 100 source records and never requests an eleventh page
     screen.queryByRole("button", { name: "Загрузить следующие 10 записей" }),
   ).toBeNull();
 });
+
+it("shows visible progress for a real source request and clears busy on completion", async () => {
+  let finish: ((response: Response) => void) | undefined;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (path: string) => {
+      if (path.startsWith("/api/v1/sources?")) {
+        return new Response(
+          JSON.stringify([
+            {
+              id: "saturn",
+              country: "RU",
+              kind: "TREATMENT_NOTICE",
+              mode: "LIVE",
+              status: "EXPERIMENTAL",
+            },
+          ]),
+        );
+      }
+      if (path.endsWith("/saturn/treatments")) {
+        return new Promise<Response>((resolve) => {
+          finish = resolve;
+        });
+      }
+      return new Response(null, { status: 404 });
+    }),
+  );
+  const onBusy = vi.fn();
+  render(
+    <LiveAreaAnalysis
+      country="RU"
+      regionId={request.regionId}
+      locale="ru"
+      request={request}
+      onNotices={vi.fn()}
+      onBusy={onBusy}
+    />,
+  );
+  await screen.findByText(/Получаем сообщения об обработках для района/);
+  await waitFor(() => expect(onBusy).toHaveBeenCalledWith(true));
+  expect(finish).toBeTypeOf("function");
+  finish?.(new Response(JSON.stringify({ ...page, next_page: null })));
+  await screen.findByText(/Загружено страниц: 1/);
+  await waitFor(() => expect(onBusy).toHaveBeenLastCalledWith(false));
+});

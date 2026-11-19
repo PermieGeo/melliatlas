@@ -1,6 +1,7 @@
 import type { ScenarioListing } from "../api/types";
 import { t } from "../i18n";
 import type { Locale, TranslationKey } from "../i18n";
+import { FieldHelp } from "./FieldHelp";
 
 /** Controls for live-source discovery and optional server-advertised fictional studies. */
 interface Props {
@@ -20,6 +21,9 @@ interface Props {
   onSeasonEnd: (value: string) => void;
   onSubmit: () => void;
   canAnalyze: boolean;
+  analysisBusy: boolean;
+  analysisAttempted: boolean;
+  showDemo: boolean;
   onAnalyze: () => void;
   analysisHint: TranslationKey;
   sourceDateStart: string;
@@ -51,39 +55,60 @@ export function InvestigationControls(props: Props) {
   return (
     <section className="controls" aria-label={tr("workspaceAnalysisTools")}>
       <h2>{tr("workspaceAnalysisTools")}</h2>
-      <p className="field-help">{tr("workspaceSaturnScope")}</p>
+
       <div className="form-group source-date-range">
-        <label>{tr("analysisDateRange")}</label>
-        <div className="date-range">
-          <input
-            aria-label={tr("analysisDateStart")}
-            type="date"
-            value={props.sourceDateStart}
-            onChange={(event) => props.onSourceDateStart(event.target.value)}
-          />
-          <span>—</span>
-          <input
-            aria-label={tr("analysisDateEnd")}
-            type="date"
-            value={props.sourceDateEnd}
-            onChange={(event) => props.onSourceDateEnd(event.target.value)}
+        <div className="label-with-help">
+          <span>{tr("analysisDateRange")}</span>
+          <FieldHelp
+            locale={locale}
+            label="analysisDateRange"
+            explanation="analysisDateMeaning"
           />
         </div>
+        <div className="date-range date-range--stacked">
+          <label className="date-field">
+            <span>{tr("analysisDateStart")}</span>
+            <input
+              aria-label={tr("analysisDateStart")}
+              type="date"
+              value={props.sourceDateStart}
+              onChange={(event) => props.onSourceDateStart(event.target.value)}
+            />
+          </label>
+          <label className="date-field">
+            <span>{tr("analysisDateEnd")}</span>
+            <input
+              aria-label={tr("analysisDateEnd")}
+              type="date"
+              value={props.sourceDateEnd}
+              onChange={(event) => props.onSourceDateEnd(event.target.value)}
+            />
+          </label>
+        </div>
+      </div>
+      <div className="label-with-help analysis-help-label">
+        <span>{tr("analysisSourcesLabel")}</span>
+        <FieldHelp
+          locale={locale}
+          label="analysisSourcesLabel"
+          explanation="workspaceSaturnScope"
+        />
       </div>
       <button
         type="button"
         className="primary-button analysis-action"
-        disabled={!props.canAnalyze}
+        disabled={props.analysisBusy}
+        aria-busy={props.analysisBusy}
         onClick={props.onAnalyze}
       >
-        {tr("analysisAction")}
+        {tr(props.analysisBusy ? "analysisWorking" : "analysisAction")}
       </button>
-      {!props.canAnalyze && (
-        <p className="field-help" role="status">
+      {props.analysisAttempted && !props.canAnalyze && (
+        <p className="field-help" role="alert">
           {tr(props.analysisHint)}
         </p>
       )}
-      {scenarios.length > 0 && (
+      {props.showDemo && scenarios.length > 0 && (
         <details className="synthetic-workflow">
           <summary>{tr("demoWorkflowHeading")}</summary>
           {scenarios.length === 0 ? (

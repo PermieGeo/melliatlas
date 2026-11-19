@@ -1,5 +1,6 @@
 import {
   decodeCountries,
+  decodeSettlementSuggestions,
   decodeAreaDistrictResult,
   decodeSources,
   decodeSaturnPage,
@@ -13,6 +14,7 @@ import {
 } from "./validation";
 import type {
   Country,
+  SettlementSuggestion,
   AreaDistrictResult,
   ExternalSource,
   SaturnNoticePage,
@@ -165,6 +167,25 @@ export function listDistricts(
     decodeTerritories,
   );
 }
+/** Name search is opt-in, server-proxied and unrelated to the private point resolver. */
+export function searchSettlements(
+  country: CountryCode,
+  query: string,
+  locale: "ru" | "en",
+  signal: AbortSignal,
+): Promise<ApiResult<SettlementSuggestion[]>> {
+  return request(
+    "/api/v1/sources/geocoding/settlements",
+    signal,
+    decodeSettlementSuggestions,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country, query, language: locale }),
+    },
+  );
+}
+
 /** Keep private map click coordinates in a POST body, never the URL. */
 export function resolveTerritoryPoint(
   country: CountryCode,

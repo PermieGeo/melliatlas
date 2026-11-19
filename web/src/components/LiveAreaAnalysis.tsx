@@ -26,6 +26,7 @@ interface Props {
   locale: Locale;
   request: AreaAnalysisRequest | null;
   onNotices: (notices: SaturnNotice[]) => void;
+  onBusy?: (busy: boolean) => void;
 }
 
 type ReadResult<T> = { kind: "ok"; data: T } | { kind: "error"; code: string };
@@ -42,9 +43,11 @@ export function LiveAreaAnalysis({
   locale,
   request,
   onNotices,
+  onBusy,
 }: Props) {
   const [sources, setSources] = useState<ExternalSource[]>([]);
   const [sourceError, setSourceError] = useState(false);
+  const [sourceLoading, setSourceLoading] = useState(true);
   const [report, setReport] = useState<Report | null>(null);
   const [busy, setBusy] = useState(false);
   const [morePages, setMorePages] = useState<{
@@ -60,6 +63,11 @@ export function LiveAreaAnalysis({
     () => () => pagingController.current?.abort(),
     [country, regionId, request],
   );
+  const busyRef = useRef(onBusy);
+  busyRef.current = onBusy;
+  useEffect(() => {
+    busyRef.current?.(busy);
+  }, [busy, request]);
   const noticesRef = useRef(onNotices);
   noticesRef.current = onNotices;
   const tr = (key: TranslationKey, values?: Record<string, string | number>) =>
@@ -69,9 +77,11 @@ export function LiveAreaAnalysis({
     const controller = new AbortController();
     setSources([]);
     setSourceError(false);
+    setSourceLoading(true);
     if (country) {
       void listExternalSources(country, controller.signal).then((response) => {
         if (controller.signal.aborted) return;
+        setSourceLoading(false);
         if (response.kind === "error") {
           setSourceError(true);
           return;
@@ -80,6 +90,8 @@ export function LiveAreaAnalysis({
           response.data.filter((source) => source.country === country),
         );
       });
+    } else {
+      setSourceLoading(false);
     }
     return () => controller.abort();
   }, [country]);
@@ -97,6 +109,10 @@ export function LiveAreaAnalysis({
       request.country !== country ||
       request.regionId !== regionId
     ) {
+      return () => controller.abort();
+    }
+    if (sourceLoading) {
+      setBusy(true);
       return () => controller.abort();
     }
     const hasSaturn =
@@ -131,7 +147,7 @@ export function LiveAreaAnalysis({
       );
     });
     return () => controller.abort();
-  }, [country, regionId, request, sources]);
+  }, [country, regionId, request, sources, sourceLoading]);
 
   const shown =
     report?.request.country === country &&
@@ -226,7 +242,12 @@ export function LiveAreaAnalysis({
     <section className="live-analysis" aria-label={tr("analysisResultsTitle")}>
       <h2>{tr("analysisResultsTitle")}</h2>
       {sourceError && <p role="alert">{tr("analysisSourcesUnavailable")}</p>}
-      {busy && <p role="status">{tr("analysisWorking")}</p>}
+      {busy && (
+        <p role="status" className="analysis-loading">
+          <span className="analysis-spinner" aria-hidden="true" />
+          {tr(sourceLoading ? "analysisCheckingSources" : "analysisWorking")}
+        </p>
+      )}
       {!request && <p className="field-help">{tr("analysisAwaiting")}</p>}
       {request && !busy && !shown && sources.length === 0 && !sourceError && (
         <p className="field-help">{tr("analysisNoProviders")}</p>

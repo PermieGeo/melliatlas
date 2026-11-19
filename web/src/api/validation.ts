@@ -13,6 +13,7 @@ import {
 import type {
   Assessment,
   AreaDistrictResult,
+  SettlementSuggestion,
   Country,
   CountryCode,
   GeoPosition,
@@ -183,6 +184,40 @@ function isIsoDate(value: string): boolean {
   return (
     Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
   );
+}
+
+/** Treat geocoder suggestions as unverified names and coordinates, not canonical regions. */
+export function decodeSettlementSuggestions(
+  value: unknown,
+): SettlementSuggestion[] {
+  const suggestions = list(value, "settlements", (entry, path) => {
+    const item = record(entry, path);
+    const latitude = numeric(item.latitude, `${path}.latitude`);
+    const longitude = numeric(item.longitude, `${path}.longitude`);
+    const sourceUri = nonEmpty(item.source_uri, `${path}.source_uri`);
+    if (
+      Math.abs(latitude) > 90 ||
+      Math.abs(longitude) > 180 ||
+      sourceUri !== "https://open-meteo.com/en/docs/geocoding-api"
+    ) {
+      throw new WireError(path);
+    }
+    return {
+      id: integer(item.id, `${path}.id`),
+      name: nonEmpty(item.name, `${path}.name`),
+      country: country(item.country, `${path}.country`),
+      admin1: maybe(item.admin1, nonEmpty, `${path}.admin1`),
+      latitude,
+      longitude,
+      source_uri: sourceUri,
+    };
+  });
+  if (
+    suggestions.length > 10 ||
+    new Set(suggestions.map((place) => place.id)).size !== suggestions.length
+  )
+    throw new WireError("settlements");
+  return suggestions;
 }
 
 /** Validate spatial response geometry and provenance before displaying district names. */

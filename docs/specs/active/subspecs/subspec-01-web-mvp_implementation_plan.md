@@ -15,6 +15,7 @@ This document is a stable entrypoint for the selected Web workstream, not a chro
 | Boundary | Current implementation and constraints |
 | --- | --- |
 | Territory catalog | `GET /api/v1/territories/countries`, `/regions`, `/districts`, `/geometry/{territory_id}`; names and validated outlines may be unavailable; never invent administrative coverage. |
+| Settlement suggestions | `POST /api/v1/sources/geocoding/settlements` performs one explicit bounded GeoNames/Open-Meteo name lookup. Results must pass the existing region-scoped point resolver before selection; the provider is non-commercial and not a complete locality catalog. |
 | Spatial point resolver | `POST /api/v1/territories/resolve-point` returns one canonical containing location when PostGIS data supports it. |
 | Read-only rectangle lookup | `POST /api/v1/territories/intersecting-districts` returns all imported ADM2 positive-area overlaps with **unverified** coverage; it stores no places. Requires imported PostGIS geometry. |
 | Synthetic investigations | `GET /api/v1/investigations/scenarios`, `POST /api/v1/investigations`, `GET /api/v1/investigations/{id}`; results remain separate from live observations. |
@@ -26,9 +27,9 @@ Source-of-truth contracts: [HTTP API contract](../../../../backend/src/melliatla
 
 ## 2. Current implementation and unmet guarantees
 
-`web/src/App.tsx` coordinates country, region, selected territory/point, the opt-in live source previews and the separate synthetic investigation. `WorkspaceHeader`, `PlaceSearchToolbar`, `MapPanel`, `ReferenceControls`, `LiveAreaAnalysis`, `WeatherPanel` and `Timeline` display the existing workflow in a place-first shell. Country/settings sit in the header, region/coordinate entry above the map, analysis/weather to its right and an honest disconnected saved-places area below the map. Browser code does not store private selected points. Viewport and validated public territory preferences have separate local persistence. The Web OpenStreetMap basemap loads immediately and discloses third-party viewport sharing with an opt-out; there is no offline basemap or regional thematic dataset yet.
+`web/src/App.tsx` coordinates country, region, selected territory/point, the opt-in live-source previews and a developer-only synthetic test route. `WorkspaceHeader`, `PlaceSearchToolbar`, `MapPanel`, `ReferenceControls`, `LiveAreaAnalysis`, `WeatherPanel` and `Timeline` display the existing workflow in a place-first shell. Country/settings sit in the header, settlement-or-coordinate search above the map, analysis/weather to its right and an honest disconnected saved-places area below the map. Browser code does not store private selected points. Viewport, validated public territory preferences and an ordered one-year source date interval have separate local persistence; no user coordinates or queries are saved. The Web OpenStreetMap basemap loads immediately and discloses third-party viewport sharing with an opt-out; there is no offline basemap or regional thematic dataset yet.
 
-The UI offers an **unsaved** editable 15–30 km analysis rectangle, region-verified manual WGS84 coordinate entry and an explicit read-only lookup of imported districts, without claiming complete ADM2 coverage. It does **not** yet save private analysis places, load a complete regional thematic dataset, render all district boundary overlays, or persist analytic snapshots locally. Browser and live PostGIS verification, external-source access/reuse rights, feature acceptance and production authentication remain open gates.
+The UI offers an **unsaved** editable 15–30 km analysis rectangle, region-verified manual WGS84 coordinate entry or a selected geocoding suggestion and an explicit read-only lookup of imported districts, without claiming complete ADM2 coverage. It does **not** yet save private analysis places, load a complete regional thematic dataset, render all district boundary overlays, or persist analytic snapshots locally. Browser and live PostGIS verification, external-source access/reuse rights, feature acceptance and production authentication remain open gates.
 
 The existing server/client code permits a one-calendar-year source filter; documentation or operator hints must not silently restore the obsolete 31-day limit. API date filtering, source completeness, and evidence validity are distinct claims.
 
@@ -46,7 +47,7 @@ TDD is required for new behavior: a failing behavior test, then implementation, 
 
 ## 5. Next dependencies (not authorized implementation tasks)
 
-1. Geographical context: region-scoped settlements or coordinate lookup, roads, rivers, protected areas, forests and fields with source licensing and coverage metadata; no assumption that the existing ADM1/ADM2 dataset contains these layers.
+1. Geographical context: complete reviewed local settlement catalog, roads, rivers, protected areas, forests and fields with source licensing and coverage metadata; no assumption that the existing ADM1/ADM2 dataset contains these layers.
 2. Timeline and evidence: date-aware treatment geometry, distinct planned/confirmed activity, source completeness and weather uncertainty; wind effects and safety reports require independently validated methods.
 3. Desktop storage: React + Tauri with SQLite for large cached geospatial/analysis data, keeping small user-owned places server-backed and synchronizable; defer runtime dependency selection and security review until the desktop slice.
 

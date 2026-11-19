@@ -97,3 +97,14 @@ source ID as `beekeperSearchFilter.district` for the user's manual request.
 External endpoint compatibility and use rights remain independently gated.
 
 The source-specific HTTP weather implementation resides in `sources/providers/weather/` and retains Open-Meteo-specific configuration in its concrete settings adapter. This package is distinct from the persistence-owned weather policy and from provider-neutral `sources/api.py`. WGS84 coordinates are validated through the shared geographic primitives.
+
+
+## Bounded populated-place lookup
+
+`SettlementReader.search` returns provider-attributed GeoNames place suggestions;
+`Settlement` names and administrative labels are not canonical territory IDs.
+Only `api.composition` constructs the concrete Open-Meteo geocoder, using the
+shared fixed-origin JSON transport. Country filtering and place-class validation
+limit the response; no local settlement dataset, coverage guarantee or runtime
+network activity without a submitted request is provided. The public territory
+point resolver, not this source, decides region membership.

@@ -180,3 +180,21 @@ filter semantics and rights to read remain unverified.
 `POST /api/v1/territories/intersecting-districts` accepts `country`, `region_id`, WGS84 `longitude`/`latitude`, and `width_km`/`height_km` (each greater than zero and at most 30). Coordinates are submitted in the request body, never in a URL. The response contains latitude bounds, one or two longitude intervals, the nominal area in km², imported district IDs/names/reference IDs, and coverage `MISSING` or `UNVERIFIED`; it does **not** certify complete geographic coverage. No saved user locations or credentials are stored.
 
 Errors: `422/INVALID_REQUEST` for malformed transport values, `422/INVALID_TERRITORY_REQUEST` for invalid area geometry or country/region mismatch, `404/TERRITORY_NOT_FOUND` when the center is outside the selected region, and `503/TERRITORY_REFERENCE_UNAVAILABLE` for unavailable/ambiguous imported geography. The optional PostGIS-backed catalog is required; the name-only bundled country directory returns `503`. This endpoint is independent of Saturn and does not fetch external data.
+
+
+## Explicit populated-place geocoding (non-commercial pilot)
+
+`POST /api/v1/sources/geocoding/settlements` accepts a validated JSON body with
+`country=RU|BY`, a 2–100 character name query and `language=ru|en`. It performs
+one bounded, fixed-host HTTPS read against the public Open-Meteo GeoNames
+geocoding endpoint (up to 10 results, 8-second timeout, 32-KiB body). Output
+contains source-attributed populated-place suggestions with an optional upstream
+administrative label, not verified canonical MelliAtlas region identifiers.
+The browser separately calls the existing body-only `resolve-point` endpoint
+before adopting coordinates within the selected region. The request is not
+autocomplete; no search occurs at application startup or on typing.
+Validation returns `422/INVALID_REQUEST`; upstream errors, broken schemas and
+unreachable providers return sanitized `502/SOURCE_READ_FAILED` rather than
+fabricated places. No address input, user coordinates or query text is persisted.
+Free provider access is restricted to non-commercial usage; publication or
+commercial deployment requires a separate license/terms review.

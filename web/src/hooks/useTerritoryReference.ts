@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getTerritoryGeometry, listDistricts } from "../api/client";
 import type { CountryCode, Territory, TerritoryGeometry } from "../api/types";
 import type { TranslationKey } from "../i18n";
@@ -68,10 +68,13 @@ export function useTerritoryReference(
       item.kind === "region",
   );
   const regionIdForRequest = region?.id ?? "";
-  const districts =
-    districtResult.regionId === regionIdForRequest
-      ? districtResult.districts
-      : [];
+  const districts = useMemo(
+    () =>
+      districtResult.regionId === regionIdForRequest
+        ? districtResult.districts
+        : [],
+    [districtResult.regionId, districtResult.districts, regionIdForRequest],
+  );
   const districtMessage: TranslationKey = !regionIdForRequest
     ? "referenceSelectRegion"
     : districtResult.regionId === regionIdForRequest

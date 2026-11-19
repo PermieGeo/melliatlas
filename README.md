@@ -30,7 +30,7 @@ Missing treatment reports are **not evidence that the area is safe**. A notice i
 
 ## Current status
 
-- **Implemented:** React/Leaflet map, RU/BY region navigation, PostGIS-backed reviewed ADM1/ADM2 reads when data is explicitly imported, bounded experimental Saturn (RU) and Open-Meteo previews, and a separate synthetic investigation demo.
+- **Implemented:** React/Leaflet map, RU/BY region navigation, PostGIS-backed reviewed ADM1/ADM2 reads when data is explicitly imported, bounded experimental Saturn (RU) and Open-Meteo weather previews, an explicit online GeoNames/Open-Meteo settlement search, and a developer-only synthetic investigation fixture route (`/developer-demo`).
 - **Not yet implemented:** complete live treatment analysis, reliable pesticide-drift assessment, a verified seasonal migration optimizer and production-ready persistence.
 - **Pending verification:** actual administrative coverage in each selected region, source licensing/age, and end-to-end browser behavior on imported PostGIS data.
 

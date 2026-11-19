@@ -30,6 +30,17 @@ export interface Country {
   code: CountryCode;
   name: string;
 }
+/** GeoNames suggestion via Open-Meteo; region membership must be verified separately. */
+export interface SettlementSuggestion {
+  id: number;
+  name: string;
+  country: CountryCode;
+  admin1: string | null;
+  latitude: number;
+  longitude: number;
+  source_uri: string;
+}
+
 /** Versioned geographic reference entry, never proof of complete regional coverage. */
 export interface Territory {
   id: string;

@@ -4,16 +4,27 @@ export type Locale = "ru" | "en";
 const en = {
   workspacePlacesHeading: "Places and analysis",
   workspaceSettings: "Settings",
-  workspaceFindPlace: "Region and coordinates",
-  workspaceCoordinateSearch: "Find a point by coordinates",
-  workspaceCoordinateExample: "54.947, 31.080",
+  workspaceFindPlace: "Region and search",
+  helpFor: "Help",
+  workspaceCoordinateSearch: "Search",
+  workspaceCoordinateExample: "Smolensk or 54.947, 31.080",
   workspaceFindOnMap: "Find on map",
   workspaceSearchNeedsRegion: "Choose a region to enable coordinate entry.",
   workspaceSearchNote:
-    "Use latitude, longitude (decimal dot), or a semicolon between decimal-comma values. Settlement search is not yet available.",
+    "Search a settlement name or enter latitude, longitude. Use a semicolon between decimal-comma coordinates. Names are sourced from GeoNames via Open-Meteo. The selected point is accepted only after server verification of the chosen region; this online source is for non-commercial use.",
+  workspaceSearching: "Searching…",
+  workspaceSearchResults: "Settlement suggestions",
+  workspaceSearchUnavailable:
+    "Settlement lookup is unavailable; try coordinates instead.",
+  workspaceSearchEmpty:
+    "No matching populated places found. Try another spelling or coordinates.",
+  workspaceSearchInvalid:
+    "Enter a settlement name (2–100 characters) or a coordinate pair.",
+  workspaceSearchAttribution:
+    "GeoNames locations via Open-Meteo (non-commercial use)",
   workspaceAnalysisTools: "Period and sources",
   workspaceSaturnScope:
-    "Saturn is requested only when you press Analyze with an imported, source-mapped district selected above. This is not yet a query for the whole draft bbox.",
+    "Analyze requests a Saturn page only for the selected district if a reviewed source mapping exists. It is not a full rectangle analysis; missing mappings or access show an explanation. Weather uses the selected point separately.",
   workspaceSavedPlaces: "Saved places",
   workspaceNotAvailable: "Not connected",
   workspacePlacesPending:
@@ -66,6 +77,9 @@ const en = {
   analysisSaturnPageProgress:
     "Fetched {pages} page(s); {records} unique notices; reported filter total: {total}.",
   analysisAction: "Analyze selected area",
+  analysisSourcesLabel: "Live sources",
+  analysisReady: "Ready to query the selected district.",
+  analysisCheckingSources: "Checking enabled live sources…",
   analysisSelectRegion: "Select a region first.",
   analysisSelectDistrict:
     "Select a district for a district-scoped Saturn query.",
@@ -321,17 +335,28 @@ const en = {
 const ru: Record<keyof typeof en, string> = {
   workspacePlacesHeading: "Места и анализ",
   workspaceSettings: "Настройки",
-  workspaceFindPlace: "Регион и координаты",
-  workspaceCoordinateSearch: "Найти точку по координатам",
-  workspaceCoordinateExample: "54.947, 31.080",
+  workspaceFindPlace: "Регион и поиск",
+  helpFor: "Подсказка",
+  workspaceCoordinateSearch: "Поиск",
+  workspaceCoordinateExample: "Смоленск или 54.947, 31.080",
   workspaceFindOnMap: "Найти на карте",
   workspaceSearchNeedsRegion:
     "Сначала выбери область — тогда станет доступен ввод координат.",
   workspaceSearchNote:
-    "Введи широту, долготу (с точкой); при десятичной запятой разделяй значения точкой с запятой. Поиск населённых пунктов пока не подключён.",
+    "Введите название населённого пункта или широту, долготу. Для десятичной запятой разделяйте координаты точкой с запятой. Названия получаем из GeoNames через Open-Meteo; точка принимается только после проверки выбранной области. Онлайн-сервис предназначен для некоммерческого использования.",
+  workspaceSearching: "Идёт поиск…",
+  workspaceSearchResults: "Найденные населённые пункты",
+  workspaceSearchUnavailable:
+    "Поиск населённых пунктов недоступен; можно ввести координаты.",
+  workspaceSearchEmpty:
+    "Населённые пункты не найдены. Уточните название или введите координаты.",
+  workspaceSearchInvalid:
+    "Введите название из 2–100 символов либо пару координат.",
+  workspaceSearchAttribution:
+    "GeoNames через Open-Meteo (некоммерческое использование)",
   workspaceAnalysisTools: "Период и источники",
   workspaceSaturnScope:
-    "Запрос Сатурн запускается только кнопкой анализа после выбора района с проверенным сопоставлением в верхней панели. Запрос всего bbox пока не реализован.",
+    "Нажатие запускает запрос Сатурн для выбранного района, если он сопоставлен с источником. Это не полный анализ прямоугольника: при отсутствии сопоставления или доступа вы увидите причину. Погода берётся для выбранной точки отдельно.",
   workspaceSavedPlaces: "Сохранённые места",
   workspaceNotAvailable: "Не подключено",
   workspacePlacesPending:
@@ -384,6 +409,9 @@ const ru: Record<keyof typeof en, string> = {
   analysisSaturnPageProgress:
     "Загружено страниц: {pages}; уникальных сообщений: {records}; всего по фильтру: {total}.",
   analysisAction: "Проанализировать выбранную местность",
+  analysisSourcesLabel: "Реальные источники",
+  analysisReady: "Можно запросить данные выбранного района.",
+  analysisCheckingSources: "Проверяем доступность реальных источников…",
   analysisSelectRegion: "Сначала выберите область или регион.",
   analysisSelectDistrict:
     "Выберите район: запрос ко всей области не выполняется.",

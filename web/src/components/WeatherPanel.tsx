@@ -3,17 +3,24 @@ import { listExternalSources, readWeatherForecast } from "../api/client";
 import type { CountryCode, Position, WeatherForecast } from "../api/types";
 import { t } from "../i18n";
 import type { Locale, TranslationKey } from "../i18n";
+import { FieldHelp } from "./FieldHelp";
 
 interface Props {
   country: CountryCode;
   locale: Locale;
   point: Position | null;
+  refreshToken?: number;
 }
 
 type SourceStatus = "loading" | "available" | "unavailable";
 
 /** Automatically fetch one attributed forecast when a validated territory point is available. */
-export function WeatherPanel({ country, locale, point }: Props) {
+export function WeatherPanel({
+  country,
+  locale,
+  point,
+  refreshToken = 0,
+}: Props) {
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>("loading");
   const [sourceCountry, setSourceCountry] = useState("");
   const [forecast, setForecast] = useState<WeatherForecast | null>(null);
@@ -73,7 +80,7 @@ export function WeatherPanel({ country, locale, point }: Props) {
       },
     );
     return () => controller.abort();
-  }, [available, latitude, longitude, refresh]);
+  }, [available, latitude, longitude, refresh, refreshToken]);
 
   const number = (value: number | null) =>
     value === null
@@ -85,7 +92,14 @@ export function WeatherPanel({ country, locale, point }: Props) {
   return (
     <section className="weather-panel" aria-label={tr("weatherTitle")}>
       <div className="section-header">
-        <h2>{tr("weatherTitle")}</h2>
+        <div className="label-with-help">
+          <h2>{tr("weatherTitle")}</h2>
+          <FieldHelp
+            locale={locale}
+            label="weatherTitle"
+            explanation="weatherWarning"
+          />
+        </div>
         {point && available && (
           <button
             type="button"
