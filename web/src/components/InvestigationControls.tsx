@@ -101,6 +101,9 @@ export function InvestigationControls(props: Props) {
         aria-busy={props.analysisBusy}
         onClick={props.onAnalyze}
       >
+        {props.analysisBusy && (
+          <span className="analysis-spinner" aria-hidden="true" />
+        )}
         {tr(props.analysisBusy ? "analysisWorking" : "analysisAction")}
       </button>
       {props.analysisAttempted && !props.canAnalyze && (

@@ -47,6 +47,7 @@ export function LiveAreaAnalysis({
 }: Props) {
   const [sources, setSources] = useState<ExternalSource[]>([]);
   const [sourceError, setSourceError] = useState(false);
+  const [sourceRetry, setSourceRetry] = useState(0);
   const [sourceLoading, setSourceLoading] = useState(true);
   const [report, setReport] = useState<Report | null>(null);
   const [busy, setBusy] = useState(false);
@@ -94,7 +95,7 @@ export function LiveAreaAnalysis({
       setSourceLoading(false);
     }
     return () => controller.abort();
-  }, [country]);
+  }, [country, sourceRetry]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -161,6 +162,8 @@ export function LiveAreaAnalysis({
     morePages?.regionId === regionId
       ? morePages.pages
       : [];
+  const hasSaturn =
+    country === "RU" && sources.some((source) => source.id === "saturn");
   const page = shown?.saturn?.kind === "ok" ? shown.saturn.data : null;
   const pages = page ? [page, ...extraPages] : [];
   const uniqueNotices = [
@@ -241,22 +244,51 @@ export function LiveAreaAnalysis({
   return (
     <section className="live-analysis" aria-label={tr("analysisResultsTitle")}>
       <h2>{tr("analysisResultsTitle")}</h2>
-      {sourceError && <p role="alert">{tr("analysisSourcesUnavailable")}</p>}
-      {busy && (
-        <p role="status" className="analysis-loading">
+      {sourceError && (
+        <div className="source-feedback source-feedback--warning">
+          <p role="alert">{tr("analysisSourcesUnavailable")}</p>
+          <button
+            type="button"
+            className="source-retry"
+            onClick={() => setSourceRetry((value) => value + 1)}
+          >
+            {tr("sourceRetry")}
+          </button>
+        </div>
+      )}
+      {(sourceLoading || busy) && (
+        <p role="status" className="source-feedback source-feedback--loading">
           <span className="analysis-spinner" aria-hidden="true" />
           {tr(sourceLoading ? "analysisCheckingSources" : "analysisWorking")}
         </p>
       )}
-      {!request && <p className="field-help">{tr("analysisAwaiting")}</p>}
-      {request && !busy && !shown && sources.length === 0 && !sourceError && (
-        <p className="field-help">{tr("analysisNoProviders")}</p>
+      {!sourceLoading && !sourceError && !hasSaturn && (
+        <div className="source-feedback source-feedback--warning" role="status">
+          <p>{tr("analysisSaturnNotSupported")}</p>
+          <p className="field-help">{tr("analysisSaturnEnableHelp")}</p>
+          <button
+            type="button"
+            className="source-retry"
+            onClick={() => setSourceRetry((value) => value + 1)}
+          >
+            {tr("sourceRetry")}
+          </button>
+        </div>
       )}
+      {!request && !sourceLoading && !sourceError && hasSaturn && (
+        <p role="status" className="source-feedback source-feedback--ready">
+          {tr("analysisSaturnReady")}
+        </p>
+      )}
+      {!request && <p className="field-help">{tr("analysisAwaiting")}</p>}
       {shown && (
         <div role="status" className="analysis-findings">
           <p className="warning-text">{tr("analysisPartialDisclaimer")}</p>
           {shown.saturn?.kind === "error" && (
-            <p role="alert">
+            <p
+              role="alert"
+              className="source-feedback source-feedback--warning"
+            >
               {shown.saturn.code === "SOURCE_REGION_UNMAPPED"
                 ? tr("analysisSaturnRegionUnmapped")
                 : tr("saturnError", { reason: shown.saturn.code })}
@@ -334,8 +366,22 @@ export function LiveAreaAnalysis({
                   })}
                 </p>
               )}
+              {pagingBusy && (
+                <p
+                  role="status"
+                  className="source-feedback source-feedback--loading"
+                >
+                  <span className="analysis-spinner" aria-hidden="true" />
+                  {tr("analysisSaturnLoadingNext")}
+                </p>
+              )}
               {pagingError && (
-                <p role="alert">{tr("saturnError", { reason: pagingError })}</p>
+                <p
+                  role="alert"
+                  className="source-feedback source-feedback--warning"
+                >
+                  {tr("saturnError", { reason: pagingError })}
+                </p>
               )}
               {lastPage?.next_page !== null &&
                 lastPage?.next_page !== undefined &&

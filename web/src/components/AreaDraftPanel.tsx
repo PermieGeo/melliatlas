@@ -125,6 +125,9 @@ export function AreaDraftPanel({
               area: (draft.widthKm * draft.heightKm).toFixed(2),
             })}
           </p>
+          <p className="field-help draft-dimension-hint">
+            {tr("draftAreaFullDimensions")}
+          </p>
           <button
             type="button"
             onClick={onCheck}
@@ -153,22 +156,27 @@ export function AreaDraftPanel({
               ? tr("draftAreaMissing")
               : tr("draftAreaUnverified")}
           </p>
-          <ul className="area-draft-district-list">
-            {preview.districts.map((district) => (
-              <li key={district.id}>
-                <span>{district.name}</span>
-                <button
-                  type="button"
-                  aria-pressed={boundaryDistrictId === district.id}
-                  onClick={() => onDistrictBoundary(district.id)}
-                >
-                  {boundaryDistrictId === district.id
-                    ? tr("draftAreaHideBoundary")
-                    : tr("draftAreaShowBoundary")}
-                </button>
-              </li>
-            ))}
-          </ul>
+          {preview.districts.length > 0 && (
+            <details className="district-boundaries">
+              <summary>{tr("draftAreaBoundaryDisclosure")}</summary>
+              <ul className="area-draft-district-list">
+                {preview.districts.map((district) => (
+                  <li key={district.id}>
+                    <span>{district.name}</span>
+                    <button
+                      type="button"
+                      aria-pressed={boundaryDistrictId === district.id}
+                      onClick={() => onDistrictBoundary(district.id)}
+                    >
+                      {boundaryDistrictId === district.id
+                        ? tr("draftAreaHideBoundary")
+                        : tr("draftAreaShowBoundary")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           {boundaryStatus === "loading" && (
             <p className="field-help">{tr("draftAreaBoundaryLoading")}</p>
           )}

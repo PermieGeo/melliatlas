@@ -582,12 +582,6 @@ export default function App() {
             }}
             analysisHint={analysisHint}
           />
-          <WeatherPanel
-            country={country}
-            locale={locale}
-            point={weatherPoint}
-            refreshToken={weatherRefresh}
-          />
           <LiveAreaAnalysis
             locale={locale}
             country={country}
@@ -595,6 +589,12 @@ export default function App() {
             request={analysisRequest}
             onNotices={setSaturnNotices}
             onBusy={setAnalysisBusy}
+          />
+          <WeatherPanel
+            country={country}
+            locale={locale}
+            point={weatherPoint}
+            refreshToken={weatherRefresh}
           />
         </aside>
       </div>

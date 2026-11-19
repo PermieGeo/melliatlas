@@ -12,7 +12,7 @@ interface Props {
   refreshToken?: number;
 }
 
-type SourceStatus = "loading" | "available" | "unavailable";
+type SourceStatus = "loading" | "available" | "unavailable" | "failed";
 
 /** Automatically fetch one attributed forecast when a validated territory point is available. */
 export function WeatherPanel({
@@ -23,6 +23,8 @@ export function WeatherPanel({
 }: Props) {
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>("loading");
   const [sourceCountry, setSourceCountry] = useState("");
+  const [sourceError, setSourceError] = useState("");
+  const [sourceRetry, setSourceRetry] = useState(0);
   const [forecast, setForecast] = useState<WeatherForecast | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -33,22 +35,26 @@ export function WeatherPanel({
   useEffect(() => {
     const controller = new AbortController();
     setSourceCountry(country);
+    setSourceError("");
     setSourceStatus("loading");
     if (!country) return () => controller.abort();
     void listExternalSources(country, controller.signal).then((result) => {
       if (controller.signal.aborted) return;
+      if (result.kind === "error") {
+        setSourceError(result.code);
+        setSourceStatus("failed");
+        return;
+      }
       setSourceStatus(
-        result.kind === "ok" &&
-          result.data.some(
-            (source) =>
-              source.country === country && source.id === "open-meteo",
-          )
+        result.data.some(
+          (source) => source.country === country && source.id === "open-meteo",
+        )
           ? "available"
           : "unavailable",
       );
     });
     return () => controller.abort();
-  }, [country]);
+  }, [country, sourceRetry]);
 
   const available = sourceCountry === country && sourceStatus === "available";
   const latitude = point?.latitude;
@@ -110,13 +116,52 @@ export function WeatherPanel({
           </button>
         )}
       </div>
-      {!point && <p className="field-help">{tr("weatherSelectTerritory")}</p>}
-      {point && sourceCountry === country && sourceStatus === "unavailable" && (
-        <p className="field-help">{tr("weatherSourceUnavailable")}</p>
+      {country && sourceCountry === country && sourceStatus === "loading" && (
+        <p role="status" className="source-feedback source-feedback--loading">
+          <span className="analysis-spinner" aria-hidden="true" />
+          {tr("weatherCheckingSource")}
+        </p>
       )}
-      {point && busy && <p role="status">{tr("weatherLoading")}</p>}
+      {country && sourceCountry === country && sourceStatus === "failed" && (
+        <div className="source-feedback source-feedback--warning">
+          <p role="alert">
+            {tr("weatherSourceCheckFailed", { code: sourceError })}
+          </p>
+          <button
+            type="button"
+            className="source-retry"
+            onClick={() => setSourceRetry((value) => value + 1)}
+          >
+            {tr("sourceRetry")}
+          </button>
+        </div>
+      )}
+      {country &&
+        sourceCountry === country &&
+        sourceStatus === "unavailable" && (
+          <div className="source-feedback source-feedback--warning">
+            <p role="status">{tr("weatherSourceUnavailable")}</p>
+            <p className="field-help">{tr("weatherEnableHelp")}</p>
+            <button
+              type="button"
+              className="source-retry"
+              onClick={() => setSourceRetry((value) => value + 1)}
+            >
+              {tr("sourceRetry")}
+            </button>
+          </div>
+        )}
+      {!point && sourceStatus === "available" && (
+        <p className="source-feedback">{tr("weatherSelectTerritory")}</p>
+      )}
+      {point && busy && (
+        <p role="status" className="source-feedback source-feedback--loading">
+          <span className="analysis-spinner" aria-hidden="true" />
+          {tr("weatherLoading")}
+        </p>
+      )}
       {error && (
-        <p role="alert" className="warning-text">
+        <p role="alert" className="source-feedback source-feedback--warning">
           {tr("weatherError", { reason: error })}
         </p>
       )}

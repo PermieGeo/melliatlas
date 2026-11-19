@@ -49,6 +49,9 @@ const en = {
   draftAreaWidth: "Width (km)",
   draftAreaHeight: "Height (km)",
   draftAreaSize: "Nominal area: {area} km²",
+  draftAreaFullDimensions:
+    "Dimensions are edge-to-edge: 30 km means 15 km from center to each side.",
+  draftAreaBoundaryDisclosure: "Inspect district boundaries",
   draftAreaCheck: "Check intersecting districts",
   draftAreaChecking: "Checking imported districts…",
   draftAreaError: "Area lookup unavailable ({code}). Coverage is unknown.",
@@ -96,7 +99,14 @@ const en = {
   weatherMoreHours: "Show / hide {count} additional hours",
   weatherSelectTerritory:
     "Select a territory with a validated boundary to load local weather automatically.",
-  weatherSourceUnavailable: "The weather provider is disabled or unavailable.",
+  weatherSourceUnavailable:
+    "The weather provider is not enabled for this country.",
+  weatherCheckingSource: "Checking weather provider configuration…",
+  weatherSourceCheckFailed:
+    "Could not check weather provider availability ({code}).",
+  weatherEnableHelp:
+    "To enable Open-Meteo, configure the weather provider in PostGIS and set MELLIATLAS_WEATHER_LIVE_ENABLED=true before restarting the backend.",
+  sourceRetry: "Check again",
   analysisMissingBoundary:
     "Administrative boundaries are not installed. Import a reviewed geographic dataset before analyzing this area.",
   analysisNarrowArea:
@@ -121,6 +131,10 @@ const en = {
     "The region or district has no reviewed Saturn mapping. No region-wide request was made.",
   analysisSaturnNotSupported:
     "Saturn is not available for this country or is disabled by the server.",
+  analysisSaturnEnableHelp:
+    "Saturn needs MELLIATLAS_SATURN_LIVE_ENABLED=true and an independently reviewed district mapping. Requests are manual and limited to selected districts.",
+  analysisSaturnReady:
+    "Saturn is enabled. Select a district and date range, then use Analyze to request a page.",
   analysisWeatherNotEnabled: "Weather source is disabled by the server.",
   headerContext: "Environmental source explorer",
   syntheticMode: "Synthetic source",
@@ -381,6 +395,9 @@ const ru: Record<keyof typeof en, string> = {
   draftAreaWidth: "Ширина (км)",
   draftAreaHeight: "Высота (км)",
   draftAreaSize: "Расчётная площадь: {area} км²",
+  draftAreaFullDimensions:
+    "Размеры указаны от края до края: 30 км — это по 15 км от центра в обе стороны.",
+  draftAreaBoundaryDisclosure: "Показать границы районов",
   draftAreaCheck: "Найти пересекающиеся районы",
   draftAreaChecking: "Проверка импортированных районов…",
   draftAreaError: "Не удалось прочитать районы ({code}). Полнота неизвестна.",
@@ -428,7 +445,13 @@ const ru: Record<keyof typeof en, string> = {
   weatherMoreHours: "Открыть / закрыть остальные {count} ч",
   weatherSelectTerritory:
     "Выберите территорию с подтверждёнными границами для автоматической загрузки погоды.",
-  weatherSourceUnavailable: "Источник погоды отключён или недоступен.",
+  weatherSourceUnavailable:
+    "Погодный источник не включён для выбранной страны.",
+  weatherCheckingSource: "Проверяем настройки погодного источника…",
+  weatherSourceCheckFailed: "Не удалось проверить доступность погоды ({code}).",
+  weatherEnableHelp:
+    "Для Open-Meteo нужны настройки провайдера в PostGIS и MELLIATLAS_WEATHER_LIVE_ENABLED=true перед перезапуском backend.",
+  sourceRetry: "Проверить снова",
   analysisMissingBoundary:
     "Границы ещё не импортированы в географическую базу. Для анализа нужен проверенный географический слой.",
   analysisNarrowArea:
@@ -454,6 +477,10 @@ const ru: Record<keyof typeof en, string> = {
     "Для области или района нет проверенного кода Сатурна. Запрос на всю область не выполнялся.",
   analysisSaturnNotSupported:
     "Сатурн недоступен для выбранной страны или отключён на сервере.",
+  analysisSaturnEnableHelp:
+    "Для запроса нужны MELLIATLAS_SATURN_LIVE_ENABLED=true и проверенное соответствие кода района. Запрос выполняется только вручную для выбранного района.",
+  analysisSaturnReady:
+    "Сатурн включён. Выберите район и период, затем нажмите «Проанализировать» для запроса данных.",
   analysisWeatherNotEnabled: "Погодный источник отключён на сервере.",
   headerContext: "Исследование данных для пчеловода",
   syntheticMode: "Синтетический источник",
