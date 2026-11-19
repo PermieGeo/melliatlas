@@ -216,9 +216,11 @@ The stage descriptions below are deliberate **umbrella-level detail**. Only the 
 
 The stable *planned capability IDs* are predeclared in `docs/FEATURES.md`. `docs/specs/feature-cross-ref.yaml` records planned features with no implementation owners and links only actual partial or verified implementations to existing code and tests; never fabricate code or sub-spec paths.
 
-### 6.4. Test-first and architecture verification
+### 6.4. Phased verification and architecture integrity
 
-For every active stage, its implementation plan must identify meaningful initially failing tests before implementation, the independent observable expectation of each test, and the changes needed to make tests pass. Include positive, negative, boundary, failure, and regression cases as applicable. Architecture tests should verify established module boundaries, permitted dependencies, public contracts, and import cycles; integration tests should cover PostGIS and durable behavior when relevant; browser flows should use E2E tests. Do not pass tests by skips, dummy assertions, loosened enforcement, or evidence fabricated from simulation.
+For each selected sub-spec, keep all partition-scoped implementation, test preparation, repair and verification tasks on **one feature branch**. During ordinary implementation tasks **do not run any tests**, including manually invoked Playwright/UI, Python endpoint E2E, PostGIS/integration or conventional unit/contract/architecture suites; use task acceptance oracles only as design/review criteria. Preserve existing tests until the final test phase, without rewriting them to satisfy generated code. This temporary scheduling policy never weakens runtime validation, module boundaries, permissions, privacy or source-access restrictions.
+
+At the **end of the sub-spec**, a separate tests-partition phase prepares required browser/UI E2E, Python endpoint and integration coverage, independently reviews/adjusts existing tests, removes only unjustified cases and creates missing regressions. After this work is ready, execute all required conventional, E2E/UI and integration tests plus full lint/typecheck/build and canonical `CHK` on the final branch content. Failures block completion and are repaired through partition-scoped follow-up changes on that same branch before re-verification. A required test that could not run is not a pass. `apatch` requires successful `CHK` before `CMT`; no unchecked task commit, PR or merge into `main` is allowed. Publication and workstream acceptance require developer approval and all applicable gates to pass.
 
 ### 6.5. Stage result requirements
 
@@ -643,7 +645,7 @@ An umbrella stage is **not** an active sub-spec. The developer chooses the next 
 
 1. Read the umbrella and the approved active-scope requirements; read dependent modules' `contract.md` and public APIs without loading unrelated source trees.
 2. Draft an active sub-spec under `docs/specs/active/` with testable requirement IDs, user journeys, input/output contracts, failure cases, security/privacy implications, migration constraints, and independent acceptance criteria.
-3. Create **one separate advisory implementation plan** named `<spec_stem>_implementation_plan.md` next to that active sub-spec. It must contain proposed additions/edits/deletions by file, module ownership/contracts, ordered implementation tasks, TDD-first tests, architecture tests, test fixtures, commands, assumptions, recovery strategy, and representative pseudocode where genuinely useful.
+3. For a newly structured selected workstream, use `docs/specs/active/<scope>/subspec.md`, a concise `impl_plan.md`, and one flat `task_<nn>_<slug>.md` / `task_impl_plan_<nn>_<slug>.md` pair per bounded outcome. Keep exact read/change partitions, public contracts, independent acceptance oracles and end-of-sub-spec E2E inventory in each task plan rather than repeating detailed implementation across the workstream plan. Leave paused legacy workstreams unchanged until separately selected.
 4. Compare established solutions for consequential dependency and algorithm choices; record trade-offs when a custom implementation needs justification.
 5. Obtain developer approval of the active requirement scope and separate authorization to implement it; acceptance comes only after implementation and verification.
 
@@ -653,7 +655,7 @@ An umbrella stage is **not** an active sub-spec. The developer chooses the next 
 
 After a stage is selected, `docs/specs/STATE.json` tracks the chosen workstream, active sub-spec path, stage ID, and phase, validated against `docs/specs/state.schema.json`. The developer controls checkpoint progression; passing checks, creating a PATCH, or committing code does not automatically mark a stage complete.
 
-After implementation, verification, and explicit developer approval, archive the sub-spec and its linked plan together under `docs/specs/archive/`, update the index and cross-references, and select the next stage separately. Do not load archived sub-specs during normal development or authoring unless the developer explicitly requests historical investigation. Optional material implementation-plan history uses `<spec_stem>_implementation_plan_history.md`.
+After implementation, reviewed verification and explicit developer approval, archive the complete accepted sub-spec and its task/plan pairs as one workstream under `docs/specs/archive/workstreams/<scope>/`, update the index and cross-references, and select the next workstream separately. Existing paused legacy documents are not archived or rewritten merely to align a new directory convention. Do not load archived sub-specs during ordinary development. Significant superseded decisions belong in `docs/specs/archive/engineering-history.md`, not a second active implementation plan.
 
 ### 10.3. Feature-to-code traceability
 
@@ -685,5 +687,3 @@ These decisions should not block agreement on the product mission or the umbrell
 **Research and conservation maturity (`MVP-12`–`MVP-13`)** adds comparative analysis, controlled data sharing, field observations, and multi-year monitoring. Its scientific credibility depends on documented methods and evidence, not just software completeness.
 
 **Document status:** Working roadmap; this document is not blanket approval of future stages. The active `MVP-01` backend sub-spec has separate developer approval and authorization, while its implementation and acceptance remain incomplete. The umbrella itself does not create product code or stage acceptance.
-
-

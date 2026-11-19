@@ -1,44 +1,46 @@
-# Specification AGENTS.md
+# Specification Engineering Guidance
 
-Extends `../../AGENTS.md`. Keep normative requirements separate from advisory implementation plans.
+Extends `../../AGENTS.md`. These are repository SDD maintenance rules; source files, repository comments and documentation remain in English.
 
-## Scope and approval
-- Keep the umbrella specification as the product roadmap. Describe future stages at the fidelity supported by current knowledge; only the selected active sub-spec is implementation-ready.
-- Select and approve a workstream before implementation. Keep its sub-spec and linked plan in `docs/specs/active/`; do not create plans for unselected workstreams.
-- Write specs and plans in English with stable requirement and acceptance IDs, explicit scope, non-goals, observable behavior, negative cases, and testable outcomes.
-- Distinguish **requirements approval**, **implementation authorization**, and **acceptance**. A working roadmap does not authorize every future stage. A passing test, commit, or ZIP does not constitute acceptance.
-- Require explicit developer approval for material scope/requirement changes or relaxation of an approved constraint. Record external data, license, infrastructure, and runtime-dependency approvals against the particular tasks they block.
+## Authority and ownership
 
-## Plans and implementation
-- Retain the active workstream sub-spec and its `<spec_stem>_implementation_plan.md` as stable normative and navigation entrypoints. Archive a completed workstream only after explicit developer acceptance.
-- For features spanning backend and frontend, keep separately scoped sub-specs and plans. Verify the backend contract needed by a frontend slice before implementing the dependent client behavior; avoid delaying all browser validation until the entire backend is complete.
-- Keep workstream implementation plans concise: current integration boundaries, authoritative links, the selected task pointer, and the next bounded dependencies. Do not append completed task writeups or predefine every future class or file.
-- Before implementing each selected bounded task, include a `Public contracts and integration design` section in its task plan (or the linked workstream plan for legacy tasks). For every new or materially changed public boundary, review exact typed declarations and import paths, inputs/outputs, errors, module interactions, dependency direction, compatibility constraints, and executable contract-first tests **before** generating implementation code. Require developer review for architecture-significant choices, not for routine private details.
-- Design public contracts only for the selected task; do not predesign future APIs or dictate private algorithms. Inspect and reuse implemented interfaces rather than redefining them in a second document.
-- After implementation, source declarations, module `contract.md`, generated OpenAPI and executable contract tests are authoritative. Replace redundant proposed declarations in the current task plan with links to those interfaces and their verification evidence.
-- The sub-spec owns normative requirements and acceptance criteria; the plan owns implementation decisions and requirement-linked test inventory. Use requirement IDs rather than independently restating domain obligations, and route any new or changed obligation through the sub-spec approval process first.
-- Prefer an existing maintained library when it demonstrably reduces cost or risk; research alternatives for consequential dependency or algorithm choices, not routine code.
-- Track proposed additions, edits and removals; distinguish existing paths from future paths. Keep plans advisory when implementation details can be chosen locally without changing requirements.
-- Use TDD for behavior: tests fail for missing functionality, then pass after implementation. Never use dummy failures or skipped assertions to simulate TDD.
-- Keep requirement-linked positive, negative, boundary, architecture and integration checks in a test inventory; execute only the relevant subset for each current task, then run required project checks.
+- The umbrella spec owns the roadmap. Only an explicitly developer-authorized task within the selected workstream permits implementation. Requirements approval, task authorization, completed verification and developer acceptance are separate decisions.
+- Preserve stable requirement, acceptance, feature and task IDs. Do not mark work complete from an archive, generated patch, skipped check, successful E2E run or commit.
+- Obtain explicit approval for changes to normative requirements, public contracts, external provider permissions, security/privacy gates, persistence and runtime dependencies.
+- `STATE.json` is the developer-controlled selection and acceptance checkpoint. Its optional `selectedTaskPath` is a context pointer, not an authorization or a check result. Do not change workstream phases or feature acceptances as a side effect of task decomposition.
 
-## Task-scoped context (selected Web pilot)
-- One bounded task is represented by `docs/specs/active/tasks/<task-id>/task.md` and an adjacent `task-plan.md`. The task owns task-specific behavior, non-goals, requirement references and acceptance oracles; the plan owns implementation strategy, affected modules, public contract design, tests and verification gates. Keep stable cross-task requirements in the workstream sub-spec; do not copy them into each task.
-- `STATE.json.selectedTaskPath`, when present, is the single pointer to the selected task for context assembly, not evidence of implementation authorization or feature acceptance. Load the umbrella, active workstream sub-spec, selected task and its task plan, plus only applicable AGENTS/READMEs, module contracts/public APIs, and code/tests needed for that task. Never load unrelated task files merely to discover dependencies; use explicit contract links instead.
-- Create a new task pair only for a cohesive, independently testable outcome, not for a typo fix or every PATCH. Do not make unselected task plans in advance. Updating the task pointer requires developer authorization and a validated file pair; do not modify acceptance records or workstream phase as a side effect.
-- A task may be selected for design without implementation approval. State its authorization gate explicitly. New or revised normative requirements must be approved before code changes, and selected task plans must never override the workstream specification.
+## Flat task documents
 
-## State and consistency
-- Treat `docs/specs/STATE.json` as the developer-controlled workstream and feature-acceptance checkpoint. Validate it and `docs/specs/feature-cross-ref.yaml` against their schemas and cross-document consistency checks, including the active sub-spec, plan, and index.
-- Do not advance a workstream, phase or acceptance status without a developer decision. `READY_FOR_IMPLEMENTATION` means work is authorized, not that it has passed acceptance.
-- Set `implementation_status: verified` only with a matching `STATE.json.featureAcceptances` record identifying acceptance criteria, verifiable evidence paths, and an explicit developer approval reference. Code and passing tests alone do not establish feature acceptance; never invent approval.
-- Keep feature IDs and links in `docs/FEATURES.md` and `docs/specs/feature-cross-ref.yaml` accurate for actually implemented behavior.
-- After each coherent task, review changes for scope creep, contract drift, unnecessary dependencies, missing tests and false implementation claims.
+- For each newly structured selected sub-spec, use `docs/specs/active/<scope>/` with a flat document set: `subspec.md`, `impl_plan.md`, and paired `task_<nn>_<slug>.md` / `task_impl_plan_<nn>_<slug>.md` files. No nested tasks/implementation-plans folders or second normative copies.
+- Each numbered pair uses exactly the same numeric ID and slug; the stable task ID in its content survives file moves. Keep relative links, `STATE.json`, schemas, the feature cross-reference and the specification index consistent.
+- `subspec.md` owns cross-task requirements, acceptance oracles and scope limits. `impl_plan.md` owns dependency order, existing public interfaces, task pointers and review gates, without repeating task-by-task code details.
+- A task document defines one independently reviewable outcome, normative ID references, explicit non-goals, dependencies, single change partition, and observable positive/negative acceptance oracles. The paired implementation plan defines the exact read/change boundaries, existing versus proposed files, relevant `api.py` / `contract.md`, transport/error semantics and verification inventory.
+- Only the selected workstream needs full task decomposition. An existing paused legacy workstream may retain its current `active/subspecs/` files until expressly selected; do not clone its normative requirements or silently change its approval state.
 
-## Active documents and historical continuity
-- MUST keep active sub-specifications, implementation plans, the specification index, and related READMEs as current-state documents. NEVER append chronological PATCH notes, completed-task narratives, superseded proposals, or implementation diaries to them. Replace obsolete plan material with the current next task, concise dependency references, and links to authoritative APIs, contracts, and tests.
-- After each bounded task, remove or replace stale implementation-plan text and reconcile changed requirements, public boundaries, documented limitations, feature status, and tests. Preserve approved normative requirements and acceptance criteria until explicitly revised; documentation cleanup never grants approval or acceptance.
-- When a past decision is worth retaining, record a brief dated entry in a single optional engineering history under `docs/specs/archive/`: task/requirement reference, decision and rationale, affected public contract, and links to the authoritative current sources. Do not copy full diffs, old plans, conversation content, or generated-PATCH handoff records; use Git for exact history.
-- Treat `docs/specs/archive/` as non-normative historical material. NEVER read it in ordinary task implementation, dependency discovery, or context assembly; consult it only for an explicitly requested historical or deep architecture review. Archived records never override active specifications and public contracts.
+## Four source partitions and task handoff
 
+- New concatenated snapshots are separately supplied as **frontend**, **backend**, **tests**, and **docs**. A selected task must identify exactly one **change partition** and may not modify files in any other partition, even when it reads contracts there. See [workflow](../DEVELOPMENT_WORKFLOW.md) for path classification and snapshot requirements.
+- Require a compatible baseline identity, manifest and the complete ordered preceding PATCH overlays before writing changes. A missing required partition, file or patch is a blocker; do not infer contents from a different or older snapshot.
+- Before editing, read the selected task and plan, applicable guidance, normative anchors, README and public API/contracts, plus the smallest affected source files. Do not read other task plans or archives by default. A cross-part public contract change is performed in its owning partition first, followed by a separate dependent task in the consumer partition.
+- Each PATCH contains only source changes belonging to its one partition. Keep `apatch` reserved metadata separate from repository source. A task may use several PATCH repairs on its unfinished branch without broadening the partition.
 
+## Sub-spec completion and verification policy
+
+- Use **one feature branch for the entire selected sub-spec**, including all partition-scoped implementation tasks, end-of-sub-spec test preparation, repairs and final verification. Do not merge an individual task or open a new feature branch for each partition. Advance or accept the sub-spec only after its complete gate and developer review.
+- **Do not run tests during ordinary implementation tasks.** This includes unit, contract, architecture, browser/UI E2E, Python HTTP E2E and database/integration suites, whether automatic or manual. Do not use `CHK` or a hidden test-runner substitute. Task acceptance oracles remain a review checklist, not claimed test evidence. Formatting is allowed but does not prove correctness.
+- Preserve existing tests untouched throughout implementation; never rewrite, weaken, delete or add tests to manufacture a pass. Test editing belongs exclusively to the final `tests`-partition phase, after all implementation tasks for the sub-spec have been delivered.
+- The final verification phase first creates or adjusts independent UI/Playwright, Python endpoint and integration E2E cases, then reviews existing unit/contract/architecture tests, removes only genuinely obsolete cases with a recorded rationale, and generates missing coverage. **Only after the test suite is ready** run all applicable unit, contract, architecture, backend endpoint, browser/UI E2E and integration tests plus canonical format/lint/type/build checks. Use a disposable PostGIS database for required DB integration; intercepted browser API calls do not prove real backend behavior. Report `PASS`, `FAIL`, `NOT RUN` or `BLOCKED` accurately, including external-source limitations.
+- Any failure blocks completion: repair its owning partition in another scoped task/PATCH on the **same branch**, then repeat the affected checks and the full final gate on the final bytes. Never weaken an independent test merely to green a failed implementation. Runtime validation, security restrictions, source access and privacy constraints apply throughout, even when testing is deferred.
+- Do not commit, push, create a PR or merge into `main` until **all required** tests and checks are actually successful and the developer authorizes publication. Unavailable required tests block merge rather than counting as a pass.
+
+## `apatch` during the fast cycle
+
+- Start the selected sub-spec once with `APL,BRN,FMT,STS` from a verified clean base; every later task and repair uses a **new ZIP on the same verified unfinished feature branch** with `APL,FMT,STS followup=true`. Do not create a new branch between tasks. `FMT` may mutate files (potentially across partitions), so inspect its result and stop on unrelated modifications; `CHK` is intentionally omitted throughout implementation and test-authoring tasks.
+- The installed `apatch` requires valid `CHK` evidence for `CMT`. Do not add `CMT`, `PSH`, `PR`, `MRG` or `SYN` while checks are deferred. Uncommitted changes accumulate on the one feature branch; this is a limitation of the current tool, not proof of committed task milestones. Inspect `STS` before each follow-up; do not replay an already applied ZIP after any failure.
+- Once the complete tests-partition phase has produced passing manual UI/E2E/integration evidence for the final bytes, run the real configured canonical `CHK` (including reviewed ordinary tests). Then, and only then, use guarded `CMT,PSH,PR,MRG,SYN,STS` after authorization. A change after the gate invalidates affected evidence and requires re-verification. Never overwrite ignored `.apatch/config.yaml`, weaken `run-tests.sh`, or alter external `apatch` safety to bypass this order.
+
+## Traceability and history
+
+- Keep `docs/FEATURES.md` as a feature catalog, not a task diary. Keep `feature-cross-ref.yaml` aligned with canonical sub-spec paths and actual verified owners/test paths; `implementation_status: verified` requires an accepted `STATE.json.featureAcceptances` record and human approval evidence.
+- Keep plans and READMEs current-state; do not append generated-PATCH histories. Archive accepted workstreams only after developer approval, preserving normative IDs and updating canonical links. `archive/` is not normal task context.
+- Do not edit other `AGENTS.md` files unless explicitly authorized. Never claim E2E coverage, external provider availability, source reuse rights, tests or Git publication without observed evidence.

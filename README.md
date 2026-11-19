@@ -36,6 +36,6 @@ Missing treatment reports are **not evidence that the area is safe**. A notice i
 
 ## Run locally
 
-See [Installation](docs/INSTALLATION.md) for the database, boundary download/import, backend and web commands. Run checks using `sh ./run-tests.sh`; format with `sh ./run-format.sh`.
+See [Installation](docs/INSTALLATION.md) for database, boundary imports, backend and web setup. The temporary [sub-spec development workflow](docs/DEVELOPMENT_WORKFLOW.md) keeps all tasks on one feature branch and defers **all** tests (unit, UI/E2E and integration) and full `CHK` until the end-of-sub-spec review gate. The retained full suite is `sh ./run-tests.sh`; source formatting is `sh ./run-format.sh`.
 
 Architecture and requirements: [Specification index](docs/specs/README.md), [Backend](backend/README.md), [Web](web/README.md).

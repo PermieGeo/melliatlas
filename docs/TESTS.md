@@ -2,6 +2,21 @@
 
 Install the backend development dependencies described in [INSTALLATION.md](INSTALLATION.md) before running the full project checks.
 
+## Sub-spec completion-only test policy (developer-selected)
+
+**Do not run any tests during implementation tasks** for an active sub-spec: no unit/contract/architecture checks, browser/UI Playwright tests, Python endpoint E2E or database/integration suites, whether manual or automatic. The existing `run-tests.sh` is still the **full** read-only canonical runner and remains unchanged. Avoid `apatch CHK` and all test runners until the final test/review phase. Formatting with `FMT` is allowed and is not test evidence.
+
+At the end of the sub-spec, first use `WEB-MVP-T09` to create or adjust independent browser/Playwright and Python/httpx real-ASGI endpoint E2E cases **without executing them**. Then `WEB-MVP-T10` reviews all existing tests (including SDD path assumptions), removes demonstrably redundant/obsolete cases with rationale, generates missing coverage and runs the complete suites. The final run includes unit, contract, architecture, browser/UI, endpoint E2E and relevant real-database/integration testing; lint/typecheck/build and full canonical `CHK` must also pass before any commit or merge. If a required suite cannot run, report `BLOCKED` rather than a pass; repair on the same sub-spec branch and re-run the gate after changes.
+
+For the browser acceptance gate once the final phase is ready:
+
+```sh
+cd web
+npm run test:e2e
+```
+
+Playwright starts Vite through `web/playwright.config.ts`; install browsers/dependencies first. Existing intercepted browser checks validate UI only and are not proof of a live backend, PostGIS or third-party provider. Dedicated Python endpoint E2E is planned, not yet implemented; execute against the real ASGI composition with controlled upstreams. Required PostGIS tests use a disposable database; never invoke live Saturn by default. Detailed gates and branch lifecycle are in [development workflow](DEVELOPMENT_WORKFLOW.md). The current SDD tests still contain old Web task paths and need adjustment only in the final tests partition phase.
+
 Run all configured checks from the repository root:
 
 ```bash

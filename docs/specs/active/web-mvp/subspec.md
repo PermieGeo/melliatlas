@@ -5,9 +5,9 @@
 - **Implementation authorization:** AUTHORIZED — selected Web workstream
 - **Acceptance:** PENDING
 - **Parent stage:** [`MVP-01`](../../umbrella_spec_melliatlas.md#mvp-01--working-sustainable-beekeeping-mvp)
-- **Related active workstream:** [Backend sub-spec](subspec-01-backend-planning.md)
-- **Implementation plan:** [MVP-01 Web plan](subspec-01-web-mvp_implementation_plan.md)
-- **Selected next task (partially implemented, not accepted):** [Saved place and editable bbox](../tasks/web-saved-place-bbox/task.md). Read-only geometry and an inactive owner-scoped storage adapter are available. This task does not replace approved W01 requirements or authorize public saved-place access.
+- **Related active workstream:** [Backend sub-spec](../subspecs/subspec-01-backend-planning.md)
+- **Implementation plan:** [MVP-01 Web plan](impl_plan.md)
+- **Selected task (partially implemented, not accepted):** [Editable area draft](task_03_area_draft.md). Read-only geometry and an inactive owner-scoped storage adapter are available. This task does not replace approved W01 requirements or authorize public saved-place access.
 
 ## 1. User journey and scope
 
@@ -34,6 +34,25 @@ This workstream does **not** port the former administration interface, map compo
 | `MVP01-WEB-R08` | Preserve predictable empty/loading/error states, mobile/touch usability, visible focus and basic screen-reader semantics; do not expose protected source contents or private apiary coordinates in logs, query strings or telemetry. | `MVP-01.R01`, `R09`; `SYS-14` |
 | `MVP01-WEB-R12` | Make the place-first workspace discoverable: country and settings in the global header; region and coordinate search above the central map; editable area controls, period, source availability and weather in a contextual analysis column; saved-place area below the map with a truthful unavailable state until protected CRUD exists. Do not imply that the synthetic investigation or a source-specific district selection already analyzes the entire bbox. On-demand settlement lookup may use a bounded, attributed, non-commercial GeoNames/Open-Meteo provider through a public backend contract; results are suggestions rather than trusted administrative IDs, and selection requires a validated region membership check. No automatic network search or broad gazetteer ingestion. | `MVP-01.R01`, `R08`; `WEB-PLACE-01` |
 | `MVP01-WEB-R13` | Show a usable online Web basemap immediately, identify the external tile provider and viewed-area disclosure in the interface, and provide a discoverable opt-out without hiding geography overlays or accessible results. Do not claim offline tiles or conceal the privacy consequence of navigation to a private point. | `MVP-01.R01`, `R09`; `SYS-14` |
+
+## Task decomposition
+
+This approved sub-spec remains the normative source of browser requirements. The task pairs are bounded delivery units and do not constitute new approval. Each task changes **one snapshot partition** only; cross-part dependencies are read through documented contracts. All tasks share **one feature branch**. No tests run until the final verification phase (`T09` test preparation, followed by `T10` test review and execution); a task is never merged independently.
+
+| Task | Partition | Outcome | Status |
+| --- | --- | --- | --- |
+| [`WEB-MVP-T01`](task_01_territory_navigation.md) | `frontend` | Territory navigation, map shell and basemap disclosure | Partial |
+| [`WEB-MVP-T02`](task_02_settlement_search.md) | `frontend` | Settlement/coordinate selection and contextual help | Partial |
+| [`WEB-PLACE-01`](task_03_area_draft.md) | `frontend` | Unsaved bbox editing and district preview | Partial; selected |
+| [`WEB-MVP-T04`](task_04_investigation_flow.md) | `frontend` | Synthetic investigation lifecycle and reopening | Partial |
+| [`WEB-MVP-T05`](task_05_evidence_timeline.md) | `frontend` | Synchronized timeline, uncertainty and evidence | Partial |
+| [`WEB-MVP-T06`](task_06_live_source_previews.md) | `frontend` | Explicit weather and Saturn preview feedback | Partial |
+| [`WEB-MVP-T07`](task_07_saved_places_service.md) | `backend` | Secure saved-place HTTP persistence | Blocked on approval |
+| [`WEB-MVP-T08`](task_08_saved_places_client.md) | `frontend` | Saved-place management UI | Blocked on T07 |
+| [`WEB-MVP-T09`](task_09_manual_e2e.md) | `tests` | End-of-sub-spec UI/ASGI/integration E2E preparation (no execution) | Planned final phase |
+| [`WEB-MVP-T10`](task_10_test_suite_review.md) | `tests` | Final test audit, all suites, canonical CHK and merge readiness | Deferred until end-of-sub-spec gate |
+
+`WEB-PLACE-01` retains its stable task identity for the unsaved Web drafting portion; its previously bundled backend persistence and test work are now separate tasks. Original `PLACE-A01`–`PLACE-A05` identifiers are retained and distributed by their owning tasks. No task authorizes public private-place storage or new third-party access by itself.
 
 ## 3. UX composition
 
