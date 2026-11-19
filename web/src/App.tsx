@@ -273,6 +273,8 @@ export default function App() {
       : !validSourceDateRange(sourceRange.start, sourceRange.end)
         ? "analysisInvalidDateRange"
         : "analysisReady";
+  const activeAnalysisRequest =
+    analysisRequest?.area === areaDraft.bounds ? analysisRequest : null;
   const analyze = () => {
     setAnalysisAttempted(true);
     if (
@@ -290,6 +292,7 @@ export default function App() {
       districtId: referenceNavigation.districtId,
       dateStart: sourceRange.start,
       dateEnd: sourceRange.end,
+      area: areaDraft.bounds,
     });
   };
   const chooseRegion = (id: string) => {
@@ -442,7 +445,7 @@ export default function App() {
               privateFocus={areaDraft.coordinateFocus}
               referenceGeometry={referenceNavigation.geometry}
               previewDistrictGeometry={districtBoundary.geometry}
-              saturnNotices={saturnNotices}
+              saturnNotices={activeAnalysisRequest ? saturnNotices : []}
               onSelect={investigation.setSelectedSite}
               onPoint={selectMapPoint}
               onDraftResize={areaDraft.resize}
@@ -586,7 +589,7 @@ export default function App() {
             locale={locale}
             country={country}
             regionId={referenceNavigation.regionId}
-            request={analysisRequest}
+            request={activeAnalysisRequest}
             onNotices={setSaturnNotices}
             onBusy={setAnalysisBusy}
           />

@@ -24,7 +24,7 @@ const en = {
     "GeoNames locations via Open-Meteo (non-commercial use)",
   workspaceAnalysisTools: "Period and sources",
   workspaceSaturnScope:
-    "Analyze requests a Saturn page only for the selected district if a reviewed source mapping exists. It is not a full rectangle analysis; missing mappings or access show an explanation. Weather uses the selected point separately.",
+    "Saturn reads the selected district only. When a draft exists, loaded field polygons are screened for intersection with its rectangle; neighboring districts and unread pages are not included. Weather uses the selected point separately.",
   workspaceSavedPlaces: "Saved places",
   workspaceNotAvailable: "Not connected",
   workspacePlacesPending:
@@ -71,10 +71,17 @@ const en = {
     "Draft only. Coordinates are not saved; this is not a safety assessment.",
   mapPointOutside: "No imported administrative region contains this point.",
   mapPointUnavailable: "Could not identify a district at the selected point.",
-  mapShowSaturnFields: "Zoom to fetched fields",
+  mapShowSaturnFields: "Zoom to displayed fields",
   analysisSaturnLoadNext: "Load next 10 records",
   analysisSaturnLoadingNext: "Loading another Saturn page…",
   analysisSaturnGeometryCount: "Field polygons in fetched records: {count}.",
+  analysisSaturnWithinDraft:
+    "Intersecting the draft: {matched}; outside it: {outside}; without usable geometry: {unlocated}. Only loaded pages of the selected district were checked.",
+  analysisSaturnDistrictOnly:
+    "No analysis rectangle is active; fetched records cover the selected district, not a local square.",
+  analysisNoDraftMatchesTitle: "No intersecting fields in the loaded pages",
+  analysisNoDraftMatchesDetail:
+    "Loaded pages do not contain a field polygon intersecting this rectangle. Other districts, unread pages and unidentified locations remain unverified.",
   analysisSaturnNoGeometry:
     "No usable field polygons in the fetched records; the map has nothing to draw.",
   analysisSaturnPageProgress:
@@ -99,8 +106,7 @@ const en = {
   weatherMoreHours: "Show / hide {count} additional hours",
   weatherSelectTerritory:
     "Select a territory with a validated boundary to load local weather automatically.",
-  weatherSourceUnavailable:
-    "The weather provider is not enabled for this country.",
+  weatherSourceUnavailable: "The weather provider is disabled or unavailable.",
   weatherCheckingSource: "Checking weather provider configuration…",
   weatherSourceCheckFailed:
     "Could not check weather provider availability ({code}).",
@@ -370,7 +376,7 @@ const ru: Record<keyof typeof en, string> = {
     "GeoNames через Open-Meteo (некоммерческое использование)",
   workspaceAnalysisTools: "Период и источники",
   workspaceSaturnScope:
-    "Нажатие запускает запрос Сатурн для выбранного района, если он сопоставлен с источником. Это не полный анализ прямоугольника: при отсутствии сопоставления или доступа вы увидите причину. Погода берётся для выбранной точки отдельно.",
+    "Сатурн запрашивает выбранный район. Когда задан квадрат, отображаются только загруженные поля, пересекающие его границы. Другие районы и непрочитанные страницы не охвачены. Погода запрашивается отдельно.",
   workspaceSavedPlaces: "Сохранённые места",
   workspaceNotAvailable: "Не подключено",
   workspacePlacesPending:
@@ -416,11 +422,19 @@ const ru: Record<keyof typeof en, string> = {
   mapPointOutside:
     "Для этой точки нет импортированной административной территории.",
   mapPointUnavailable: "Не удалось определить район по выбранной точке.",
-  mapShowSaturnFields: "Показать загруженные поля",
+  mapShowSaturnFields: "Показать найденные поля",
   analysisSaturnLoadNext: "Загрузить следующие 10 записей",
   analysisSaturnLoadingNext: "Загружается следующая страница Сатурна…",
   analysisSaturnGeometryCount:
     "Контуров полей среди загруженных записей: {count}.",
+  analysisSaturnWithinDraft:
+    "Пересекают квадрат: {matched}; вне квадрата: {outside}; без пригодной геометрии: {unlocated}. Проверены только загруженные страницы выбранного района.",
+  analysisSaturnDistrictOnly:
+    "Квадрат анализа не задан: показаны записи выбранного района, а не локальной области.",
+  analysisNoDraftMatchesTitle:
+    "В загруженных страницах нет полей, пересекающих квадрат",
+  analysisNoDraftMatchesDetail:
+    "Это не исключает сообщений из других районов, непрочитанных страниц и записей без геометрии. Полнота данных неизвестна.",
   analysisSaturnNoGeometry:
     "Среди загруженных записей нет пригодных контуров. На карте пока нечего показывать.",
   analysisSaturnPageProgress:
@@ -445,8 +459,7 @@ const ru: Record<keyof typeof en, string> = {
   weatherMoreHours: "Открыть / закрыть остальные {count} ч",
   weatherSelectTerritory:
     "Выберите территорию с подтверждёнными границами для автоматической загрузки погоды.",
-  weatherSourceUnavailable:
-    "Погодный источник не включён для выбранной страны.",
+  weatherSourceUnavailable: "Источник погоды отключён или недоступен.",
   weatherCheckingSource: "Проверяем настройки погодного источника…",
   weatherSourceCheckFailed: "Не удалось проверить доступность погоды ({code}).",
   weatherEnableHelp:

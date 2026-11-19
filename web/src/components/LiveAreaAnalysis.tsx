@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { listExternalSources, readSaturnPage } from "../api/client";
 import { SATURN_PAGE_COUNT, SATURN_RECORD_LIMIT } from "../api/types";
+import type { DraftRectangle } from "../geo/analysisDraft";
+import { scopeSaturnNotices } from "../geo/saturnFootprint";
 import type {
   CountryCode,
   ExternalSource,
@@ -18,6 +20,7 @@ export interface AreaAnalysisRequest {
   districtId: string;
   dateStart: string;
   dateEnd: string;
+  area: DraftRectangle | null;
 }
 
 interface Props {
@@ -144,7 +147,9 @@ export function LiveAreaAnalysis({
       setReport({ request, saturn: checkedSaturn });
       setBusy(false);
       noticesRef.current(
-        checkedSaturn?.kind === "ok" ? checkedSaturn.data.notices : [],
+        checkedSaturn?.kind === "ok"
+          ? scopeSaturnNotices(checkedSaturn.data.notices, request.area).matched
+          : [],
       );
     });
     return () => controller.abort();
@@ -173,6 +178,8 @@ export function LiveAreaAnalysis({
         .map((notice) => [notice.record_id, notice] as const),
     ).values(),
   ];
+  const scoped = scopeSaturnNotices(uniqueNotices, request?.area ?? null);
+  const visibleNotices = scoped.matched;
   const lastPage = pages[pages.length - 1] ?? null;
   const recordLimitExceeded = pages.some(
     (entry) => entry.record_limit_exceeded,
@@ -238,7 +245,7 @@ export function LiveAreaAnalysis({
             .map((notice) => [notice.record_id, notice] as const),
         ).values(),
       ];
-      noticesRef.current(merged);
+      noticesRef.current(scopeSaturnNotices(merged, request.area).matched);
     });
   };
   return (
@@ -311,12 +318,33 @@ export function LiveAreaAnalysis({
                   })}
                 </p>
               )}
-              {uniqueNotices.length === 0 && (
+              {visibleNotices.length === 0 && (
                 <div className="analysis-empty" role="status">
-                  <strong>{tr("analysisNoRecordsTitle")}</strong>
-                  <p>{tr("analysisNoRecordsDetail")}</p>
+                  <strong>
+                    {tr(
+                      request?.area && uniqueNotices.length > 0
+                        ? "analysisNoDraftMatchesTitle"
+                        : "analysisNoRecordsTitle",
+                    )}
+                  </strong>
+                  <p>
+                    {tr(
+                      request?.area && uniqueNotices.length > 0
+                        ? "analysisNoDraftMatchesDetail"
+                        : "analysisNoRecordsDetail",
+                    )}
+                  </p>
                 </div>
               )}
+              <p className="field-help">
+                {request?.area
+                  ? tr("analysisSaturnWithinDraft", {
+                      matched: visibleNotices.length,
+                      outside: scoped.outside,
+                      unlocated: scoped.unlocated,
+                    })
+                  : tr("analysisSaturnDistrictOnly")}
+              </p>
               <p className="field-help">
                 {tr("analysisSaturnGeometryCount", { count: geometryCount })}
               </p>
@@ -328,7 +356,7 @@ export function LiveAreaAnalysis({
                   total: page.total_elements ?? tr("saturnMissing"),
                 })}
               </p>
-              {uniqueNotices.slice(0, SATURN_RECORD_LIMIT).map((notice) => (
+              {visibleNotices.slice(0, SATURN_RECORD_LIMIT).map((notice) => (
                 <details key={notice.record_id} className="saturn-record">
                   <summary>
                     {tr("saturnField", {
@@ -355,7 +383,7 @@ export function LiveAreaAnalysis({
                   ))}
                 </details>
               ))}
-              {uniqueNotices.length > SATURN_RECORD_LIMIT && (
+              {visibleNotices.length > SATURN_RECORD_LIMIT && (
                 <p className="field-help">
                   {tr("analysisSaturnCount", {
                     count: uniqueNotices.length,
