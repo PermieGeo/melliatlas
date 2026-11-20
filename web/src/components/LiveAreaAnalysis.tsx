@@ -308,7 +308,6 @@ export function LiveAreaAnalysis({
                 {tr("analysisSaturnPageProgress", {
                   pages: pages.length,
                   records: uniqueNotices.length,
-                  total: page.total_elements ?? tr("saturnMissing"),
                 })}
               </p>
               {recordLimitExceeded && (
@@ -339,6 +338,7 @@ export function LiveAreaAnalysis({
               <p className="field-help">
                 {request?.area
                   ? tr("analysisSaturnWithinDraft", {
+                      records: uniqueNotices.length,
                       matched: visibleNotices.length,
                       outside: scoped.outside,
                       unlocated: scoped.unlocated,
@@ -352,9 +352,11 @@ export function LiveAreaAnalysis({
                 <p className="field-help">{tr("analysisSaturnNoGeometry")}</p>
               )}
               <p className="field-help">
-                {tr("analysisSaturnPartial", {
-                  total: page.total_elements ?? tr("saturnMissing"),
-                })}
+                {page.total_elements === null
+                  ? tr("analysisSaturnTotalUnavailable")
+                  : tr("analysisSaturnPartial", {
+                      total: page.total_elements,
+                    })}
               </p>
               {visibleNotices.slice(0, SATURN_RECORD_LIMIT).map((notice) => (
                 <details key={notice.record_id} className="saturn-record">

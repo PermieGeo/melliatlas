@@ -76,7 +76,7 @@ const en = {
   analysisSaturnLoadingNext: "Loading another Saturn page…",
   analysisSaturnGeometryCount: "Field polygons in fetched records: {count}.",
   analysisSaturnWithinDraft:
-    "Intersecting the draft: {matched}; outside it: {outside}; without usable geometry: {unlocated}. Only loaded pages of the selected district were checked.",
+    "Of {records} loaded notices: {matched} have field geometry intersecting the square; {outside} are outside it; {unlocated} have no usable geometry. Other districts and unread pages were not checked.",
   analysisSaturnDistrictOnly:
     "No analysis rectangle is active; fetched records cover the selected district, not a local square.",
   analysisNoDraftMatchesTitle: "No intersecting fields in the loaded pages",
@@ -85,7 +85,7 @@ const en = {
   analysisSaturnNoGeometry:
     "No usable field polygons in the fetched records; the map has nothing to draw.",
   analysisSaturnPageProgress:
-    "Fetched {pages} page(s); {records} unique notices; reported filter total: {total}.",
+    "Saturn pages read: {pages}; distinct notices in those pages: {records}.",
   analysisAction: "Analyze selected area",
   analysisSourcesLabel: "Live sources",
   analysisReady: "Ready to query the selected district.",
@@ -129,9 +129,11 @@ const en = {
   analysisSaturnCount:
     "{count} notices in the sampled response; {skipped} unrecognized entries.",
   analysisSaturnPartial:
-    "Source reports {total} records for the requested filter; completeness is unverified.",
+    "Saturn reports {total} records for the upstream request with district and date parameters (their effective filtering is unverified). This is NOT the number of fields or notices inside the square.",
+  analysisSaturnTotalUnavailable:
+    "Saturn did not report an upstream record total. Coverage remains unknown.",
   analysisSaturnRecordLimit:
-    "The source reports more than {limit} records (or additional pages beyond the limit). At most the first {limit} source records can be fetched, in 10 manual pages. Results are incomplete and do not establish safety.",
+    "Saturn reports more than {limit} records or additional pages. At most the first {limit} source records can be read in 10 manual requests; the square's coverage remains incomplete and safety cannot be inferred.",
   analysisForecastHours: "Hourly weather forecast ({count} h)",
   analysisSaturnRegionUnmapped:
     "The region or district has no reviewed Saturn mapping. No region-wide request was made.",
@@ -428,7 +430,7 @@ const ru: Record<keyof typeof en, string> = {
   analysisSaturnGeometryCount:
     "Контуров полей среди загруженных записей: {count}.",
   analysisSaturnWithinDraft:
-    "Пересекают квадрат: {matched}; вне квадрата: {outside}; без пригодной геометрии: {unlocated}. Проверены только загруженные страницы выбранного района.",
+    "Из {records} загруженных сообщений: {matched} с геометрией поля, пересекающей квадрат; {outside} вне квадрата; {unlocated} без пригодной геометрии. Другие районы и непрочитанные страницы не проверены.",
   analysisSaturnDistrictOnly:
     "Квадрат анализа не задан: показаны записи выбранного района, а не локальной области.",
   analysisNoDraftMatchesTitle:
@@ -438,7 +440,7 @@ const ru: Record<keyof typeof en, string> = {
   analysisSaturnNoGeometry:
     "Среди загруженных записей нет пригодных контуров. На карте пока нечего показывать.",
   analysisSaturnPageProgress:
-    "Загружено страниц: {pages}; уникальных сообщений: {records}; всего по фильтру: {total}.",
+    "Прочитано страниц Сатурна: {pages}; уникальных сообщений в этих страницах: {records}.",
   analysisAction: "Проанализировать выбранную местность",
   analysisSourcesLabel: "Реальные источники",
   analysisReady: "Можно запросить данные выбранного района.",
@@ -482,9 +484,11 @@ const ru: Record<keyof typeof en, string> = {
   analysisSaturnCount:
     "В полученной выборке {count} сообщений, не распознано: {skipped}.",
   analysisSaturnPartial:
-    "Источник сообщает {total} записей по выбранному фильтру; полнота не подтверждена.",
+    "Сатурн сообщает {total} записей для запроса с параметрами района и дат (фактическая фильтрация не подтверждена). Это НЕ число полей или сообщений внутри квадрата.",
+  analysisSaturnTotalUnavailable:
+    "Сатурн не сообщил общее число записей. Полнота данных неизвестна.",
   analysisSaturnRecordLimit:
-    "В источнике более {limit} записей (или есть страницы сверх лимита). Можно загрузить не более первых {limit} записей за 10 ручных запросов. Результат неполный и не подтверждает безопасность.",
+    "Сатурн сообщает более {limit} записей или наличие следующих страниц. Можно загрузить не более первых {limit} записей за 10 ручных запросов; покрытие квадрата неполное и безопасность не подтверждена.",
   analysisForecastHours: "Почасовой прогноз ({count} ч)",
   analysisSaturnRegionUnmapped:
     "Для области или района нет проверенного кода Сатурна. Запрос на всю область не выполнялся.",
