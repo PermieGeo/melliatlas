@@ -24,7 +24,7 @@ const en = {
     "GeoNames locations via Open-Meteo (non-commercial use)",
   workspaceAnalysisTools: "Period and sources",
   workspaceSaturnScope:
-    "Analyze requests a Saturn page only for the selected district if a reviewed source mapping exists. It is not a full rectangle analysis; missing mappings or access show an explanation. Weather uses the selected point separately.",
+    "Saturn reads the selected district only. When a draft exists, loaded field polygons are screened for intersection with its rectangle; neighboring districts and unread pages are not included. Weather uses the selected point separately.",
   workspaceSavedPlaces: "Saved places",
   workspaceNotAvailable: "Not connected",
   workspacePlacesPending:
@@ -49,6 +49,9 @@ const en = {
   draftAreaWidth: "Width (km)",
   draftAreaHeight: "Height (km)",
   draftAreaSize: "Nominal area: {area} km²",
+  draftAreaFullDimensions:
+    "Dimensions are edge-to-edge: 30 km means 15 km from center to each side.",
+  draftAreaBoundaryDisclosure: "Inspect district boundaries",
   draftAreaCheck: "Check intersecting districts",
   draftAreaChecking: "Checking imported districts…",
   draftAreaError: "Area lookup unavailable ({code}). Coverage is unknown.",
@@ -68,14 +71,21 @@ const en = {
     "Draft only. Coordinates are not saved; this is not a safety assessment.",
   mapPointOutside: "No imported administrative region contains this point.",
   mapPointUnavailable: "Could not identify a district at the selected point.",
-  mapShowSaturnFields: "Zoom to fetched fields",
+  mapShowSaturnFields: "Zoom to displayed fields",
   analysisSaturnLoadNext: "Load next 10 records",
   analysisSaturnLoadingNext: "Loading another Saturn page…",
   analysisSaturnGeometryCount: "Field polygons in fetched records: {count}.",
+  analysisSaturnWithinDraft:
+    "Of {records} loaded notices: {matched} have field geometry intersecting the square; {outside} are outside it; {unlocated} have no usable geometry. Other districts and unread pages were not checked.",
+  analysisSaturnDistrictOnly:
+    "No analysis rectangle is active; fetched records cover the selected district, not a local square.",
+  analysisNoDraftMatchesTitle: "No intersecting fields in the loaded pages",
+  analysisNoDraftMatchesDetail:
+    "Loaded pages do not contain a field polygon intersecting this rectangle. Other districts, unread pages and unidentified locations remain unverified.",
   analysisSaturnNoGeometry:
     "No usable field polygons in the fetched records; the map has nothing to draw.",
   analysisSaturnPageProgress:
-    "Fetched {pages} page(s); {records} unique notices; reported filter total: {total}.",
+    "Saturn pages read: {pages}; distinct notices in those pages: {records}.",
   analysisAction: "Analyze selected area",
   analysisSourcesLabel: "Live sources",
   analysisReady: "Ready to query the selected district.",
@@ -83,6 +93,12 @@ const en = {
   analysisSelectRegion: "Select a region first.",
   analysisSelectDistrict:
     "Select a district for a district-scoped Saturn query.",
+  analysisCheckDraftDistricts:
+    "Check the districts intersecting the rectangle before requesting Saturn data.",
+  analysisDistrictOutsideDraft:
+    "The selected district does not intersect the rectangle according to imported boundaries. Choose an intersecting district or move the rectangle.",
+  analysisSaturnSelectedDistrict:
+    "Saturn query scope: {district}. Only fetched field polygons intersecting the rectangle are displayed; this is not a complete area search.",
   analysisInvalidDateRange:
     "Choose an ordered source interval no longer than one calendar year.",
   analysisDateRange: "Saturn source date range",
@@ -97,6 +113,12 @@ const en = {
   weatherSelectTerritory:
     "Select a territory with a validated boundary to load local weather automatically.",
   weatherSourceUnavailable: "The weather provider is disabled or unavailable.",
+  weatherCheckingSource: "Checking weather provider configuration…",
+  weatherSourceCheckFailed:
+    "Could not check weather provider availability ({code}).",
+  weatherEnableHelp:
+    "To enable Open-Meteo, configure the weather provider in PostGIS and set MELLIATLAS_WEATHER_LIVE_ENABLED=true before restarting the backend.",
+  sourceRetry: "Check again",
   analysisMissingBoundary:
     "Administrative boundaries are not installed. Import a reviewed geographic dataset before analyzing this area.",
   analysisNarrowArea:
@@ -113,14 +135,20 @@ const en = {
   analysisSaturnCount:
     "{count} notices in the sampled response; {skipped} unrecognized entries.",
   analysisSaturnPartial:
-    "Source reports {total} records for the requested filter; completeness is unverified.",
+    "Saturn reports {total} records for the upstream request with district and date parameters (their effective filtering is unverified). This is NOT the number of fields or notices inside the square.",
+  analysisSaturnTotalUnavailable:
+    "Saturn did not report an upstream record total. Coverage remains unknown.",
   analysisSaturnRecordLimit:
-    "The source reports more than {limit} records (or additional pages beyond the limit). At most the first {limit} source records can be fetched, in 10 manual pages. Results are incomplete and do not establish safety.",
+    "Saturn reports more than {limit} records or additional pages. At most the first {limit} source records can be read in 10 manual requests; the square's coverage remains incomplete and safety cannot be inferred.",
   analysisForecastHours: "Hourly weather forecast ({count} h)",
   analysisSaturnRegionUnmapped:
     "The region or district has no reviewed Saturn mapping. No region-wide request was made.",
   analysisSaturnNotSupported:
     "Saturn is not available for this country or is disabled by the server.",
+  analysisSaturnEnableHelp:
+    "Saturn needs MELLIATLAS_SATURN_LIVE_ENABLED=true and an independently reviewed district mapping. Requests are manual and limited to selected districts.",
+  analysisSaturnReady:
+    "Saturn is enabled. Select a district and date range, then use Analyze to request a page.",
   analysisWeatherNotEnabled: "Weather source is disabled by the server.",
   headerContext: "Environmental source explorer",
   syntheticMode: "Synthetic source",
@@ -356,7 +384,7 @@ const ru: Record<keyof typeof en, string> = {
     "GeoNames через Open-Meteo (некоммерческое использование)",
   workspaceAnalysisTools: "Период и источники",
   workspaceSaturnScope:
-    "Нажатие запускает запрос Сатурн для выбранного района, если он сопоставлен с источником. Это не полный анализ прямоугольника: при отсутствии сопоставления или доступа вы увидите причину. Погода берётся для выбранной точки отдельно.",
+    "Сатурн запрашивает выбранный район. Когда задан квадрат, отображаются только загруженные поля, пересекающие его границы. Другие районы и непрочитанные страницы не охвачены. Погода запрашивается отдельно.",
   workspaceSavedPlaces: "Сохранённые места",
   workspaceNotAvailable: "Не подключено",
   workspacePlacesPending:
@@ -381,6 +409,9 @@ const ru: Record<keyof typeof en, string> = {
   draftAreaWidth: "Ширина (км)",
   draftAreaHeight: "Высота (км)",
   draftAreaSize: "Расчётная площадь: {area} км²",
+  draftAreaFullDimensions:
+    "Размеры указаны от края до края: 30 км — это по 15 км от центра в обе стороны.",
+  draftAreaBoundaryDisclosure: "Показать границы районов",
   draftAreaCheck: "Найти пересекающиеся районы",
   draftAreaChecking: "Проверка импортированных районов…",
   draftAreaError: "Не удалось прочитать районы ({code}). Полнота неизвестна.",
@@ -399,15 +430,23 @@ const ru: Record<keyof typeof en, string> = {
   mapPointOutside:
     "Для этой точки нет импортированной административной территории.",
   mapPointUnavailable: "Не удалось определить район по выбранной точке.",
-  mapShowSaturnFields: "Показать загруженные поля",
+  mapShowSaturnFields: "Показать найденные поля",
   analysisSaturnLoadNext: "Загрузить следующие 10 записей",
   analysisSaturnLoadingNext: "Загружается следующая страница Сатурна…",
   analysisSaturnGeometryCount:
     "Контуров полей среди загруженных записей: {count}.",
+  analysisSaturnWithinDraft:
+    "Из {records} загруженных сообщений: {matched} с геометрией поля, пересекающей квадрат; {outside} вне квадрата; {unlocated} без пригодной геометрии. Другие районы и непрочитанные страницы не проверены.",
+  analysisSaturnDistrictOnly:
+    "Квадрат анализа не задан: показаны записи выбранного района, а не локальной области.",
+  analysisNoDraftMatchesTitle:
+    "В загруженных страницах нет полей, пересекающих квадрат",
+  analysisNoDraftMatchesDetail:
+    "Это не исключает сообщений из других районов, непрочитанных страниц и записей без геометрии. Полнота данных неизвестна.",
   analysisSaturnNoGeometry:
     "Среди загруженных записей нет пригодных контуров. На карте пока нечего показывать.",
   analysisSaturnPageProgress:
-    "Загружено страниц: {pages}; уникальных сообщений: {records}; всего по фильтру: {total}.",
+    "Прочитано страниц Сатурна: {pages}; уникальных сообщений в этих страницах: {records}.",
   analysisAction: "Проанализировать выбранную местность",
   analysisSourcesLabel: "Реальные источники",
   analysisReady: "Можно запросить данные выбранного района.",
@@ -415,6 +454,12 @@ const ru: Record<keyof typeof en, string> = {
   analysisSelectRegion: "Сначала выберите область или регион.",
   analysisSelectDistrict:
     "Выберите район: запрос ко всей области не выполняется.",
+  analysisCheckDraftDistricts:
+    "Сначала нажмите «Найти пересекающиеся районы» для выделенного квадрата.",
+  analysisDistrictOutsideDraft:
+    "Выбранный район не пересекает квадрат по импортированным границам. Выберите пересекающийся район или переместите квадрат.",
+  analysisSaturnSelectedDistrict:
+    "Район запроса к Сатурну: {district}. Из загруженных записей показаны только поля, пересекающие квадрат; это не полный анализ области.",
   analysisInvalidDateRange:
     "Укажите даты по возрастанию в пределах одного календарного года.",
   analysisDateRange: "Период запроса к Сатурну",
@@ -429,6 +474,11 @@ const ru: Record<keyof typeof en, string> = {
   weatherSelectTerritory:
     "Выберите территорию с подтверждёнными границами для автоматической загрузки погоды.",
   weatherSourceUnavailable: "Источник погоды отключён или недоступен.",
+  weatherCheckingSource: "Проверяем настройки погодного источника…",
+  weatherSourceCheckFailed: "Не удалось проверить доступность погоды ({code}).",
+  weatherEnableHelp:
+    "Для Open-Meteo нужны настройки провайдера в PostGIS и MELLIATLAS_WEATHER_LIVE_ENABLED=true перед перезапуском backend.",
+  sourceRetry: "Проверить снова",
   analysisMissingBoundary:
     "Границы ещё не импортированы в географическую базу. Для анализа нужен проверенный географический слой.",
   analysisNarrowArea:
@@ -446,14 +496,20 @@ const ru: Record<keyof typeof en, string> = {
   analysisSaturnCount:
     "В полученной выборке {count} сообщений, не распознано: {skipped}.",
   analysisSaturnPartial:
-    "Источник сообщает {total} записей по выбранному фильтру; полнота не подтверждена.",
+    "Сатурн сообщает {total} записей для запроса с параметрами района и дат (фактическая фильтрация не подтверждена). Это НЕ число полей или сообщений внутри квадрата.",
+  analysisSaturnTotalUnavailable:
+    "Сатурн не сообщил общее число записей. Полнота данных неизвестна.",
   analysisSaturnRecordLimit:
-    "В источнике более {limit} записей (или есть страницы сверх лимита). Можно загрузить не более первых {limit} записей за 10 ручных запросов. Результат неполный и не подтверждает безопасность.",
+    "Сатурн сообщает более {limit} записей или наличие следующих страниц. Можно загрузить не более первых {limit} записей за 10 ручных запросов; покрытие квадрата неполное и безопасность не подтверждена.",
   analysisForecastHours: "Почасовой прогноз ({count} ч)",
   analysisSaturnRegionUnmapped:
     "Для области или района нет проверенного кода Сатурна. Запрос на всю область не выполнялся.",
   analysisSaturnNotSupported:
     "Сатурн недоступен для выбранной страны или отключён на сервере.",
+  analysisSaturnEnableHelp:
+    "Для запроса нужны MELLIATLAS_SATURN_LIVE_ENABLED=true и проверенное соответствие кода района. Запрос выполняется только вручную для выбранного района.",
+  analysisSaturnReady:
+    "Сатурн включён. Выберите район и период, затем нажмите «Проанализировать» для запроса данных.",
   analysisWeatherNotEnabled: "Погодный источник отключён на сервере.",
   headerContext: "Исследование данных для пчеловода",
   syntheticMode: "Синтетический источник",

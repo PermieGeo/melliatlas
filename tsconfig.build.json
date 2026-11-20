@@ -1,0 +1,17 @@
+{
+  "extends": "./web/tsconfig.json",
+  "include": [
+    "web/src",
+    "web/vite.config.ts"
+  ],
+  "exclude": [
+    "web/tests",
+    "web/e2e"
+  ],
+  "compilerOptions": {
+    "typeRoots": [
+      "./web/node_modules/@types",
+      "./web/node_modules"
+    ]
+  }
+}

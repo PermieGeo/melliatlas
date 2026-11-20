@@ -57,6 +57,15 @@ export function parseMapViewport(raw: string | null): MapViewport | null {
   }
 }
 
+/** Remove a previously saved camera when a point may represent a private location. */
+export function clearMapViewport(): void {
+  try {
+    window.localStorage.removeItem(VIEWPORT_STORAGE_KEY);
+  } catch {
+    // Storage restrictions must not affect map selection.
+  }
+}
+
 /** Storage can be disabled by the browser; map usage must still work. */
 export function readMapViewport(): MapViewport | null {
   try {

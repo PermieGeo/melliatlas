@@ -260,11 +260,21 @@ export default function App() {
       : selectedBoundary
         ? representativePoint(selectedBoundary)
         : null);
+  // The draft is a private rectangle; Saturn reads remain explicitly district-scoped.
+  const draftDistrictsChecked = !areaDraft.draft || areaDraft.preview !== null;
+  const selectedDistrictIntersectsDraft =
+    !areaDraft.draft ||
+    (areaDraft.preview?.districts.some(
+      (district) => district.id === referenceNavigation.districtId,
+    ) ??
+      false);
   const canAnalyze = !!(
     country &&
     referenceNavigation.regionId &&
     referenceNavigation.districtId &&
-    validSourceDateRange(sourceRange.start, sourceRange.end)
+    validSourceDateRange(sourceRange.start, sourceRange.end) &&
+    draftDistrictsChecked &&
+    selectedDistrictIntersectsDraft
   );
   const analysisHint: TranslationKey = !referenceNavigation.regionId
     ? "analysisSelectRegion"
@@ -272,7 +282,20 @@ export default function App() {
       ? "analysisSelectDistrict"
       : !validSourceDateRange(sourceRange.start, sourceRange.end)
         ? "analysisInvalidDateRange"
-        : "analysisReady";
+        : !draftDistrictsChecked
+          ? "analysisCheckDraftDistricts"
+          : !selectedDistrictIntersectsDraft
+            ? "analysisDistrictOutsideDraft"
+            : "analysisReady";
+  const selectedDistrict = referenceNavigation.districts.find(
+    (district) => district.id === referenceNavigation.districtId,
+  );
+  const selectedDistrictName = selectedDistrict
+    ? (locale === "ru" ? selectedDistrict.name_ru : null) ||
+      selectedDistrict.name
+    : null;
+  const activeAnalysisRequest =
+    analysisRequest?.area === areaDraft.bounds ? analysisRequest : null;
   const analyze = () => {
     setAnalysisAttempted(true);
     if (
@@ -290,6 +313,7 @@ export default function App() {
       districtId: referenceNavigation.districtId,
       dateStart: sourceRange.start,
       dateEnd: sourceRange.end,
+      area: areaDraft.bounds,
     });
   };
   const chooseRegion = (id: string) => {
@@ -316,7 +340,17 @@ export default function App() {
   };
   const selectMapPoint = (position: Position) => {
     if (areaDraft.editing) {
-      areaDraft.selectPoint(position);
+      void areaDraft.selectPoint(position).then((selection) => {
+        if (
+          selection?.districtId &&
+          selection.regionId === referenceNavigation.regionId &&
+          referenceNavigation.districts.some(
+            (district) => district.id === selection.districtId,
+          )
+        ) {
+          referenceNavigation.selectDistrict(selection.districtId);
+        }
+      });
       return;
     }
     pointLookup.current?.abort();
@@ -442,7 +476,7 @@ export default function App() {
               privateFocus={areaDraft.coordinateFocus}
               referenceGeometry={referenceNavigation.geometry}
               previewDistrictGeometry={districtBoundary.geometry}
-              saturnNotices={saturnNotices}
+              saturnNotices={activeAnalysisRequest ? saturnNotices : []}
               onSelect={investigation.setSelectedSite}
               onPoint={selectMapPoint}
               onDraftResize={areaDraft.resize}
@@ -518,6 +552,7 @@ export default function App() {
             locale={locale}
             regionSelected={Boolean(referenceNavigation.regionId)}
             editing={areaDraft.editing}
+            mapCoordinateStatus={areaDraft.mapCoordinateStatus}
             draft={areaDraft.draft}
             preview={areaDraft.preview}
             boundaryDistrictId={districtBoundary.districtId}
@@ -580,20 +615,21 @@ export default function App() {
               setSaturnNotices([]);
             }}
             analysisHint={analysisHint}
+            selectedDistrictName={selectedDistrictName}
+          />
+          <LiveAreaAnalysis
+            locale={locale}
+            country={country}
+            regionId={referenceNavigation.regionId}
+            request={activeAnalysisRequest}
+            onNotices={setSaturnNotices}
+            onBusy={setAnalysisBusy}
           />
           <WeatherPanel
             country={country}
             locale={locale}
             point={weatherPoint}
             refreshToken={weatherRefresh}
-          />
-          <LiveAreaAnalysis
-            locale={locale}
-            country={country}
-            regionId={referenceNavigation.regionId}
-            request={analysisRequest}
-            onNotices={setSaturnNotices}
-            onBusy={setAnalysisBusy}
           />
         </aside>
       </div>

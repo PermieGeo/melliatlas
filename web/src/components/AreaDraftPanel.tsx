@@ -1,5 +1,5 @@
 import type { AreaDistrictResult } from "../api/types";
-import type { AnalysisDraft } from "../hooks/useAreaDraft";
+import type { AnalysisDraft, CoordinateStatus } from "../hooks/useAreaDraft";
 import type { Locale } from "../i18n";
 import { t } from "../i18n";
 import { FieldHelp } from "./FieldHelp";
@@ -8,6 +8,7 @@ interface Props {
   locale: Locale;
   regionSelected: boolean;
   editing: boolean;
+  mapCoordinateStatus: CoordinateStatus;
   draft: AnalysisDraft | null;
   status: "idle" | "loading" | "ready" | "failed";
   errorCode: string | null;
@@ -28,6 +29,7 @@ export function AreaDraftPanel({
   locale,
   regionSelected,
   editing,
+  mapCoordinateStatus,
   draft,
   status,
   errorCode,
@@ -69,6 +71,27 @@ export function AreaDraftPanel({
           {tr("draftAreaNeedsRegion")}
         </p>
       )}
+      {editing && mapCoordinateStatus === "checking" && (
+        <p className="field-help" role="status">
+          {tr("draftAreaVerifying")}
+        </p>
+      )}
+      {editing && mapCoordinateStatus === "invalid" && (
+        <p className="field-help" role="status">
+          {tr("draftAreaCoordinateInvalid")}
+        </p>
+      )}
+      {editing &&
+        (mapCoordinateStatus === "outside" ||
+          mapCoordinateStatus === "unavailable") && (
+          <p className="field-help" role="status">
+            {tr(
+              mapCoordinateStatus === "outside"
+                ? "draftAreaCoordinateOutside"
+                : "draftAreaCoordinateUnavailable",
+            )}
+          </p>
+        )}
       {draft && (
         <>
           <div className="area-draft-dimensions">
@@ -102,6 +125,9 @@ export function AreaDraftPanel({
               area: (draft.widthKm * draft.heightKm).toFixed(2),
             })}
           </p>
+          <p className="field-help draft-dimension-hint">
+            {tr("draftAreaFullDimensions")}
+          </p>
           <button
             type="button"
             onClick={onCheck}
@@ -130,22 +156,27 @@ export function AreaDraftPanel({
               ? tr("draftAreaMissing")
               : tr("draftAreaUnverified")}
           </p>
-          <ul className="area-draft-district-list">
-            {preview.districts.map((district) => (
-              <li key={district.id}>
-                <span>{district.name}</span>
-                <button
-                  type="button"
-                  aria-pressed={boundaryDistrictId === district.id}
-                  onClick={() => onDistrictBoundary(district.id)}
-                >
-                  {boundaryDistrictId === district.id
-                    ? tr("draftAreaHideBoundary")
-                    : tr("draftAreaShowBoundary")}
-                </button>
-              </li>
-            ))}
-          </ul>
+          {preview.districts.length > 0 && (
+            <details className="district-boundaries">
+              <summary>{tr("draftAreaBoundaryDisclosure")}</summary>
+              <ul className="area-draft-district-list">
+                {preview.districts.map((district) => (
+                  <li key={district.id}>
+                    <span>{district.name}</span>
+                    <button
+                      type="button"
+                      aria-pressed={boundaryDistrictId === district.id}
+                      onClick={() => onDistrictBoundary(district.id)}
+                    >
+                      {boundaryDistrictId === district.id
+                        ? tr("draftAreaHideBoundary")
+                        : tr("draftAreaShowBoundary")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           {boundaryStatus === "loading" && (
             <p className="field-help">{tr("draftAreaBoundaryLoading")}</p>
           )}

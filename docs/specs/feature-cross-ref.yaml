@@ -146,7 +146,7 @@ features:
   - feature_id: SOURCES.WEATHER_FORECAST
     implementation_status: partial
     stages: [MVP-01]
-    spec_paths: [docs/specs/active/subspecs/subspec-01-web-mvp.md]
+    spec_paths: [docs/specs/active/web-mvp/subspec.md]
     owners:
       - backend/src/melliatlas/sources/api.py#WeatherForecastReader
       - backend/src/melliatlas/sources/providers/weather/forecast.py#OpenMeteoForecastReader
@@ -276,7 +276,7 @@ features:
   - feature_id: WEB.INVESTIGATIONS
     implementation_status: partial
     stages: [MVP-01]
-    spec_paths: [docs/specs/active/subspecs/subspec-01-web-mvp.md]
+    spec_paths: [docs/specs/active/web-mvp/subspec.md]
     owners:
       - web/src/App.tsx
       - web/src/api/client.ts
@@ -288,7 +288,7 @@ features:
   - feature_id: WEB.MAP_TIMELINE
     implementation_status: partial
     stages: [MVP-01]
-    spec_paths: [docs/specs/active/subspecs/subspec-01-web-mvp.md]
+    spec_paths: [docs/specs/active/web-mvp/subspec.md]
     owners:
       - web/src/components/WorkspaceHeader.tsx
       - web/src/components/PlaceSearchToolbar.tsx

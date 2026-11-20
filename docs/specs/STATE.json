@@ -11,11 +11,11 @@
     },
     {
       "id": "mvp-01-web",
-      "specPath": "docs/specs/active/subspecs/subspec-01-web-mvp.md",
+      "specPath": "docs/specs/active/web-mvp/subspec.md",
       "stageId": "MVP-01",
       "phase": "READY_FOR_IMPLEMENTATION"
     }
   ],
   "featureAcceptances": [],
-  "selectedTaskPath": "docs/specs/active/tasks/web-saved-place-bbox/task.md"
+  "selectedTaskPath": "docs/specs/active/web-mvp/task_03_area_draft.md"
 }
