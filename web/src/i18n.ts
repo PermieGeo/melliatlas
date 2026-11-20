@@ -93,6 +93,12 @@ const en = {
   analysisSelectRegion: "Select a region first.",
   analysisSelectDistrict:
     "Select a district for a district-scoped Saturn query.",
+  analysisCheckDraftDistricts:
+    "Check the districts intersecting the rectangle before requesting Saturn data.",
+  analysisDistrictOutsideDraft:
+    "The selected district does not intersect the rectangle according to imported boundaries. Choose an intersecting district or move the rectangle.",
+  analysisSaturnSelectedDistrict:
+    "Saturn query scope: {district}. Only fetched field polygons intersecting the rectangle are displayed; this is not a complete area search.",
   analysisInvalidDateRange:
     "Choose an ordered source interval no longer than one calendar year.",
   analysisDateRange: "Saturn source date range",
@@ -448,6 +454,12 @@ const ru: Record<keyof typeof en, string> = {
   analysisSelectRegion: "Сначала выберите область или регион.",
   analysisSelectDistrict:
     "Выберите район: запрос ко всей области не выполняется.",
+  analysisCheckDraftDistricts:
+    "Сначала нажмите «Найти пересекающиеся районы» для выделенного квадрата.",
+  analysisDistrictOutsideDraft:
+    "Выбранный район не пересекает квадрат по импортированным границам. Выберите пересекающийся район или переместите квадрат.",
+  analysisSaturnSelectedDistrict:
+    "Район запроса к Сатурну: {district}. Из загруженных записей показаны только поля, пересекающие квадрат; это не полный анализ области.",
   analysisInvalidDateRange:
     "Укажите даты по возрастанию в пределах одного календарного года.",
   analysisDateRange: "Период запроса к Сатурну",

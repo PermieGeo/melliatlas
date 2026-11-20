@@ -260,11 +260,21 @@ export default function App() {
       : selectedBoundary
         ? representativePoint(selectedBoundary)
         : null);
+  // The draft is a private rectangle; Saturn reads remain explicitly district-scoped.
+  const draftDistrictsChecked = !areaDraft.draft || areaDraft.preview !== null;
+  const selectedDistrictIntersectsDraft =
+    !areaDraft.draft ||
+    (areaDraft.preview?.districts.some(
+      (district) => district.id === referenceNavigation.districtId,
+    ) ??
+      false);
   const canAnalyze = !!(
     country &&
     referenceNavigation.regionId &&
     referenceNavigation.districtId &&
-    validSourceDateRange(sourceRange.start, sourceRange.end)
+    validSourceDateRange(sourceRange.start, sourceRange.end) &&
+    draftDistrictsChecked &&
+    selectedDistrictIntersectsDraft
   );
   const analysisHint: TranslationKey = !referenceNavigation.regionId
     ? "analysisSelectRegion"
@@ -272,7 +282,18 @@ export default function App() {
       ? "analysisSelectDistrict"
       : !validSourceDateRange(sourceRange.start, sourceRange.end)
         ? "analysisInvalidDateRange"
-        : "analysisReady";
+        : !draftDistrictsChecked
+          ? "analysisCheckDraftDistricts"
+          : !selectedDistrictIntersectsDraft
+            ? "analysisDistrictOutsideDraft"
+            : "analysisReady";
+  const selectedDistrict = referenceNavigation.districts.find(
+    (district) => district.id === referenceNavigation.districtId,
+  );
+  const selectedDistrictName = selectedDistrict
+    ? (locale === "ru" ? selectedDistrict.name_ru : null) ||
+      selectedDistrict.name
+    : null;
   const activeAnalysisRequest =
     analysisRequest?.area === areaDraft.bounds ? analysisRequest : null;
   const analyze = () => {
@@ -319,7 +340,17 @@ export default function App() {
   };
   const selectMapPoint = (position: Position) => {
     if (areaDraft.editing) {
-      void areaDraft.selectPoint(position);
+      void areaDraft.selectPoint(position).then((selection) => {
+        if (
+          selection?.districtId &&
+          selection.regionId === referenceNavigation.regionId &&
+          referenceNavigation.districts.some(
+            (district) => district.id === selection.districtId,
+          )
+        ) {
+          referenceNavigation.selectDistrict(selection.districtId);
+        }
+      });
       return;
     }
     pointLookup.current?.abort();
@@ -584,6 +615,7 @@ export default function App() {
               setSaturnNotices([]);
             }}
             analysisHint={analysisHint}
+            selectedDistrictName={selectedDistrictName}
           />
           <LiveAreaAnalysis
             locale={locale}

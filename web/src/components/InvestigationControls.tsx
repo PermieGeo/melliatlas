@@ -26,6 +26,7 @@ interface Props {
   showDemo: boolean;
   onAnalyze: () => void;
   analysisHint: TranslationKey;
+  selectedDistrictName: string | null;
   sourceDateStart: string;
   sourceDateEnd: string;
   onSourceDateStart: (value: string) => void;
@@ -94,6 +95,13 @@ export function InvestigationControls(props: Props) {
           explanation="workspaceSaturnScope"
         />
       </div>
+      {props.selectedDistrictName && (
+        <p className="field-help" role="status">
+          {t(locale, "analysisSaturnSelectedDistrict", {
+            district: props.selectedDistrictName,
+          })}
+        </p>
+      )}
       <button
         type="button"
         className="primary-button analysis-action"
