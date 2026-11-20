@@ -1,5 +1,6 @@
 """ASGI application entry point with opt-in local territory references."""
 
+import logging
 import os
 from pathlib import Path
 
@@ -53,8 +54,22 @@ def _database_regions() -> PostgisTerritoryCatalog | None:
     return PostgisTerritoryCatalog(connection_factory(dsn))
 
 
+def _configure_saturn_diagnostics() -> None:
+    """Expose bounded source-only diagnostics on stderr for the opt-in local live reader."""
+    logger = logging.getLogger("melliatlas.sources.providers.saturn")
+    logger.setLevel(logging.INFO)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+        logger.addHandler(handler)
+    logger.propagate = False
+
+
 _regions = _database_regions()
 _weather_allowed = _weather_enabled()
+_saturn_allowed = _saturn_enabled()
+if _saturn_allowed:
+    _configure_saturn_diagnostics()
 
 
 def _configured_weather_reader() -> WeatherForecastReader | None:
@@ -92,7 +107,7 @@ app = create_app(
         reference_snapshot_path=_reference_snapshot,
         reference_inventory_path=_reference_inventory,
         source_provider=_source_provider_mode(),
-        saturn_live_enabled=_saturn_enabled(),
+        saturn_live_enabled=_saturn_allowed,
         weather_live_enabled=_weather_allowed,
     ),
 )
